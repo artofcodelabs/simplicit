@@ -1,5 +1,4 @@
 const path = require("path");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
   mode: "production",
@@ -16,13 +15,11 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new CleanWebpackPlugin(),
-  ],
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "loco-core.js",
-    library: "LocoCore",
-    libraryTarget: "umd"
-  }
+    library: { name: "LocoCore", type: "umd", umdNamedDefine: true },
+    globalObject: "window",
+    clean: true,
+  },
 };

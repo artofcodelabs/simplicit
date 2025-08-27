@@ -1,22 +1,24 @@
-const path = require('path');
-const express = require('express');
-const webpack = require('webpack');
-const webpackDevMiddleware = require('webpack-dev-middleware');
+const path = require("path");
+const express = require("express");
+const webpack = require("webpack");
+const webpackDevMiddleware = require("webpack-dev-middleware");
 
-const rootPath = '..';
+const rootPath = "..";
 
 const app = express();
 const config = require(`${rootPath}/webpack.config.js`);
 const compiler = webpack(config);
 
-app.use(webpackDevMiddleware(compiler, {
-  publicPath: config.output.publicPath
-}));
+app.use(
+  webpackDevMiddleware(compiler, {
+    publicPath: config.output.publicPath,
+  }),
+);
 
-app.get('/', (_, res) => {
+app.get("/", (_, res) => {
   res.sendFile(path.join(__dirname, `${rootPath}/dev/`));
 });
 
 app.listen(3000, () => {
-  console.log('Example app listening on port 3000!\n');
+  console.log("Example app listening on port 3000!\n");
 });

@@ -8,7 +8,7 @@ const fetchParams = (url = window.location.href) => {
   const splitUrl = url.split("?");
   if (splitUrl.length === 1) return params;
   const paramsString = splitUrl[splitUrl.length - 1];
-  const paramsArray = paramsString.split("&").map(s => s.split("="));
+  const paramsArray = paramsString.split("&").map((s) => s.split("="));
   for (const arr of paramsArray) {
     let key = decodeURIComponent(arr[0]);
     let val = decodeURIComponent(arr[1]);
@@ -23,5 +23,5 @@ const fetchParams = (url = window.location.href) => {
 export default {
   get params() {
     return fetchParams();
-  }
+  },
 };
