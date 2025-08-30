@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stimulus</title>
+  </head>
+  <body>
+    <h1>Stimulus</h1>
+
+    <div data-controller="hello">
+      <input data-hello-target="name" type="text">
+
+      <button data-action="click->hello#greet">
+        Greet
+      </button>
+
+      <span data-hello-target="output">
+      </span>
+    </div>
+
+    <div data-controller="hello">
+      <input data-hello-target="name" type="text">
+
+      <button data-action="click->hello#greet">
+        Greet
+      </button>
+
+      <span data-hello-target="output">
+      </span>
+    </div>
+
+    <script type="module">
+      import {
+        Application,
+        Controller,
+      } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js";
+
+      window.Stimulus = Application.start();
+
+      Stimulus.register(
+        "hello",
+        class extends Controller {
+          static targets = ["name", "output"];
+
+          connect() {
+            console.log("Hello, Stimulus!", this.element)
+          }
+
+          greet() {
+            this.outputTarget.textContent = `Hello, ${this.nameTarget.value}!`
+          }
+        },
+      );
+    </script>
+
+    <p>
+      <a href="/">Modest</a>
+    </p>
+  </body>
+</html>

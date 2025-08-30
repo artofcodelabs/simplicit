@@ -16,7 +16,11 @@ app.use(
 );
 
 app.get("/", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/`));
+  res.sendFile(path.join(__dirname, `${rootPath}/dev/index.html`));
+});
+
+app.get("/stimulus", (_, res) => {
+  res.sendFile(path.join(__dirname, `${rootPath}/dev/stimulus.html`));
 });
 
 app.listen(3000, () => {

@@ -2,9 +2,35 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>loco-js-core</title>
+    <title>Modest</title>
   </head>
   <body>
-    <script type="text/javascript" src="loco-core.js"></script>
+    <h1>Modest</h1>
+
+    <div data-component="hello">
+      <input type="text">
+      <button>Greet</button>
+      <div data-component="display">
+        <span></span>
+      </div>
+    </div>
+
+    <div data-component="hello">
+      <input type="text">
+      <button>Greet</button>
+      <div data-component="display">
+        <span></span>
+      </div>
+    </div>
+
+    <script src="/loco-core.js"></script>
+    <script type="module">
+      const { start } = LocoCore;
+      start();
+    </script>
+
+    <p>
+      <a href="/stimulus">Stimulus</a>
+    </p>
   </body>
 </html>
