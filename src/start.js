@@ -35,6 +35,7 @@ const start = () => {
   }
 
   console.log(components);
+  return components;
 };
 
 export default start;
