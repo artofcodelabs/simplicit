@@ -1,5 +1,4 @@
 const start = (root = document) => {
-  console.log(">>> start");
   // Build a fresh components tree on every call
   const components = [];
 
@@ -44,7 +43,6 @@ const start = (root = document) => {
     }
   }
 
-  console.log(components);
   return components;
 };
 
