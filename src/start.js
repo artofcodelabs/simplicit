@@ -75,6 +75,29 @@ const start = (options = {}) => {
     }
   }
 
+  // Warn for components present in DOM without provided classes
+  if (componentElements.length > 0) {
+    const domNames = new Set(
+      componentElements.map((el) => el.getAttribute("data-component")),
+    );
+    const providedNames = new Set(
+      componentClasses
+        .map(
+          (C) =>
+            (C && (C.component || C.componentName)) ||
+            (typeof C?.name === "string" ? C.name.toLowerCase() : null),
+        )
+        .filter(Boolean),
+    );
+    for (const name of domNames) {
+      if (!providedNames.has(name)) {
+        console.warn(
+          `Found data-component="${name}" but no matching class passed to start({ components })`,
+        );
+      }
+    }
+  }
+
   return components;
 };
 

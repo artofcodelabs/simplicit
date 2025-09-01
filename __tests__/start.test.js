@@ -56,10 +56,22 @@ describe("start", () => {
       expect(seen).toHaveLength(1);
       expect(rootA.contains(seen[0])).toBe(true);
     });
+
+    it("warns when DOM has data-component without a provided class", () => {
+      document.body.innerHTML = `
+        <div data-component="display"></div>
+      `;
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      start({ components: [] });
+      expect(warnSpy).toHaveBeenCalled();
+      const message = warnSpy.mock.calls.map((c) => c.join(" ")).join("\n");
+      expect(message).toMatch(/data-component="display"/);
+      warnSpy.mockRestore();
+    });
   });
 
   it("returns empty array when no components present", () => {
-    const result = start({ root: document });
+    const result = start();
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(0);
   });
@@ -68,7 +80,7 @@ describe("start", () => {
     document.body.innerHTML = `
       <div data-component="hello"></div>
     `;
-    const result = start({ root: document });
+    const result = start();
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("hello");
     expect(result[0].children).toEqual([]);
