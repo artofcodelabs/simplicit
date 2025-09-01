@@ -1,6 +1,6 @@
 import {
   warnMissingStaticName,
-  warnMissingComponentClass,
+  warnMissingDomComponents,
 } from "./start/warnings";
 
 const start = (options = {}) => {
@@ -63,7 +63,6 @@ const start = (options = {}) => {
       continue;
     }
 
-    // Reuse parsed nodes instead of querying DOM again
     const matches = [];
     for (const node of elementToNode.values()) {
       if (node.name === componentName) matches.push(node.element);
@@ -76,22 +75,7 @@ const start = (options = {}) => {
     }
   }
 
-  // Warn for components present in DOM without provided classes
-  if (componentElements.length > 0) {
-    const domNames = new Set(
-      componentElements.map((el) => el.getAttribute("data-component")),
-    );
-    const providedNames = new Set(
-      componentClasses
-        .map((C) => (typeof C?.name === "string" ? C.name : null))
-        .filter(Boolean),
-    );
-    for (const name of domNames) {
-      if (!providedNames.has(name)) {
-        warnMissingComponentClass(name);
-      }
-    }
-  }
+  warnMissingDomComponents(componentElements, componentClasses);
 
   return components;
 };
