@@ -68,6 +68,45 @@ describe("start", () => {
       expect(message).toMatch(/data-component="display"/);
       warnSpy.mockRestore();
     });
+
+    it("assigns componentId and mirrors it to data-component-id on the element", () => {
+      document.body.innerHTML = `
+        <div data-component="hello"></div>
+        <div data-component="hello"></div>
+      `;
+
+      const seen = [];
+      class Hello extends Component {
+        static name = "hello";
+        connect() {
+          seen.push({
+            id: this.componentId,
+            attr: this.element.getAttribute("data-component-id"),
+          });
+        }
+      }
+
+      start({ root: document, components: [Hello] });
+
+      expect(seen).toHaveLength(2);
+      for (const { id, attr } of seen) {
+        expect(id).toBeDefined();
+        expect(attr).toBeDefined();
+        expect(id).toEqual(attr);
+        expect(id).toMatch(/^\d+$/);
+      }
+      // ensure uniqueness across multiple instances
+      const unique = new Set(seen.map((s) => s.id));
+      expect(unique.size).toBe(seen.length);
+
+      // also verify all hello elements have the attribute set
+      const allHelloEls = Array.from(
+        document.querySelectorAll('[data-component="hello"]'),
+      );
+      for (const el of allHelloEls) {
+        expect(el.getAttribute("data-component-id")).toMatch(/^\d+$/);
+      }
+    });
   });
 
   it("returns empty array when no components present", () => {

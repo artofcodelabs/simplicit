@@ -3,6 +3,9 @@ import {
   warnMissingDomComponents,
 } from "./start/warnings";
 
+let componentIdCounter = 1;
+const generateComponentId = () => `${componentIdCounter++}`;
+
 const start = (options = {}) => {
   const providedRoot = options.root ?? document;
   const componentClasses = Array.isArray(options.components)
@@ -71,6 +74,8 @@ const start = (options = {}) => {
     for (const el of matches) {
       const instance = new ComponentClass();
       instance.element = el;
+      instance.componentId = generateComponentId();
+      el.setAttribute("data-component-id", instance.componentId);
       if (typeof instance.connect === "function") instance.connect();
     }
   }
