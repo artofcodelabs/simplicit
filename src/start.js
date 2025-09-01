@@ -50,22 +50,25 @@ const start = (options = {}) => {
 
   // Initialize provided component classes (if any)
   for (const ComponentClass of componentClasses) {
-    // Determine the component name to match
-    const inferredName =
-      typeof ComponentClass.name === "string"
-        ? ComponentClass.name.toLowerCase()
-        : null;
+    // Determine the component name to match (custom static field 'name' only)
     const componentName =
-      ComponentClass.component || ComponentClass.componentName || inferredName;
-    if (!componentName) continue;
+      typeof ComponentClass?.name === "string" ? ComponentClass.name : null;
+    if (!componentName) {
+      const ctorName =
+        ComponentClass &&
+        ComponentClass.prototype &&
+        ComponentClass.prototype.constructor
+          ? ComponentClass.prototype.constructor.name
+          : "(anonymous)";
+      console.warn(
+        `Component class ${ctorName} passed to start({ components }) should implement static "name"`,
+      );
+      continue;
+    }
 
-    const selector = `[data-component="${componentName}"]`;
-    const matches = Array.from(searchRoot.querySelectorAll(selector));
-    if (
-      searchRoot instanceof Element &&
-      searchRoot.getAttribute("data-component") === componentName
-    ) {
-      matches.unshift(searchRoot);
+    const matches = [];
+    for (const node of elementToNode.values()) {
+      if (node.name === componentName) matches.push(node.element);
     }
 
     for (const el of matches) {
@@ -82,11 +85,7 @@ const start = (options = {}) => {
     );
     const providedNames = new Set(
       componentClasses
-        .map(
-          (C) =>
-            (C && (C.component || C.componentName)) ||
-            (typeof C?.name === "string" ? C.name.toLowerCase() : null),
-        )
+        .map((C) => (typeof C?.name === "string" ? C.name : null))
         .filter(Boolean),
     );
     for (const name of domNames) {

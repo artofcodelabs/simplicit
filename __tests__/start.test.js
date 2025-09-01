@@ -16,7 +16,7 @@ describe("start", () => {
 
       const seen = [];
       class Hello extends Component {
-        static component = "hello";
+        static name = "hello";
         connect() {
           expect(this.element).toBeInstanceOf(HTMLElement);
           expect(this.element.getAttribute("data-component")).toBe("hello");
@@ -45,7 +45,7 @@ describe("start", () => {
 
       const seen = [];
       class Hello extends Component {
-        static component = "hello";
+        static name = "hello";
         connect() {
           seen.push(this.element);
         }
