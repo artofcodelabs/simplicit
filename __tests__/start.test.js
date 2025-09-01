@@ -59,7 +59,7 @@ describe("start", () => {
   });
 
   it("returns empty array when no components present", () => {
-    const result = start();
+    const result = start({ root: document });
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(0);
   });
@@ -68,7 +68,7 @@ describe("start", () => {
     document.body.innerHTML = `
       <div data-component="hello"></div>
     `;
-    const result = start();
+    const result = start({ root: document });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("hello");
     expect(result[0].children).toEqual([]);
@@ -86,7 +86,7 @@ describe("start", () => {
         </div>
       </div>
     `;
-    const result = start();
+    const result = start({ root: document });
     expect(result).toHaveLength(1);
     const parent = result[0];
     expect(parent.name).toBe("parent");
@@ -107,8 +107,8 @@ describe("start", () => {
         <div data-component="child"></div>
       </div>
     `;
-    const first = start();
-    const second = start();
+    const first = start({ root: document });
+    const second = start({ root: document });
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(1);
     expect(second[0].children).toHaveLength(1);
@@ -127,13 +127,13 @@ describe("start", () => {
     document.body.innerHTML = `
       <div data-component="parent"></div>
     `;
-    const before = start();
+    const before = start({ root: document });
     expect(before[0].children).toHaveLength(0);
     const parent = document.querySelector('[data-component="parent"]');
     const child = document.createElement("div");
     child.setAttribute("data-component", "child");
     parent.appendChild(child);
-    const after = start();
+    const after = start({ root: document });
     expect(after[0].children.map((c) => c.name)).toEqual(["child"]);
   });
 
@@ -147,13 +147,13 @@ describe("start", () => {
       </div>
     `;
     const rootA = document.getElementById("a");
-    const resultA = start(rootA);
+    const resultA = start({ root: rootA });
     expect(resultA).toHaveLength(1);
     expect(resultA[0].name).toBe("A");
     expect(resultA[0].children.map((c) => c.name)).toEqual(["A1"]);
 
     const rootB = document.getElementById("b");
-    const resultB = start(rootB);
+    const resultB = start({ root: rootB });
     expect(resultB).toHaveLength(1);
     expect(resultB[0].name).toBe("B");
     expect(resultB[0].children.map((c) => c.name)).toEqual(["B1"]);
@@ -165,7 +165,7 @@ describe("start", () => {
     root.innerHTML = `
       <div data-component="child"></div>
     `;
-    const result = start(root);
+    const result = start({ root });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("root");
     expect(result[0].children.map((c) => c.name)).toEqual(["child"]);

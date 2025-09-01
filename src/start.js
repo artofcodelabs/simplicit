@@ -1,10 +1,8 @@
-const start = (arg = document) => {
-  // Support both start(root) and start({ root, components })
-  const hasOptions =
-    arg && typeof arg === "object" && ("root" in arg || "components" in arg);
-  const providedRoot = hasOptions ? (arg.root ?? document) : arg;
-  const componentClasses =
-    hasOptions && Array.isArray(arg.components) ? arg.components : [];
+const start = (options = {}) => {
+  const providedRoot = options.root ?? document;
+  const componentClasses = Array.isArray(options.components)
+    ? options.components
+    : [];
   // Build a fresh components tree on every call
   const components = [];
 
