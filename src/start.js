@@ -1,3 +1,8 @@
+import {
+  warnMissingStaticName,
+  warnMissingComponentClass,
+} from "./start/warnings";
+
 const start = (options = {}) => {
   const providedRoot = options.root ?? document;
   const componentClasses = Array.isArray(options.components)
@@ -54,18 +59,11 @@ const start = (options = {}) => {
     const componentName =
       typeof ComponentClass?.name === "string" ? ComponentClass.name : null;
     if (!componentName) {
-      const ctorName =
-        ComponentClass &&
-        ComponentClass.prototype &&
-        ComponentClass.prototype.constructor
-          ? ComponentClass.prototype.constructor.name
-          : "(anonymous)";
-      console.warn(
-        `Component class ${ctorName} passed to start({ components }) should implement static "name"`,
-      );
+      warnMissingStaticName(ComponentClass);
       continue;
     }
 
+    // Reuse parsed nodes instead of querying DOM again
     const matches = [];
     for (const node of elementToNode.values()) {
       if (node.name === componentName) matches.push(node.element);
@@ -90,9 +88,7 @@ const start = (options = {}) => {
     );
     for (const name of domNames) {
       if (!providedNames.has(name)) {
-        console.warn(
-          `Found data-component="${name}" but no matching class passed to start({ components })`,
-        );
+        warnMissingComponentClass(name);
       }
     }
   }
