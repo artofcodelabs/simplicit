@@ -107,6 +107,54 @@ describe("start", () => {
         expect(el.getAttribute("data-component-id")).toMatch(/^\d+$/);
       }
     });
+
+    it("provides sanitized node on instance without name and element keys", () => {
+      document.body.innerHTML = `
+        <div data-component="hello">
+          <div data-component="display"></div>
+        </div>
+        <div data-component="hello"></div>
+      `;
+
+      const snapshots = [];
+      class Hello extends Component {
+        static name = "hello";
+        connect() {
+          snapshots.push({
+            hasNameKey: Object.prototype.hasOwnProperty.call(this.node, "name"),
+            hasElementKey: Object.prototype.hasOwnProperty.call(
+              this.node,
+              "element",
+            ),
+            hasParent: this.node.parent !== undefined,
+            parentIsNull: this.node.parent === null,
+            childrenCount: Array.isArray(this.node.children)
+              ? this.node.children.length
+              : -1,
+            firstChildName:
+              this.node.children && this.node.children[0]
+                ? this.node.children[0].name
+                : null,
+          });
+        }
+      }
+
+      start({ root: document, components: [Hello] });
+
+      expect(snapshots).toHaveLength(2);
+      // Both instances should have sanitized node
+      for (const s of snapshots) {
+        expect(s.hasNameKey).toBe(false);
+        expect(s.hasElementKey).toBe(false);
+        expect(s.hasParent).toBe(true);
+        expect(s.childrenCount).toBeGreaterThanOrEqual(0);
+      }
+      // The first hello has a display child
+      expect(snapshots[0].childrenCount).toBe(1);
+      expect(snapshots[0].firstChildName).toBe("display");
+      // The second hello has no children
+      expect(snapshots[1].childrenCount).toBe(0);
+    });
   });
 
   it("returns empty array when no components present", () => {

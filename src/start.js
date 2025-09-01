@@ -68,14 +68,19 @@ const start = (options = {}) => {
 
     const matches = [];
     for (const node of elementToNode.values()) {
-      if (node.name === componentName) matches.push(node.element);
+      if (node.name === componentName) matches.push(node);
     }
 
-    for (const el of matches) {
+    for (const node of matches) {
       const instance = new ComponentClass();
-      instance.element = el;
+      instance.element = node.element;
+      // Attach a sanitized view of the node without name/element keys
+      const sanitizedNode = { ...node };
+      delete sanitizedNode.name;
+      delete sanitizedNode.element;
+      instance.node = sanitizedNode;
       instance.componentId = generateComponentId();
-      el.setAttribute("data-component-id", instance.componentId);
+      node.element.setAttribute("data-component-id", instance.componentId);
       if (typeof instance.connect === "function") instance.connect();
     }
   }
