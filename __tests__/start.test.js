@@ -1,8 +1,61 @@
 import { start } from "index";
+import { Component } from "index";
 
 describe("start", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+  });
+
+  describe("component class initialization", () => {
+    it("initializes for every matching element and sets element before connect", () => {
+      document.body.innerHTML = `
+        <div data-component="hello"></div>
+        <div data-component="hello"></div>
+        <div data-component="display"></div>
+      `;
+
+      const seen = [];
+      class Hello extends Component {
+        static component = "hello";
+        connect() {
+          expect(this.element).toBeInstanceOf(HTMLElement);
+          expect(this.element.getAttribute("data-component")).toBe("hello");
+          seen.push(this.element);
+        }
+      }
+
+      const result = start({ root: document, components: [Hello] });
+      expect(Array.isArray(result)).toBe(true);
+      expect(seen).toHaveLength(2);
+      const expected = Array.from(
+        document.querySelectorAll('[data-component="hello"]'),
+      );
+      expect(new Set(seen)).toEqual(new Set(expected));
+    });
+
+    it("respects provided element root when initializing components", () => {
+      document.body.innerHTML = `
+        <div id="a">
+          <div data-component="hello"></div>
+        </div>
+        <div id="b">
+          <div data-component="hello"></div>
+        </div>
+      `;
+
+      const seen = [];
+      class Hello extends Component {
+        static component = "hello";
+        connect() {
+          seen.push(this.element);
+        }
+      }
+
+      const rootA = document.getElementById("a");
+      start({ root: rootA, components: [Hello] });
+      expect(seen).toHaveLength(1);
+      expect(rootA.contains(seen[0])).toBe(true);
+    });
   });
 
   it("returns empty array when no components present", () => {

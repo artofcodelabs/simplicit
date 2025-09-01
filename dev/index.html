@@ -25,8 +25,17 @@
 
     <script src="/loco-core.js"></script>
     <script>
-      const { start } = LocoCore;
-      start();
+      const { start, Component } = LocoCore;
+
+      class Hello extends Component {
+        static name = "hello";
+
+        connect() {
+          console.log("Hello, Modest!", this.element);
+        }
+      }
+
+      const components = start({ root: document, components: [Hello] });
     </script>
 
     <p>
