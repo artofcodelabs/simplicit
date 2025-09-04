@@ -10,17 +10,13 @@
     <div data-component="hello">
       <input type="text">
       <button>Greet</button>
-      <div data-component="display">
-        <span></span>
-      </div>
+      <span></span>
     </div>
 
     <div data-component="hello">
       <input type="text">
       <button>Greet</button>
-      <div data-component="display">
-        <span></span>
-      </div>
+      <span></span>
     </div>
 
     <script src="/loco-core.js"></script>
@@ -31,7 +27,15 @@
         static name = "hello";
 
         connect() {
-          console.log("Hello, Modest!", this.element, this.node);
+          const input = this.element.querySelector("input");
+          const button = this.element.querySelector("button");
+          const output = this.element.querySelector("span");
+
+          if (button && input && output) {
+            button.addEventListener("click", () => {
+              output.textContent = `Hello, ${input.value}!`;
+            });
+          }
         }
       }
 
