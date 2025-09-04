@@ -8,15 +8,15 @@
     <h1>Modest</h1>
 
     <div data-component="hello">
-      <input type="text">
-      <button>Greet</button>
-      <span></span>
+      <input data-ref="input" type="text">
+      <button data-ref="button">Greet</button>
+      <span data-ref="output"></span>
     </div>
 
     <div data-component="hello">
-      <input type="text">
-      <button>Greet</button>
-      <span></span>
+      <input data-ref="input" type="text">
+      <button data-ref="button">Greet</button>
+      <span data-ref="output"></span>
     </div>
 
     <script src="/loco-core.js"></script>
@@ -27,15 +27,9 @@
         static name = "hello";
 
         connect() {
-          const input = this.element.querySelector("input");
-          const button = this.element.querySelector("button");
-          const output = this.element.querySelector("span");
-
-          if (button && input && output) {
-            button.addEventListener("click", () => {
-              output.textContent = `Hello, ${input.value}!`;
-            });
-          }
+          this.ref("button").addEventListener("click", () => {
+            this.ref("output").textContent = `Hello, ${this.ref("input").value}!`;
+          });
         }
       }
 
