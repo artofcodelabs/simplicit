@@ -149,3 +149,32 @@ describe("Component.refs", () => {
     expect(refs).toEqual({});
   });
 });
+
+describe("element.instance linkage", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("exposes the component instance on the root element", () => {
+    document.body.innerHTML = `
+      <div data-component="dummy" id="root"></div>
+    `;
+
+    let captured = {};
+    class Dummy extends Component {
+      static name = "dummy";
+      connect() {
+        captured.self = this;
+        captured.fromElement = this.element.instance;
+        captured.id = this.componentId;
+        captured.idFromElement = this.element.getAttribute("data-component-id");
+      }
+    }
+
+    start({ root: document, components: [Dummy] });
+
+    expect(captured.fromElement).toBe(captured.self);
+    expect(captured.idFromElement).toBeDefined();
+    expect(String(captured.id)).toEqual(String(captured.idFromElement));
+  });
+});

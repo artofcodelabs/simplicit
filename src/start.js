@@ -81,6 +81,8 @@ const start = (options = {}) => {
       instance.node = sanitizedNode;
       instance.componentId = generateComponentId();
       node.element.setAttribute("data-component-id", instance.componentId);
+      // Expose the instance on the root element for this component
+      node.element.instance = instance;
       if (typeof instance.connect === "function") instance.connect();
     }
   }
