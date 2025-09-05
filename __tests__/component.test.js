@@ -64,3 +64,80 @@ describe("Component.ref", () => {
     expect(missing).toBeNull();
   });
 });
+
+describe("Component.refs", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns a map of data-ref names to elements within the root", () => {
+    document.body.innerHTML = `
+      <div data-component="dummy" id="root">
+        <input data-ref="input" />
+        <button data-ref="button">Greet</button>
+        <span data-ref="output"></span>
+      </div>
+      <div>
+        <input data-ref="input" id="outside" />
+      </div>
+    `;
+
+    let refs;
+    class Dummy extends Component {
+      static name = "dummy";
+      connect() {
+        refs = this.refs();
+      }
+    }
+
+    start({ root: document, components: [Dummy] });
+
+    const root = document.getElementById("root");
+    expect(refs.input).toBe(root.querySelector('[data-ref="input"]'));
+    expect(refs.button).toBe(root.querySelector('[data-ref="button"]'));
+    expect(refs.output).toBe(root.querySelector('[data-ref="output"]'));
+    // outside element with same data-ref should be ignored
+    expect(refs.input).not.toBe(document.getElementById("outside"));
+  });
+
+  it("prefers the first occurrence when duplicate data-ref keys exist", () => {
+    document.body.innerHTML = `
+      <div data-component="dummy" id="root">
+        <input data-ref="input" id="first" />
+        <div>
+          <input data-ref="input" id="second" />
+        </div>
+      </div>
+    `;
+
+    let refs;
+    class Dummy extends Component {
+      static name = "dummy";
+      connect() {
+        refs = this.refs();
+      }
+    }
+
+    start({ root: document, components: [Dummy] });
+
+    expect(refs.input).toBe(document.getElementById("first"));
+  });
+
+  it("returns an empty object when no data-ref elements exist", () => {
+    document.body.innerHTML = `
+      <div data-component="dummy" id="root"></div>
+    `;
+
+    let refs;
+    class Dummy extends Component {
+      static name = "dummy";
+      connect() {
+        refs = this.refs();
+      }
+    }
+
+    start({ root: document, components: [Dummy] });
+
+    expect(refs).toEqual({});
+  });
+});
