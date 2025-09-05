@@ -19,6 +19,12 @@
       <span data-ref="output"></span>
     </div>
 
+    <form data-component="search">
+      <input type="checkbox" data-ref="checkbox" id="projects"> <label data-ref="label" for="projects">Projects</label>
+      <input type="checkbox" data-ref="checkbox" id="messages"> <label data-ref="label" for="messages">Messages</label>
+      <a href="#" data-ref="link">Select all</a>
+    </form>
+
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
@@ -34,7 +40,19 @@
         }
       }
 
-      const components = start({ root: document, components: [Hello] });
+      class Search extends Component {
+        static name = "search";
+
+        connect() {
+          const { checkbox, link } = this.refs();
+          link.addEventListener("click", (e) => {
+            e.preventDefault();
+            checkbox.forEach((input) => input.checked = true);
+          });
+        }
+      }
+
+      const components = start({ root: document, components: [Hello, Search] });
     </script>
 
     <p>
