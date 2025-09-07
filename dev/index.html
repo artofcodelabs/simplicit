@@ -34,9 +34,13 @@
 
         connect() {
           const { input, button, output } = this.refs();
-          button.addEventListener("click", () => {
+          this.on(button, "click", () => {
             output.textContent = `Hello, ${input.value}!`;
           });
+          // example with timers
+          this.timeout(() => {
+            console.log("timeout example...");
+          }, 1000);
         }
       }
 
@@ -45,7 +49,7 @@
 
         connect() {
           const { checkbox, link } = this.refs();
-          link.addEventListener("click", (e) => {
+          this.on(link, "click", (e) => {
             e.preventDefault();
             checkbox.forEach((input) => input.checked = true);
           });
