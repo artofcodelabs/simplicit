@@ -1,3 +1,5 @@
+// TODO: split on smaller files
+
 import {
   warnMissingStaticName,
   warnMissingDomComponents,
@@ -5,6 +7,105 @@ import {
 
 let componentIdCounter = 1;
 const generateComponentId = () => `${componentIdCounter++}`;
+
+// Track observers and registered components per root so we can auto-initialize
+// dynamically added component elements without duplicating observers.
+const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
+
+// TODO: test it
+const ensureObservation = (searchRoot, componentClasses) => {
+  // Build or extend the class map for this root
+  const classByName = new Map();
+  if (rootToObserver.has(searchRoot)) {
+    const existing = rootToObserver.get(searchRoot);
+    existing.classByName.forEach((v, k) => classByName.set(k, v));
+  }
+  for (const ComponentClass of componentClasses) {
+    const name =
+      typeof ComponentClass?.name === "string" ? ComponentClass.name : null;
+    if (name) classByName.set(name, ComponentClass);
+  }
+
+  // If an observer already exists, just update its class map and return
+  if (rootToObserver.has(searchRoot)) {
+    const entry = rootToObserver.get(searchRoot);
+    entry.classByName = classByName;
+    return;
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    const added = new Set();
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        if (node.hasAttribute("data-component")) added.add(node);
+        node
+          .querySelectorAll?.("[data-component]")
+          .forEach((el) => added.add(el));
+      }
+    }
+
+    if (added.size === 0) return;
+
+    // Filter to those with matching provided classes and not already initialized
+    const candidates = Array.from(added).filter((el) => {
+      const name = el.getAttribute("data-component");
+      return classByName.has(name) && !el.instance;
+    });
+
+    if (candidates.length === 0) return;
+
+    // Stage 1: create instances and basic nodes
+    const elementToInstance = new Map();
+    for (const el of candidates) {
+      const name = el.getAttribute("data-component");
+      const ComponentClass = classByName.get(name);
+      if (!ComponentClass) continue;
+      const instance = new ComponentClass();
+      instance.element = el;
+      instance.node = { parent: null, children: [] };
+      instance.componentId = generateComponentId();
+      el.setAttribute("data-component-id", instance.componentId);
+      el.instance = instance;
+      elementToInstance.set(el, instance);
+    }
+
+    // Stage 2: link parents and children, including external parents
+    for (const el of candidates) {
+      const instance = elementToInstance.get(el);
+      if (!instance) continue;
+      const parentEl = el.parentElement?.closest("[data-component]");
+      if (parentEl) {
+        const parentInstance =
+          elementToInstance.get(parentEl) || parentEl.instance;
+        if (parentInstance && parentInstance.node) {
+          instance.node.parent = parentInstance.node;
+          parentInstance.node.children.push(instance.node);
+        }
+      }
+      // Derive children by nearest ancestor logic within the added set
+      for (const child of candidates) {
+        if (child === el) continue;
+        const nearest = child.parentElement?.closest("[data-component]");
+        if (nearest === el) {
+          const childInstance = elementToInstance.get(child);
+          if (childInstance) {
+            instance.node.children.push(childInstance.node);
+            childInstance.node.parent = instance.node;
+          }
+        }
+      }
+    }
+
+    // Stage 3: connect
+    for (const instance of elementToInstance.values()) {
+      if (typeof instance.connect === "function") instance.connect();
+    }
+  });
+
+  observer.observe(searchRoot, { childList: true, subtree: true });
+  rootToObserver.set(searchRoot, { observer, classByName });
+};
 
 const start = (options = {}) => {
   const providedRoot = options.root ?? document;
@@ -88,6 +189,9 @@ const start = (options = {}) => {
   }
 
   warnMissingDomComponents(componentElements, componentClasses);
+
+  // Begin observing for dynamically added components within this root
+  ensureObservation(searchRoot, componentClasses);
 
   return components;
 };
