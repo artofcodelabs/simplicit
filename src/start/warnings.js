@@ -1,16 +1,3 @@
-export const warnMissingStaticName = (ComponentClass) => {
-  const ctorName =
-    ComponentClass &&
-    ComponentClass.prototype &&
-    ComponentClass.prototype.constructor
-      ? ComponentClass.prototype.constructor.name
-      : "(anonymous)";
-
-  console.warn(
-    `Component class ${ctorName} passed to start({ components }) should implement static "name"`,
-  );
-};
-
 export const warnMissingDomComponents = (
   componentElements,
   componentClasses,

@@ -7,6 +7,8 @@
   <body>
     <h1>Modest</h1>
 
+    <div data-component="invalid"></div>
+
     <div data-component="hello">
       <input data-ref="input" type="text">
       <button data-ref="button">Greet</button>
@@ -41,6 +43,8 @@
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
+
+      class InvalidComponent extends Component {}
 
       class Hello extends Component {
         static name = "hello";
@@ -106,7 +110,7 @@
       }
 
       // TODO: return top level component
-      const components = start({ root: document, components: [Hello, Search, Clock, ClockFactory] });
+      const components = start({ root: document, components: [InvalidComponent, Hello, Search, Clock, ClockFactory] });
     </script>
 
     <p>
