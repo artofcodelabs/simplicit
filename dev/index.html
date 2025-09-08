@@ -25,6 +25,10 @@
       <a href="#" data-ref="link">Select all</a>
     </form>
 
+    <div data-component="clock">
+      <p data-ref="time"></p>
+    </div>
+
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
@@ -33,14 +37,13 @@
         static name = "hello";
 
         connect() {
-          const { input, button, output } = this.refs();
-          this.on(button, "click", () => {
-            output.textContent = `Hello, ${input.value}!`;
-          });
-          // example with timers
-          this.timeout(() => {
-            console.log("timeout example...");
-          }, 1000);
+          console.log("Hello, Modest!", this.element);
+          this.on(this.ref("button"), "click", () => this.greet());
+        }
+
+        greet() {
+          const { input, output } = this.refs();
+          output.textContent = `Hello, ${input.value}!`;
         }
       }
 
@@ -56,7 +59,23 @@
         }
       }
 
-      const components = start({ root: document, components: [Hello, Search] });
+      class Clock extends Component {
+        static name = "clock";
+
+        connect() {
+          this.displayTime();
+          this.interval(() => {
+            this.displayTime();
+          }, 1000);
+        }
+
+        displayTime() {
+          this.ref("time").textContent = new Date().toLocaleTimeString();
+        }
+      }
+
+      // TODO: return top level component
+      const components = start({ root: document, components: [Hello, Search, Clock] });
     </script>
 
     <p>
