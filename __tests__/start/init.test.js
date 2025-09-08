@@ -1,0 +1,35 @@
+import { initializeMatches } from "../../src/start/init";
+import { Component } from "index";
+import { scanComponentElements, buildElementTree } from "../../src/start/scan";
+
+describe("start/init", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("initializes instances for matching nodes and calls connect", () => {
+    document.body.innerHTML = `
+      <div data-component="hello"></div>
+      <div data-component="other"></div>
+    `;
+
+    const els = scanComponentElements(document.body);
+    const { elementToNode } = buildElementTree(els);
+
+    const seen = [];
+    class Hello extends Component {
+      static name = "hello";
+      connect() {
+        seen.push(this.element);
+      }
+    }
+
+    initializeMatches(elementToNode, [Hello]);
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0].getAttribute("data-component")).toBe("hello");
+    const el = seen[0];
+    expect(el.instance).toBeDefined();
+    expect(el.getAttribute("data-component-id")).toMatch(/\d+/);
+  });
+});
