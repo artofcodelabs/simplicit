@@ -29,6 +29,15 @@
       <p data-ref="time"></p>
     </div>
 
+    <div data-component="clock-factory">
+      <div data-ref="shelf">
+      </div>
+
+      <p>
+        <a href="#" data-ref="add-clock">Add new clock</a>
+      </p>
+    </div>
+
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
@@ -74,8 +83,30 @@
         }
       }
 
+      class ClockFactory extends Component {
+        static name = "clock-factory";
+
+        static clockTemplate = `
+          <div data-component="clock">
+            <p data-ref="time">???</p>
+          </div>
+        `;
+
+        connect() {
+          this.on(this.ref("add-clock"), "click", (e) => {
+            e.preventDefault();
+            this.addNewClock();
+          });
+        }
+
+        addNewClock() {
+          const shelf = this.ref("shelf");
+          shelf.insertAdjacentHTML("beforeend", ClockFactory.clockTemplate);
+        }
+      }
+
       // TODO: return top level component
-      const components = start({ root: document, components: [Hello, Search, Clock] });
+      const components = start({ root: document, components: [Hello, Search, Clock, ClockFactory] });
     </script>
 
     <p>
