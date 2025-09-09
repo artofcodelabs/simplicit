@@ -13,31 +13,16 @@ const start = (options = {}) => {
   const componentClasses = Array.isArray(options.components)
     ? options.components
     : [];
-  // Build a fresh components tree on every call
-  const components = [];
-
-  // Determine the search root (document.body if a Document is provided)
   const searchRoot = resolveSearchRoot(providedRoot);
-
-  // Find all component elements within the search root
   const componentElements = scanComponentElements(searchRoot);
-
-  // Create a node for each element upfront so parent/child linking doesn't depend on order
-  const { elementToNode } = buildElementTree(componentElements);
-  // roots are not needed from here; tests expect return to be an array of root nodes
+  const elementToNode = buildElementTree(componentElements);
+  initializeMatches(elementToNode, componentClasses);
+  warnMissingDomComponents(componentElements, componentClasses);
+  ensureObservation(searchRoot, componentClasses);
+  const components = [];
   components.push(
     ...Array.from(elementToNode.values()).filter((n) => n.parent === null),
   );
-
-  // Initialize provided component classes (if any)
-  // Initialize instances for matching nodes
-  initializeMatches(elementToNode, componentClasses);
-
-  warnMissingDomComponents(componentElements, componentClasses);
-
-  // Begin observing for dynamically added components within this root
-  ensureObservation(searchRoot, componentClasses);
-
   return components;
 };
 

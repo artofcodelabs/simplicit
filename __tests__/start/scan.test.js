@@ -39,9 +39,8 @@ describe("start/scan", () => {
       </div>
     `;
     const els = scanComponentElements(document.body);
-    const { components, elementToNode } = buildElementTree(els);
-    expect(components).toHaveLength(1);
-    const parent = components[0];
+    const elementToNode = buildElementTree(els);
+    const parent = elementToNode.get(els[0]);
     expect(parent.name).toBe("parent");
     const childB = parent.children[1];
     expect(childB.children[0].name).toBe("grandchild");

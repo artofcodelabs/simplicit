@@ -17,7 +17,6 @@ export const scanComponentElements = (searchRoot) => {
 };
 
 export const buildElementTree = (componentElements) => {
-  const components = [];
   const elementToNode = new Map();
   for (const element of componentElements) {
     const name = element.getAttribute("data-component");
@@ -35,9 +34,7 @@ export const buildElementTree = (componentElements) => {
       const parentNode = elementToNode.get(parentElement);
       node.parent = parentNode;
       parentNode.children.push(node);
-    } else {
-      components.push(node);
     }
   }
-  return { components, elementToNode };
+  return elementToNode;
 };

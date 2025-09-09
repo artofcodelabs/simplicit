@@ -14,7 +14,7 @@ describe("start/init", () => {
     `;
 
     const els = scanComponentElements(document.body);
-    const { elementToNode } = buildElementTree(els);
+    const elementToNode = buildElementTree(els);
 
     const seen = [];
     class Hello extends Component {
