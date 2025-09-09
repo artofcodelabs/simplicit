@@ -15,9 +15,9 @@ const start = (options = {}) => {
     : [];
   const searchRoot = resolveSearchRoot(providedRoot);
   const componentElements = scanComponentElements(searchRoot);
+  warnMissingDomComponents(componentElements, componentClasses);
   const elementToNode = buildElementTree(componentElements);
   initializeMatches(elementToNode, componentClasses);
-  warnMissingDomComponents(componentElements, componentClasses);
   ensureObservation(searchRoot, componentClasses);
   const components = [];
   components.push(
