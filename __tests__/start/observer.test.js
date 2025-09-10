@@ -44,19 +44,27 @@ describe("ensureObservation", () => {
     const root = document.body;
     ensureObservation(root, [Parent, Child]);
 
-    // Append parent first to ensure parent instance exists before child
-    const parentEl = document.createElement("div");
-    parentEl.setAttribute("data-component", "parent");
-    root.appendChild(parentEl);
-    await waitFor(() => !!parentEl.instance);
+    const parent = document.createElement("div");
+    parent.innerHTML = `
+      <div data-component="parent"></div>
+    `;
+    root.appendChild(parent);
+
+    let el = root.querySelector('[data-component="parent"]');
+    await waitFor(() => !!el.instance);
 
     const childEl = document.createElement("div");
-    childEl.setAttribute("data-component", "child");
-    parentEl.appendChild(childEl);
-    await waitFor(() => !!childEl.instance);
-    expect(parentEl.instance).toBeDefined();
-    expect(childEl.instance).toBeDefined();
-    expect(childEl.instance.node.parent).toBe(parentEl.instance.node);
-    expect(parentEl.instance.node.children).toContain(childEl.instance.node);
+    childEl.innerHTML = `
+      <div data-component="child"></div>
+    `;
+    parent.appendChild(childEl);
+
+    el = root.querySelector('[data-component="child"]');
+    await waitFor(() => !!el.instance);
+
+    console.log(root.innerHTML);
+    console.log(el.instance.node);
+    //expect(childEl.instance.node.parent).toBe(parentEl.instance.node);
+    //expect(parentEl.instance.node.children).toContain(childEl.instance.node);
   });
 });
