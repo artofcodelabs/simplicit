@@ -4,13 +4,19 @@ import {
   buildElementTree,
 } from "../../src/start/scan";
 
-describe("start/scan", () => {
+describe("scanComponentElements", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
 
   it("resolves provided Document to document.body", () => {
     expect(resolveSearchRoot(document)).toBe(document.body);
+  });
+});
+
+describe("scanComponentElements", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
   });
 
   it("scans for [data-component] under root and includes root when applicable", () => {
@@ -25,6 +31,12 @@ describe("start/scan", () => {
     expect(els.some((e) => e.getAttribute("data-component") === "child")).toBe(
       true,
     );
+  });
+});
+
+describe("buildElementTree", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
   });
 
   it("builds a proper element tree with parent/children links", () => {

@@ -2,9 +2,19 @@ import { initializeMatches } from "../../src/start/init";
 import { Component } from "index";
 import { scanComponentElements, buildElementTree } from "../../src/start/scan";
 
-describe("start/init", () => {
+let seen = [];
+
+class Hello extends Component {
+  static name = "hello";
+  connect() {
+    seen.push(this.element);
+  }
+}
+
+describe("initializeMatches", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+    seen = [];
   });
 
   it("initializes instances for matching nodes and calls connect", () => {
@@ -15,14 +25,6 @@ describe("start/init", () => {
 
     const els = scanComponentElements(document.body);
     const elementToNode = buildElementTree(els);
-
-    const seen = [];
-    class Hello extends Component {
-      static name = "hello";
-      connect() {
-        seen.push(this.element);
-      }
-    }
 
     initializeMatches(elementToNode, [Hello]);
 

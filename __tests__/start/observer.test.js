@@ -12,7 +12,7 @@ const waitFor = (predicate, { timeout = 1000, interval = 5 } = {}) =>
     tick();
   });
 
-describe("start/observer", () => {
+describe("ensureObservation", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
