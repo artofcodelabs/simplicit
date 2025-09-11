@@ -14,6 +14,7 @@ const start = (options = {}) => {
     ? options.components
     : [];
   const searchRoot = resolveSearchRoot(providedRoot);
+  // TODO: validate componentClasses
   const componentElements = scanComponentElements(searchRoot);
   warnMissingDomComponents(componentElements, componentClasses);
   const elementToNode = buildElementTree(componentElements);

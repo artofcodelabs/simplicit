@@ -4,20 +4,9 @@ const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
 export const ensureObservation = (searchRoot, componentClasses) => {
   const classByName = new Map();
-  if (rootToObserver.has(searchRoot)) {
-    const existing = rootToObserver.get(searchRoot);
-    existing.classByName.forEach((v, k) => classByName.set(k, v));
-  }
-  for (const ComponentClass of componentClasses) {
-    const name =
-      typeof ComponentClass?.name === "string" ? ComponentClass.name : null;
-    if (name) classByName.set(name, ComponentClass);
-  }
 
-  if (rootToObserver.has(searchRoot)) {
-    const entry = rootToObserver.get(searchRoot);
-    entry.classByName = classByName;
-    return;
+  for (const ComponentClass of componentClasses) {
+    classByName.set(ComponentClass.name, ComponentClass);
   }
 
   const observer = new MutationObserver((mutations) => {

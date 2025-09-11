@@ -40,31 +40,31 @@ describe("ensureObservation", () => {
     expect(el.getAttribute("data-component-id")).toMatch(/\d+/);
   });
 
-  it.skip("links parent and child nodes for dynamically added trees", async () => {
+  it("links parent and child nodes for dynamically added trees", async () => {
     const root = document.body;
     ensureObservation(root, [Parent, Child]);
 
-    const parent = document.createElement("div");
-    parent.innerHTML = `
-      <div data-component="parent"></div>
-    `;
-    root.appendChild(parent);
+    // Append parent element
+    const parentEl = document.createElement("div");
+    parentEl.setAttribute("data-component", "parent");
+    root.appendChild(parentEl);
+    await waitFor(() => !!parentEl.instance);
 
-    let el = root.querySelector('[data-component="parent"]');
-    await waitFor(() => !!el.instance);
-
+    // Append child inside the parent
     const childEl = document.createElement("div");
-    childEl.innerHTML = `
-      <div data-component="child"></div>
-    `;
-    parent.appendChild(childEl);
+    childEl.setAttribute("data-component", "child");
+    parentEl.appendChild(childEl);
+    await waitFor(() => !!childEl.instance);
 
-    el = root.querySelector('[data-component="child"]');
-    await waitFor(() => !!el.instance);
+    // Wait until linkage is established
+    await waitFor(
+      () =>
+        !!childEl.instance &&
+        !!parentEl.instance &&
+        childEl.instance.node.parent === parentEl.instance.node,
+    );
 
-    console.log(root.innerHTML);
-    console.log(el.instance.node);
-    //expect(childEl.instance.node.parent).toBe(parentEl.instance.node);
-    //expect(parentEl.instance.node.children).toContain(childEl.instance.node);
+    expect(childEl.instance.node.parent).toBe(parentEl.instance.node);
+    expect(parentEl.instance.node.children).toContain(childEl.instance.node);
   });
 });
