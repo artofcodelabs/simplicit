@@ -23,8 +23,11 @@ describe("start", () => {
           seen.push(this.element);
         }
       }
+      class Display extends Component {
+        static name = "display";
+      }
 
-      const result = start({ root: document, components: [Hello] });
+      const result = start({ root: document, components: [Hello, Display] });
       expect(Array.isArray(result)).toBe(true);
       expect(seen).toHaveLength(2);
       const expected = Array.from(
@@ -57,16 +60,13 @@ describe("start", () => {
       expect(rootA.contains(seen[0])).toBe(true);
     });
 
-    it("warns when DOM has data-component without a provided class", () => {
+    it("throws when DOM has data-component without a provided class", () => {
       document.body.innerHTML = `
         <div data-component="display"></div>
       `;
-      const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-      start({ components: [] });
-      expect(warnSpy).toHaveBeenCalled();
-      const message = warnSpy.mock.calls.map((c) => c.join(" ")).join("\n");
-      expect(message).toMatch(/data-component="display"/);
-      warnSpy.mockRestore();
+      expect(() => start({ components: [] })).toThrow(
+        /data-component="display"/,
+      );
     });
 
     it("assigns componentId and mirrors it to data-component-id on the element", () => {
@@ -139,7 +139,11 @@ describe("start", () => {
         }
       }
 
-      start({ root: document, components: [Hello] });
+      class Display extends Component {
+        static name = "display";
+      }
+
+      start({ root: document, components: [Hello, Display] });
 
       expect(snapshots).toHaveLength(2);
       // Both instances should have sanitized node
@@ -157,17 +161,19 @@ describe("start", () => {
     });
   });
 
-  it("returns empty array when no components present", () => {
-    const result = start();
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(0);
+  it("throws when no components present in root", () => {
+    document.body.innerHTML = "";
+    expect(() => start()).toThrow(/No component elements found/);
   });
 
   it("collects a single root component", () => {
     document.body.innerHTML = `
       <div data-component="hello"></div>
     `;
-    const result = start();
+    class Hello extends Component {
+      static name = "hello";
+    }
+    const result = start({ components: [Hello] });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("hello");
     expect(result[0].children).toEqual([]);
@@ -185,7 +191,22 @@ describe("start", () => {
         </div>
       </div>
     `;
-    const result = start({ root: document });
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class ChildA extends Component {
+      static name = "child-a";
+    }
+    class ChildB extends Component {
+      static name = "child-b";
+    }
+    class Grandchild extends Component {
+      static name = "grandchild";
+    }
+    const result = start({
+      root: document,
+      components: [Parent, ChildA, ChildB, Grandchild],
+    });
     expect(result).toHaveLength(1);
     const parent = result[0];
     expect(parent.name).toBe("parent");
@@ -206,8 +227,14 @@ describe("start", () => {
         <div data-component="child"></div>
       </div>
     `;
-    const first = start({ root: document });
-    const second = start({ root: document });
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    const first = start({ root: document, components: [Parent, Child] });
+    const second = start({ root: document, components: [Parent, Child] });
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(1);
     expect(second[0].children).toHaveLength(1);
@@ -226,13 +253,19 @@ describe("start", () => {
     document.body.innerHTML = `
       <div data-component="parent"></div>
     `;
-    const before = start({ root: document });
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    const before = start({ root: document, components: [Parent] });
     expect(before[0].children).toHaveLength(0);
     const parent = document.querySelector('[data-component="parent"]');
     const child = document.createElement("div");
     child.setAttribute("data-component", "child");
     parent.appendChild(child);
-    const after = start({ root: document });
+    const after = start({ root: document, components: [Parent, Child] });
     expect(after[0].children.map((c) => c.name)).toEqual(["child"]);
   });
 
@@ -246,13 +279,25 @@ describe("start", () => {
       </div>
     `;
     const rootA = document.getElementById("a");
-    const resultA = start({ root: rootA });
+    class A extends Component {
+      static name = "A";
+    }
+    class A1 extends Component {
+      static name = "A1";
+    }
+    class B extends Component {
+      static name = "B";
+    }
+    class B1 extends Component {
+      static name = "B1";
+    }
+    const resultA = start({ root: rootA, components: [A, A1, B, B1] });
     expect(resultA).toHaveLength(1);
     expect(resultA[0].name).toBe("A");
     expect(resultA[0].children.map((c) => c.name)).toEqual(["A1"]);
 
     const rootB = document.getElementById("b");
-    const resultB = start({ root: rootB });
+    const resultB = start({ root: rootB, components: [A, A1, B, B1] });
     expect(resultB).toHaveLength(1);
     expect(resultB[0].name).toBe("B");
     expect(resultB[0].children.map((c) => c.name)).toEqual(["B1"]);
@@ -264,7 +309,13 @@ describe("start", () => {
     root.innerHTML = `
       <div data-component="child"></div>
     `;
-    const result = start({ root });
+    class Root extends Component {
+      static name = "root";
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    const result = start({ root, components: [Root, Child] });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("root");
     expect(result[0].children.map((c) => c.name)).toEqual(["child"]);

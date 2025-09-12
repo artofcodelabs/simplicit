@@ -1,10 +1,12 @@
+const dataComponentAttribute = "data-component";
+
 export const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
-    searchRoot.querySelectorAll("[data-component]"),
+    searchRoot.querySelectorAll(`[${dataComponentAttribute}]`),
   );
   if (
     searchRoot instanceof Element &&
-    searchRoot.hasAttribute("data-component") &&
+    searchRoot.hasAttribute(dataComponentAttribute) &&
     !componentElements.includes(searchRoot)
   ) {
     componentElements.unshift(searchRoot);
@@ -15,7 +17,7 @@ export const scanComponentElements = (searchRoot) => {
 export const buildElementTree = (componentElements) => {
   const elementToNode = new Map();
   for (const element of componentElements) {
-    const name = element.getAttribute("data-component");
+    const name = element.getAttribute(dataComponentAttribute);
     elementToNode.set(element, {
       name,
       element,
@@ -25,7 +27,9 @@ export const buildElementTree = (componentElements) => {
   }
   for (const element of componentElements) {
     const node = elementToNode.get(element);
-    const parentElement = element.parentElement?.closest("[data-component]");
+    const parentElement = element.parentElement?.closest(
+      `[${dataComponentAttribute}]`,
+    );
     if (parentElement && elementToNode.has(parentElement)) {
       const parentNode = elementToNode.get(parentElement);
       node.parent = parentNode;

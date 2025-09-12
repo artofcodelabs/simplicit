@@ -1,6 +1,5 @@
-import { warnMissingDomComponents } from "./start/warnings";
-
 import { scanComponentElements, buildElementTree } from "./start/scan";
+import { validate } from "./start/validate";
 import { initializeMatches } from "./start/init";
 import { ensureObservation } from "./start/observer";
 
@@ -9,9 +8,8 @@ const start = (options = {}) => {
   const componentClasses = Array.isArray(options.components)
     ? options.components
     : [];
-  // TODO: validate componentClasses
   const componentElements = scanComponentElements(searchRoot);
-  warnMissingDomComponents(componentElements, componentClasses);
+  validate(componentElements, componentClasses);
   const elementToNode = buildElementTree(componentElements);
   initializeMatches(elementToNode, componentClasses);
   ensureObservation(searchRoot, componentClasses);
