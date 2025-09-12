@@ -1,18 +1,4 @@
-import {
-  resolveSearchRoot,
-  scanComponentElements,
-  buildElementTree,
-} from "../../src/start/scan";
-
-describe("scanComponentElements", () => {
-  beforeEach(() => {
-    document.body.innerHTML = "";
-  });
-
-  it("resolves provided Document to document.body", () => {
-    expect(resolveSearchRoot(document)).toBe(document.body);
-  });
-});
+import { scanComponentElements, buildElementTree } from "../../src/start/scan";
 
 describe("scanComponentElements", () => {
   beforeEach(() => {

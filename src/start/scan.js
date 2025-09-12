@@ -1,7 +1,3 @@
-export const resolveSearchRoot = (providedRoot) => {
-  return providedRoot && providedRoot.body ? providedRoot.body : providedRoot;
-};
-
 export const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
     searchRoot.querySelectorAll("[data-component]"),

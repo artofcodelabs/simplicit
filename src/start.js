@@ -1,19 +1,14 @@
 import { warnMissingDomComponents } from "./start/warnings";
 
-import {
-  resolveSearchRoot,
-  scanComponentElements,
-  buildElementTree,
-} from "./start/scan";
+import { scanComponentElements, buildElementTree } from "./start/scan";
 import { initializeMatches } from "./start/init";
 import { ensureObservation } from "./start/observer";
 
 const start = (options = {}) => {
-  const providedRoot = options.root ?? document;
+  const searchRoot = options.root ?? document.body;
   const componentClasses = Array.isArray(options.components)
     ? options.components
     : [];
-  const searchRoot = resolveSearchRoot(providedRoot);
   // TODO: validate componentClasses
   const componentElements = scanComponentElements(searchRoot);
   warnMissingDomComponents(componentElements, componentClasses);
