@@ -2,14 +2,9 @@ import { generateComponentId } from "./id";
 
 export const initializeMatches = (elementToNode, componentClasses) => {
   for (const ComponentClass of componentClasses) {
-    // TODO: validate componentClasses first
-    const componentName =
-      typeof ComponentClass?.name === "string" ? ComponentClass.name : null;
-    if (!componentName) continue;
-
     const matches = [];
     for (const node of elementToNode.values()) {
-      if (node.name === componentName) matches.push(node);
+      if (node.name === ComponentClass.name) matches.push(node);
     }
 
     for (const node of matches) {
