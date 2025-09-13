@@ -1,6 +1,6 @@
 import { validate } from "../../src/start/validate";
 
-describe("start/validate", () => {
+describe("validate", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
@@ -19,15 +19,13 @@ describe("start/validate", () => {
     `;
     const root = document.body;
     const componentElements = root.querySelectorAll("[data-component]");
-
-    class Good {}
-    Object.defineProperty(Good, "name", { value: "good", configurable: true });
-    // Bad1: empty name
-    const Bad1 = function () {};
-    Object.defineProperty(Bad1, "name", { value: "", configurable: true });
-    // Bad2: default constructor name but not explicitly set static name
+    class Good {
+      static name = "good";
+    }
+    class Bad1 {
+      static name = "";
+    }
     class Bad2 {}
-
     expect(() => validate(componentElements, [Good, Bad1])).toThrow(
       /Invalid component class: missing static name/,
     );
@@ -43,7 +41,7 @@ describe("start/validate", () => {
     const root = document.body;
     const componentElements = root.querySelectorAll("[data-component]");
     expect(() => validate(componentElements, [])).toThrow(
-      /Found data-component="missing"/,
+      /Found data-component="missing" but no matching class passed to start/,
     );
   });
 });

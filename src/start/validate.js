@@ -4,14 +4,10 @@ export const validate = (componentElements, componentClasses) => {
   }
   for (const C of componentClasses) {
     const ctorName =
-      (C && C.prototype && C.prototype.constructor
-        ? C.prototype.constructor.name
-        : null) ||
-      (C && C.constructor ? C.constructor.name : null) ||
-      "(anonymous)";
+      C.prototype?.constructor?.name || C.constructor?.name || "(anonymous)";
     const desc = Object.getOwnPropertyDescriptor(C, "name");
     if (
-      typeof C?.name !== "string" ||
+      typeof C.name !== "string" ||
       C.name.length === 0 ||
       !desc ||
       desc.writable !== true
