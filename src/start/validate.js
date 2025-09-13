@@ -1,5 +1,5 @@
-export const validate = (componentElements, componentClasses) => {
-  if (componentElements.length === 0) {
+export const validate = (elementToNode, componentClasses) => {
+  if (elementToNode.size === 0) {
     throw new Error("No component elements found in the root element");
   }
   for (const C of componentClasses) {
@@ -17,9 +17,7 @@ export const validate = (componentElements, componentClasses) => {
       );
     }
   }
-  const domNames = new Set(
-    Array.from(componentElements, (el) => el.getAttribute("data-component")),
-  );
+  const domNames = new Set(Array.from(elementToNode.values(), (n) => n.name));
   const providedNames = new Set(
     (Array.isArray(componentClasses) ? componentClasses : [])
       .map((C) => (typeof C?.name === "string" ? C.name : null))

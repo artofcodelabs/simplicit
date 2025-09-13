@@ -9,8 +9,8 @@ const start = (options = {}) => {
     ? options.components
     : [];
   const componentElements = scanComponentElements(searchRoot);
-  validate(componentElements, componentClasses);
   const elementToNode = buildElementTree(componentElements);
+  validate(elementToNode, componentClasses);
   initializeMatches(elementToNode, componentClasses);
   ensureObservation(searchRoot, componentClasses);
   const components = [];

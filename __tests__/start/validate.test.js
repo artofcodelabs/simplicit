@@ -1,4 +1,5 @@
 import { validate } from "../../src/start/validate";
+import { scanComponentElements, buildElementTree } from "../../src/start/scan";
 
 describe("validate", () => {
   beforeEach(() => {
@@ -6,9 +7,8 @@ describe("validate", () => {
   });
 
   it("throws when no component elements in root", () => {
-    const root = document.body;
-    const componentElements = root.querySelectorAll("[data-component]");
-    expect(() => validate(componentElements, [])).toThrow(
+    const elementToNode = new Map();
+    expect(() => validate(elementToNode, [])).toThrow(
       /No component elements found/,
     );
   });
@@ -17,8 +17,9 @@ describe("validate", () => {
     document.body.innerHTML = `
       <div data-component="good"></div>
     `;
-    const root = document.body;
-    const componentElements = root.querySelectorAll("[data-component]");
+    const elementToNode = buildElementTree(
+      scanComponentElements(document.body),
+    );
     class Good {
       static name = "good";
     }
@@ -26,10 +27,10 @@ describe("validate", () => {
       static name = "";
     }
     class Bad2 {}
-    expect(() => validate(componentElements, [Good, Bad1])).toThrow(
+    expect(() => validate(elementToNode, [Good, Bad1])).toThrow(
       /Invalid component class: missing static name/,
     );
-    expect(() => validate(componentElements, [Good, Bad2])).toThrow(
+    expect(() => validate(elementToNode, [Good, Bad2])).toThrow(
       /Invalid component class: missing static name/,
     );
   });
@@ -38,9 +39,10 @@ describe("validate", () => {
     document.body.innerHTML = `
       <div data-component="missing"></div>
     `;
-    const root = document.body;
-    const componentElements = root.querySelectorAll("[data-component]");
-    expect(() => validate(componentElements, [])).toThrow(
+    const elementToNode = buildElementTree(
+      scanComponentElements(document.body),
+    );
+    expect(() => validate(elementToNode, [])).toThrow(
       /Found data-component="missing" but no matching class passed to start/,
     );
   });
