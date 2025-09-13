@@ -18,11 +18,7 @@ export const validate = (elementToNode, componentClasses) => {
     }
   }
   const domNames = new Set(Array.from(elementToNode.values(), (n) => n.name));
-  const providedNames = new Set(
-    (Array.isArray(componentClasses) ? componentClasses : [])
-      .map((C) => (typeof C?.name === "string" ? C.name : null))
-      .filter(Boolean),
-  );
+  const providedNames = new Set(componentClasses.map((C) => C.name));
   for (const name of domNames) {
     if (!providedNames.has(name)) {
       throw new Error(
