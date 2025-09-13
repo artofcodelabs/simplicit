@@ -1,20 +1,21 @@
-import { scanComponentElements, buildElementTree } from "../../src/start/scan";
+import { buildElementTree } from "../../src/start/scan";
 
-describe("scanComponentElements", () => {
+describe("buildElementTree (scanning)", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
 
-  it("scans for [data-component] under root and includes root when applicable", () => {
+  it("scans under root and includes root when applicable", () => {
     document.body.innerHTML = `
       <div data-component="root">
         <div data-component="child"></div>
       </div>
     `;
     const root = document.querySelector('[data-component="root"]');
-    const els = scanComponentElements(root);
-    expect(els[0]).toBe(root);
-    expect(els.some((e) => e.getAttribute("data-component") === "child")).toBe(
+    const elementToNode = buildElementTree(root);
+    const keys = Array.from(elementToNode.keys());
+    expect(keys[0]).toBe(root);
+    expect(keys.some((e) => e.getAttribute("data-component") === "child")).toBe(
       true,
     );
   });
@@ -36,9 +37,9 @@ describe("buildElementTree", () => {
         </div>
       </div>
     `;
-    const els = scanComponentElements(document.body);
-    const elementToNode = buildElementTree(els);
-    const parent = elementToNode.get(els[0]);
+    const elementToNode = buildElementTree(document.body);
+    const parentEl = document.querySelector('[data-component="parent"]');
+    const parent = elementToNode.get(parentEl);
     expect(parent.name).toBe("parent");
     const childB = parent.children[1];
     expect(childB.children[0].name).toBe("grandchild");

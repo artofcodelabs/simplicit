@@ -1,4 +1,4 @@
-import { scanComponentElements, buildElementTree } from "./start/scan";
+import { buildElementTree } from "./start/scan";
 import { validate } from "./start/validate";
 import { initializeMatches } from "./start/init";
 import { ensureObservation } from "./start/observer";
@@ -8,8 +8,7 @@ const start = (options = {}) => {
   const componentClasses = Array.isArray(options.components)
     ? options.components
     : [];
-  const componentElements = scanComponentElements(searchRoot);
-  const elementToNode = buildElementTree(componentElements);
+  const elementToNode = buildElementTree(searchRoot);
   validate(elementToNode, componentClasses);
   initializeMatches(elementToNode, componentClasses);
   ensureObservation(searchRoot, componentClasses);

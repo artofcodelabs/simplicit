@@ -1,6 +1,6 @@
 const dataComponentAttribute = "data-component";
 
-export const scanComponentElements = (searchRoot) => {
+const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
     searchRoot.querySelectorAll(`[${dataComponentAttribute}]`),
   );
@@ -14,7 +14,8 @@ export const scanComponentElements = (searchRoot) => {
   return componentElements;
 };
 
-export const buildElementTree = (componentElements) => {
+export const buildElementTree = (searchRoot) => {
+  const componentElements = scanComponentElements(searchRoot);
   const elementToNode = new Map();
   for (const element of componentElements) {
     const name = element.getAttribute(dataComponentAttribute);

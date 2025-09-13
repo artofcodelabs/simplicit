@@ -1,5 +1,5 @@
 import { validate } from "../../src/start/validate";
-import { scanComponentElements, buildElementTree } from "../../src/start/scan";
+import { buildElementTree } from "../../src/start/scan";
 
 describe("validate", () => {
   beforeEach(() => {
@@ -17,9 +17,7 @@ describe("validate", () => {
     document.body.innerHTML = `
       <div data-component="good"></div>
     `;
-    const elementToNode = buildElementTree(
-      scanComponentElements(document.body),
-    );
+    const elementToNode = buildElementTree(document.body);
     class Good {
       static name = "good";
     }
@@ -39,9 +37,7 @@ describe("validate", () => {
     document.body.innerHTML = `
       <div data-component="missing"></div>
     `;
-    const elementToNode = buildElementTree(
-      scanComponentElements(document.body),
-    );
+    const elementToNode = buildElementTree(document.body);
     expect(() => validate(elementToNode, [])).toThrow(
       /Found data-component="missing" but no matching class passed to start/,
     );

@@ -1,6 +1,6 @@
 import { initializeMatches } from "../../src/start/init";
 import { Component } from "index";
-import { scanComponentElements, buildElementTree } from "../../src/start/scan";
+import { buildElementTree } from "../../src/start/scan";
 
 let seen = [];
 
@@ -23,8 +23,7 @@ describe("initializeMatches", () => {
       <div data-component="other"></div>
     `;
 
-    const els = scanComponentElements(document.body);
-    const elementToNode = buildElementTree(els);
+    const elementToNode = buildElementTree(document.body);
 
     initializeMatches(elementToNode, [Hello]);
 
