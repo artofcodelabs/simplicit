@@ -55,9 +55,7 @@ export const ensureObservation = (searchRoot, componentClasses) => {
 
     const elementToInstance = buildElementToInstance(candidates, classByName);
 
-    for (const el of candidates) {
-      const instance = elementToInstance.get(el);
-      if (!instance) continue;
+    for (const [el, instance] of elementToInstance) {
       const parentEl = el.parentElement?.closest(`[${dataComponentAttribute}]`);
       if (parentEl) {
         const parentInstance =
@@ -67,17 +65,14 @@ export const ensureObservation = (searchRoot, componentClasses) => {
           parentInstance.node.children.push(instance.node);
         }
       }
-      for (const child of candidates) {
-        if (child === el) continue;
-        const nearest = child.parentElement?.closest(
+      for (const [childEl, childInstance] of elementToInstance) {
+        if (childEl === el) continue;
+        const nearest = childEl.parentElement?.closest(
           `[${dataComponentAttribute}]`,
         );
         if (nearest === el) {
-          const childInstance = elementToInstance.get(child);
-          if (childInstance) {
-            instance.node.children.push(childInstance.node);
-            childInstance.node.parent = instance.node;
-          }
+          instance.node.children.push(childInstance.node);
+          childInstance.node.parent = instance.node;
         }
       }
     }
