@@ -4,6 +4,11 @@ export default class Component {
     this._isDisconnected = false;
   }
 
+  addParent(parent) {
+    this.node.parent = parent.node;
+    parent.node.children.push(this.node);
+  }
+
   registerCleanup(callback) {
     if (typeof callback === "function") this._cleanupCallbacks.push(callback);
     return callback;

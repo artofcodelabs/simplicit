@@ -58,11 +58,9 @@ export const ensureObservation = (searchRoot, componentClasses) => {
     for (const [el, instance] of elementToInstance) {
       const parentEl = el.parentElement?.closest(`[${dataComponentAttribute}]`);
       if (parentEl) {
-        const parentInstance =
-          elementToInstance.get(parentEl) || parentEl.instance;
-        if (parentInstance && parentInstance.node) {
-          instance.node.parent = parentInstance.node;
-          parentInstance.node.children.push(instance.node);
+        const parentInstance = parentEl.instance;
+        if (parentInstance) {
+          instance.addParent(parentInstance);
         }
       }
       for (const [childEl, childInstance] of elementToInstance) {
