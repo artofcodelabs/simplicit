@@ -1,8 +1,6 @@
 import { dataComponentAttribute } from "./config";
 import { initComponent, extendElement } from "./init";
 
-const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
-
 const instancesForElements = (elements, classByName) => {
   const instances = new Array();
   for (const el of elements) {
@@ -40,7 +38,7 @@ const addedElements = (mutations) => {
   return added;
 };
 
-export const ensureObservation = (searchRoot, componentClasses) => {
+export const observe = (searchRoot, componentClasses) => {
   const classByName = new Map();
   for (const ComponentClass of componentClasses) {
     classByName.set(ComponentClass.name, ComponentClass);
@@ -67,6 +65,7 @@ export const ensureObservation = (searchRoot, componentClasses) => {
       }
       for (const childInstance of instances) {
         if (childInstance.element === instance.element) continue;
+
         const nearest = childInstance.element.parentElement?.closest(
           `[${dataComponentAttribute}]`,
         );
@@ -83,5 +82,4 @@ export const ensureObservation = (searchRoot, componentClasses) => {
   });
 
   observer.observe(searchRoot, { childList: true, subtree: true });
-  rootToObserver.set(searchRoot, { observer, classByName });
 };

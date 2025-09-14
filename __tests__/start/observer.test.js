@@ -1,4 +1,4 @@
-import { ensureObservation } from "../../src/start/observer";
+import { observe } from "../../src/start/observer";
 import { Component } from "index";
 
 import { waitFor } from "../support";
@@ -25,7 +25,7 @@ describe("ensureObservation", () => {
 
   it("auto-initializes components added after observation begins", async () => {
     const root = document.body;
-    ensureObservation(root, [Clock]);
+    observe(root, [Clock]);
 
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
@@ -42,7 +42,7 @@ describe("ensureObservation", () => {
 
   it("links parent and child nodes for dynamically added trees", async () => {
     const root = document.body;
-    ensureObservation(root, [Parent, Child]);
+    observe(root, [Parent, Child]);
 
     // Append parent element
     const parentEl = document.createElement("div");
