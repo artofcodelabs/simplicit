@@ -3,6 +3,24 @@ import { dataComponentAttribute } from "./config";
 
 const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
+const buildElementToInstance = (candidates, classByName) => {
+  const elementToInstance = new Map();
+  for (const el of candidates) {
+    const name = el.getAttribute(dataComponentAttribute);
+    const ComponentClass = classByName.get(name);
+    if (!ComponentClass) continue;
+
+    const instance = new ComponentClass();
+    instance.element = el;
+    instance.node = { parent: null, children: [] };
+    instance.componentId = generateComponentId();
+    el.setAttribute("data-component-id", instance.componentId);
+    el.instance = instance;
+    elementToInstance.set(el, instance);
+  }
+  return elementToInstance;
+};
+
 const filterAdded = (added, classByName) => {
   return Array.from(added).filter((el) => {
     const name = el.getAttribute(dataComponentAttribute);
@@ -38,19 +56,7 @@ export const ensureObservation = (searchRoot, componentClasses) => {
     const candidates = filterAdded(added, classByName);
     if (candidates.length === 0) return;
 
-    const elementToInstance = new Map();
-    for (const el of candidates) {
-      const name = el.getAttribute(dataComponentAttribute);
-      const ComponentClass = classByName.get(name);
-      if (!ComponentClass) continue;
-      const instance = new ComponentClass();
-      instance.element = el;
-      instance.node = { parent: null, children: [] };
-      instance.componentId = generateComponentId();
-      el.setAttribute("data-component-id", instance.componentId);
-      el.instance = instance;
-      elementToInstance.set(el, instance);
-    }
+    const elementToInstance = buildElementToInstance(candidates, classByName);
 
     for (const el of candidates) {
       const instance = elementToInstance.get(el);
