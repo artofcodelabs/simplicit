@@ -3,6 +3,21 @@ import { dataComponentAttribute } from "./config";
 
 const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
+const addedNodes = (mutations) => {
+  const added = new Set();
+  for (const m of mutations) {
+    for (const node of m.addedNodes) {
+      if (!(node instanceof Element)) continue;
+
+      if (node.hasAttribute(dataComponentAttribute)) added.add(node);
+      node
+        .querySelectorAll?.(`[${dataComponentAttribute}]`)
+        .forEach((el) => added.add(el));
+    }
+  }
+  return added;
+};
+
 export const ensureObservation = (searchRoot, componentClasses) => {
   const classByName = new Map();
   for (const ComponentClass of componentClasses) {
@@ -10,17 +25,7 @@ export const ensureObservation = (searchRoot, componentClasses) => {
   }
 
   const observer = new MutationObserver((mutations) => {
-    const added = new Set();
-    for (const m of mutations) {
-      for (const node of m.addedNodes) {
-        if (!(node instanceof Element)) continue;
-        if (node.hasAttribute(dataComponentAttribute)) added.add(node);
-        node
-          .querySelectorAll?.(`[${dataComponentAttribute}]`)
-          .forEach((el) => added.add(el));
-      }
-    }
-
+    const added = addedNodes(mutations);
     if (added.size === 0) return;
 
     const candidates = Array.from(added).filter((el) => {
