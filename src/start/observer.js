@@ -1,5 +1,5 @@
-import { generateComponentId } from "./id";
 import { dataComponentAttribute } from "./config";
+import { initComponent, extendElement } from "./init";
 
 const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
@@ -10,12 +10,9 @@ const buildElementToInstance = (candidates, classByName) => {
     const ComponentClass = classByName.get(name);
     if (!ComponentClass) continue;
 
-    const instance = new ComponentClass();
-    instance.element = el;
-    instance.node = { parent: null, children: [] };
-    instance.componentId = generateComponentId();
-    el.setAttribute("data-component-id", instance.componentId);
-    el.instance = instance;
+    const node = { element: el, parent: null, children: [] };
+    const instance = initComponent(node, ComponentClass);
+    extendElement(el, instance);
     elementToInstance.set(el, instance);
   }
   return elementToInstance;

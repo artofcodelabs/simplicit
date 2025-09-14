@@ -1,6 +1,6 @@
 import { generateComponentId } from "./id";
 
-const initComponent = (node, ComponentClass) => {
+export const initComponent = (node, ComponentClass) => {
   const instance = new ComponentClass();
   instance.element = node.element;
   const { parent, children } = { ...node };
@@ -9,7 +9,7 @@ const initComponent = (node, ComponentClass) => {
   return instance;
 };
 
-const extendElement = (element, instance) => {
+export const extendElement = (element, instance) => {
   element.setAttribute("data-component-id", instance.componentId);
   element.instance = instance;
 };
