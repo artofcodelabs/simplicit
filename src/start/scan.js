@@ -1,4 +1,4 @@
-const dataComponentAttribute = "data-component";
+import { dataComponentAttribute } from "./config";
 
 const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
