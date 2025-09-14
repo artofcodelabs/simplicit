@@ -9,15 +9,18 @@ const initComponent = (node, ComponentClass) => {
   return instance;
 };
 
+const extendElement = (element, instance) => {
+  element.setAttribute("data-component-id", instance.componentId);
+  element.instance = instance;
+};
+
 export const initMatches = (nodes, componentClasses) => {
   for (const ComponentClass of componentClasses) {
     for (const node of nodes) {
       if (node.name != ComponentClass.name) continue;
 
       const instance = initComponent(node, ComponentClass);
-      node.element.setAttribute("data-component-id", instance.componentId);
-      node.element.instance = instance;
-
+      extendElement(node.element, instance);
       if (typeof instance.connect === "function") instance.connect();
     }
   }
