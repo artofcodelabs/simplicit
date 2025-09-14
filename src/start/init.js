@@ -2,12 +2,9 @@ import { generateComponentId } from "./id";
 
 export const initializeMatches = (elementToNode, componentClasses) => {
   for (const ComponentClass of componentClasses) {
-    const matches = [];
     for (const node of elementToNode.values()) {
-      if (node.name === ComponentClass.name) matches.push(node);
-    }
+      if (node.name != ComponentClass.name) continue;
 
-    for (const node of matches) {
       const instance = new ComponentClass();
       instance.element = node.element;
       const sanitizedNode = { ...node };
