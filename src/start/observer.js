@@ -3,9 +3,9 @@ import { initComponent, extendElement } from "./init";
 
 const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
-const buildElementToInstance = (candidates, classByName) => {
-  const elementToInstance = new Map();
-  for (const el of candidates) {
+const instancesForElements = (elements, classByName) => {
+  const instances = new Array();
+  for (const el of elements) {
     const name = el.getAttribute(dataComponentAttribute);
     const ComponentClass = classByName.get(name);
     if (!ComponentClass) continue;
@@ -13,19 +13,19 @@ const buildElementToInstance = (candidates, classByName) => {
     const node = { element: el, parent: null, children: [] };
     const instance = initComponent(node, ComponentClass);
     extendElement(el, instance);
-    elementToInstance.set(el, instance);
+    instances.push(instance);
   }
-  return elementToInstance;
+  return instances;
 };
 
-const filterAdded = (added, classByName) => {
+const filterElements = (added, classByName) => {
   return Array.from(added).filter((el) => {
     const name = el.getAttribute(dataComponentAttribute);
     return classByName.has(name) && !el.instance;
   });
 };
 
-const addedNodes = (mutations) => {
+const addedElements = (mutations) => {
   const added = new Set();
   for (const m of mutations) {
     for (const node of m.addedNodes) {
@@ -47,35 +47,37 @@ export const ensureObservation = (searchRoot, componentClasses) => {
   }
 
   const observer = new MutationObserver((mutations) => {
-    const added = addedNodes(mutations);
+    const added = addedElements(mutations);
     if (added.size === 0) return;
 
-    const candidates = filterAdded(added, classByName);
-    if (candidates.length === 0) return;
+    const filtered = filterElements(added, classByName);
+    if (filtered.length === 0) return;
 
-    const elementToInstance = buildElementToInstance(candidates, classByName);
+    const instances = instancesForElements(filtered, classByName);
 
-    for (const [el, instance] of elementToInstance) {
-      const parentEl = el.parentElement?.closest(`[${dataComponentAttribute}]`);
+    for (const instance of instances) {
+      const parentEl = instance.element.parentElement?.closest(
+        `[${dataComponentAttribute}]`,
+      );
       if (parentEl) {
         const parentInstance = parentEl.instance;
         if (parentInstance) {
           instance.addParent(parentInstance);
         }
       }
-      for (const [childEl, childInstance] of elementToInstance) {
-        if (childEl === el) continue;
-        const nearest = childEl.parentElement?.closest(
+      for (const childInstance of instances) {
+        if (childInstance.element === instance.element) continue;
+        const nearest = childInstance.element.parentElement?.closest(
           `[${dataComponentAttribute}]`,
         );
-        if (nearest === el) {
+        if (nearest === instance.element) {
           instance.node.children.push(childInstance.node);
           childInstance.node.parent = instance.node;
         }
       }
     }
 
-    for (const instance of elementToInstance.values()) {
+    for (const instance of instances) {
       if (typeof instance.connect === "function") instance.connect();
     }
   });
