@@ -1,4 +1,4 @@
-import { observe } from "../../src/start/observer";
+import { observe } from "../../src/start/observe";
 import { Component } from "index";
 
 import { waitFor } from "../support";

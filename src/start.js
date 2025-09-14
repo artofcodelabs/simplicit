@@ -1,7 +1,7 @@
 import { buildElementTree } from "./start/scan";
 import { validate } from "./start/validate";
 import { initMatches } from "./start/init";
-import { observe } from "./start/observer";
+import { observe } from "./start/observe";
 
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
