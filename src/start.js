@@ -12,9 +12,7 @@ const start = (options = {}) => {
   validate(nodes, componentClasses);
   initializeMatches(nodes, componentClasses);
   ensureObservation(searchRoot, componentClasses);
-  const components = [];
-  components.push(...nodes.filter((n) => n.parent === null));
-  return components;
+  return nodes.filter((n) => n.parent === null);
 };
 
 export default start;
