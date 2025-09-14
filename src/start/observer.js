@@ -3,6 +3,13 @@ import { dataComponentAttribute } from "./config";
 
 const rootToObserver = new WeakMap(); // Element -> { observer, classByName }
 
+const filterAdded = (added, classByName) => {
+  return Array.from(added).filter((el) => {
+    const name = el.getAttribute(dataComponentAttribute);
+    return classByName.has(name) && !el.instance;
+  });
+};
+
 const addedNodes = (mutations) => {
   const added = new Set();
   for (const m of mutations) {
@@ -28,10 +35,7 @@ export const ensureObservation = (searchRoot, componentClasses) => {
     const added = addedNodes(mutations);
     if (added.size === 0) return;
 
-    const candidates = Array.from(added).filter((el) => {
-      const name = el.getAttribute(dataComponentAttribute);
-      return classByName.has(name) && !el.instance;
-    });
+    const candidates = filterAdded(added, classByName);
     if (candidates.length === 0) return;
 
     const elementToInstance = new Map();
