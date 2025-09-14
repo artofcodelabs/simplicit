@@ -1,8 +1,8 @@
 import { generateComponentId } from "./id";
 
-export const initializeMatches = (elementToNode, componentClasses) => {
+export const initializeMatches = (nodes, componentClasses) => {
   for (const ComponentClass of componentClasses) {
-    for (const node of elementToNode.values()) {
+    for (const node of nodes) {
       if (node.name != ComponentClass.name) continue;
 
       const instance = new ComponentClass();

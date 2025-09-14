@@ -16,16 +16,16 @@ const scanComponentElements = (searchRoot) => {
 
 export const buildElementTree = (searchRoot) => {
   const componentElements = scanComponentElements(searchRoot);
+  const nodes = componentElements.map((element) => ({
+    name: element.getAttribute(dataComponentAttribute),
+    element,
+    parent: null,
+    children: [],
+  }));
+
   const elementToNode = new Map();
-  for (const element of componentElements) {
-    const name = element.getAttribute(dataComponentAttribute);
-    elementToNode.set(element, {
-      name,
-      element,
-      parent: null,
-      children: [],
-    });
-  }
+  for (const node of nodes) elementToNode.set(node.element, node);
+
   for (const element of componentElements) {
     const node = elementToNode.get(element);
     const parentElement = element.parentElement?.closest(
@@ -37,5 +37,5 @@ export const buildElementTree = (searchRoot) => {
       parentNode.children.push(node);
     }
   }
-  return elementToNode;
+  return nodes;
 };

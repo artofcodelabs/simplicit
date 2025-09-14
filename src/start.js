@@ -8,14 +8,12 @@ const start = (options = {}) => {
   const componentClasses = Array.isArray(options.components)
     ? options.components
     : [];
-  const elementToNode = buildElementTree(searchRoot);
-  validate(elementToNode, componentClasses);
-  initializeMatches(elementToNode, componentClasses);
+  const nodes = buildElementTree(searchRoot);
+  validate(nodes, componentClasses);
+  initializeMatches(nodes, componentClasses);
   ensureObservation(searchRoot, componentClasses);
   const components = [];
-  components.push(
-    ...Array.from(elementToNode.values()).filter((n) => n.parent === null),
-  );
+  components.push(...nodes.filter((n) => n.parent === null));
   return components;
 };
 

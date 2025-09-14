@@ -12,12 +12,12 @@ describe("buildElementTree (scanning)", () => {
       </div>
     `;
     const root = document.querySelector('[data-component="root"]');
-    const elementToNode = buildElementTree(root);
-    const keys = Array.from(elementToNode.keys());
-    expect(keys[0]).toBe(root);
-    expect(keys.some((e) => e.getAttribute("data-component") === "child")).toBe(
-      true,
-    );
+    const nodes = buildElementTree(root);
+    const elements = nodes.map((n) => n.element);
+    expect(elements[0]).toBe(root);
+    expect(
+      elements.some((e) => e.getAttribute("data-component") === "child"),
+    ).toBe(true);
   });
 });
 
@@ -37,14 +37,12 @@ describe("buildElementTree", () => {
         </div>
       </div>
     `;
-    const elementToNode = buildElementTree(document.body);
-    const parentEl = document.querySelector('[data-component="parent"]');
-    const parent = elementToNode.get(parentEl);
+    const nodes = buildElementTree(document.body);
+    const parent = nodes.find((n) => n.name === "parent");
     expect(parent.name).toBe("parent");
     const childB = parent.children[1];
     expect(childB.children[0].name).toBe("grandchild");
-    const childAEl = document.querySelector('[data-component="child-a"]');
-    const childANode = elementToNode.get(childAEl);
+    const childANode = nodes.find((n) => n.name === "child-a");
     expect(childANode.parent).toBe(parent);
   });
 });

@@ -23,9 +23,9 @@ describe("initializeMatches", () => {
       <div data-component="other"></div>
     `;
 
-    const elementToNode = buildElementTree(document.body);
+    const nodes = buildElementTree(document.body);
 
-    initializeMatches(elementToNode, [Hello]);
+    initializeMatches(nodes, [Hello]);
 
     expect(seen).toHaveLength(1);
     expect(seen[0].getAttribute("data-component")).toBe("hello");
