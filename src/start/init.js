@@ -1,16 +1,20 @@
 import { generateComponentId } from "./id";
 
-export const initializeMatches = (nodes, componentClasses) => {
+const initComponent = (node, ComponentClass) => {
+  const instance = new ComponentClass();
+  instance.element = node.element;
+  const { parent, children } = { ...node };
+  instance.node = { parent, children };
+  instance.componentId = generateComponentId();
+  return instance;
+};
+
+export const initMatches = (nodes, componentClasses) => {
   for (const ComponentClass of componentClasses) {
     for (const node of nodes) {
       if (node.name != ComponentClass.name) continue;
 
-      const instance = new ComponentClass();
-      instance.element = node.element;
-      const { parent, children } = { ...node };
-      instance.node = { parent, children };
-      instance.componentId = generateComponentId();
-
+      const instance = initComponent(node, ComponentClass);
       node.element.setAttribute("data-component-id", instance.componentId);
       node.element.instance = instance;
 

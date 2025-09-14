@@ -1,6 +1,6 @@
 import { buildElementTree } from "./start/scan";
 import { validate } from "./start/validate";
-import { initializeMatches } from "./start/init";
+import { initMatches } from "./start/init";
 import { ensureObservation } from "./start/observer";
 
 const start = (options = {}) => {
@@ -10,7 +10,7 @@ const start = (options = {}) => {
     : [];
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
-  initializeMatches(nodes, componentClasses);
+  initMatches(nodes, componentClasses);
   ensureObservation(searchRoot, componentClasses);
   return nodes.filter((n) => n.parent === null);
 };

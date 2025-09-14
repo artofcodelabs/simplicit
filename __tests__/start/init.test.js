@@ -1,4 +1,4 @@
-import { initializeMatches } from "../../src/start/init";
+import { initMatches } from "../../src/start/init";
 import { Component } from "index";
 import { buildElementTree } from "../../src/start/scan";
 
@@ -25,7 +25,7 @@ describe("initializeMatches", () => {
 
     const nodes = buildElementTree(document.body);
 
-    initializeMatches(nodes, [Hello]);
+    initMatches(nodes, [Hello]);
 
     expect(seen).toHaveLength(1);
     expect(seen[0].getAttribute("data-component")).toBe("hello");
