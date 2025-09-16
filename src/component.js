@@ -64,4 +64,12 @@ export default class Component {
     });
     return result;
   }
+
+  parent() {
+    return this.node.parent?.element.instance;
+  }
+
+  children() {
+    return this.node.children.map((n) => n.element.instance);
+  }
 }

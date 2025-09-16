@@ -15,13 +15,17 @@ export const extendElement = (element, instance) => {
 };
 
 export const initMatches = (nodes, componentClasses) => {
+  const instances = [];
   for (const ComponentClass of componentClasses) {
     for (const node of nodes) {
       if (node.name != ComponentClass.name) continue;
 
       const instance = initComponent(node, ComponentClass);
       extendElement(node.element, instance);
-      if (typeof instance.connect === "function") instance.connect();
+      instances.push(instance);
     }
+  }
+  for (const instance of instances) {
+    if (typeof instance.connect === "function") instance.connect();
   }
 };

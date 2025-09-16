@@ -70,7 +70,7 @@ describe("Component.ref", () => {
   });
 });
 
-describe("Component.refs", () => {
+describe("refs()", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
@@ -176,5 +176,102 @@ describe("element.instance linkage", () => {
     expect(captured.fromElement).toBe(captured.self);
     expect(captured.idFromElement).toBeDefined();
     expect(String(captured.id)).toEqual(String(captured.idFromElement));
+  });
+});
+
+describe("parent()", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns undefined for a root component", () => {
+    document.body.innerHTML = `
+      <div data-component="root" id="root"></div>
+    `;
+
+    let captured;
+    class Root extends Component {
+      static name = "root";
+      connect() {
+        captured = this.parent();
+      }
+    }
+
+    start({ root: document, components: [Root] });
+
+    expect(captured).toBeUndefined();
+  });
+
+  it("returns the enclosing parent component instance for nested components", () => {
+    document.body.innerHTML = `
+      <div data-component="parent" id="p">
+        <div data-component="child" id="c"></div>
+      </div>
+    `;
+
+    const captured = {};
+    class Parent extends Component {
+      static name = "parent";
+      connect() {
+        captured.parentInstance = this;
+      }
+    }
+    class Child extends Component {
+      static name = "child";
+      connect() {
+        captured.childParent = this.parent();
+      }
+    }
+
+    start({ root: document, components: [Parent, Child] });
+
+    expect(captured.childParent).toBe(captured.parentInstance);
+  });
+});
+
+describe("children()", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns only direct children component instances in DOM order", () => {
+    document.body.innerHTML = `
+      <div data-component="parent" id="p">
+        <div data-component="child" id="c1">
+          <div data-component="grandchild" id="gc1"></div>
+        </div>
+        <div data-component="child" id="c2"></div>
+      </div>
+      <div data-component="child" id="outside"></div>
+    `;
+
+    const captured = {};
+    class Parent extends Component {
+      static name = "parent";
+      connect() {
+        captured.children = this.children();
+        captured.self = this;
+      }
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    class Grandchild extends Component {
+      static name = "grandchild";
+    }
+
+    start({ root: document, components: [Parent, Child, Grandchild] });
+
+    const c1 = document.getElementById("c1").instance;
+    const c2 = document.getElementById("c2").instance;
+    const gc1 = document.getElementById("gc1").instance;
+    const outside = document.getElementById("outside").instance;
+
+    expect(captured.children).toEqual([c1, c2]);
+    expect(captured.children).not.toContain(gc1);
+    expect(captured.children).not.toContain(outside);
+    for (const child of captured.children) {
+      expect(child.parent()).toBe(captured.self);
+    }
   });
 });

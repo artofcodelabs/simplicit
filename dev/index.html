@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Modest</title>
   </head>
-  <body>
+  <body data-component="app">
     <h1>Modest</h1>
 
     <div data-component="hello">
@@ -41,6 +41,14 @@
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
+
+      class App extends Component {
+        static name = "app";
+
+        connect() {
+          console.log("App", this.children());
+        }
+      }
 
       class Hello extends Component {
         static name = "hello";
@@ -93,20 +101,21 @@
         `;
 
         connect() {
+          console.log("parent:", this.parent());
           this.on(this.ref("add-clock"), "click", (e) => {
             e.preventDefault();
-            this.addNewClock();
+            this.#addNewClock();
           });
         }
 
-        addNewClock() {
+        #addNewClock() {
           const shelf = this.ref("shelf");
           shelf.insertAdjacentHTML("beforeend", ClockFactory.clockTemplate);
         }
       }
 
       // TODO: return top level component
-      start({ root: document, components: [Hello, Search, Clock, ClockFactory] });
+      start({ root: document, components: [App,Hello, Search, Clock, ClockFactory] });
     </script>
 
     <p>
