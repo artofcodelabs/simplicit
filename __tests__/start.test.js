@@ -27,8 +27,7 @@ describe("start", () => {
         static name = "display";
       }
 
-      const result = start({ root: document, components: [Hello, Display] });
-      expect(Array.isArray(result)).toBe(true);
+      start({ root: document, components: [Hello, Display] });
       expect(seen).toHaveLength(2);
       const expected = Array.from(
         document.querySelectorAll('[data-component="hello"]'),
@@ -166,7 +165,7 @@ describe("start", () => {
     expect(() => start()).toThrow(/No component elements found/);
   });
 
-  it("collects a single root component", () => {
+  it("returns a single instance when one root component exists", () => {
     document.body.innerHTML = `
       <div data-component="hello"></div>
     `;
@@ -174,13 +173,12 @@ describe("start", () => {
       static name = "hello";
     }
     const result = start({ components: [Hello] });
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe("hello");
-    expect(result[0].children).toEqual([]);
-    expect(result[0].element).toBeInstanceOf(HTMLElement);
+    expect(result).toBeInstanceOf(Hello);
+    expect(result.element).toBeInstanceOf(HTMLElement);
+    expect(result.children()).toHaveLength(0);
   });
 
-  it("builds nested components tree", () => {
+  it("builds nested components relationships on instances", () => {
     document.body.innerHTML = `
       <div data-component="parent">
         <div data-component="child-a"></div>
@@ -207,21 +205,24 @@ describe("start", () => {
       root: document,
       components: [Parent, ChildA, ChildB, Grandchild],
     });
-    expect(result).toHaveLength(1);
-    const parent = result[0];
-    expect(parent.name).toBe("parent");
-    expect(parent.children.map((c) => c.name)).toEqual(["child-a", "child-b"]);
-    const childB = parent.children[1];
-    expect(childB.children).toHaveLength(1);
-    expect(childB.children[0].name).toBe("grandchild");
+    const parent = result;
+    expect(parent.element.getAttribute("data-component")).toBe("parent");
+    expect(
+      parent.children().map((c) => c.element.getAttribute("data-component")),
+    ).toEqual(["child-a", "child-b"]);
+    const childB = parent.children()[1];
+    expect(childB.children()).toHaveLength(1);
+    expect(childB.children()[0].element.getAttribute("data-component")).toBe(
+      "grandchild",
+    );
     // parent references
-    expect(parent.parent).toBe(null);
-    expect(parent.children[0].parent).toBe(parent);
-    expect(childB.parent).toBe(parent);
-    expect(childB.children[0].parent).toBe(childB);
+    expect(parent.parent()).toBeUndefined();
+    expect(parent.children()[0].parent()).toBe(parent);
+    expect(childB.parent()).toBe(parent);
+    expect(childB.children()[0].parent()).toBe(childB);
   });
 
-  it("is idempotent across multiple runs (no duplicate roots)", () => {
+  it("reflects consistent relationships across multiple runs", () => {
     document.body.innerHTML = `
       <div data-component="parent">
         <div data-component="child"></div>
@@ -235,18 +236,8 @@ describe("start", () => {
     }
     const first = start({ root: document, components: [Parent, Child] });
     const second = start({ root: document, components: [Parent, Child] });
-    expect(first).toHaveLength(1);
-    expect(second).toHaveLength(1);
-    expect(second[0].children).toHaveLength(1);
-    // Independence: modifying one result should not affect the other
-    first[0].children.push({
-      name: "x",
-      children: [],
-      element: document.createElement("div"),
-      parent: null,
-    });
-    expect(first[0].children).toHaveLength(2);
-    expect(second[0].children).toHaveLength(1);
+    expect(first.children()).toHaveLength(1);
+    expect(second.children()).toHaveLength(1);
   });
 
   it("reflects DOM changes between calls", () => {
@@ -260,13 +251,15 @@ describe("start", () => {
       static name = "child";
     }
     const before = start({ root: document, components: [Parent] });
-    expect(before[0].children).toHaveLength(0);
+    expect(before.children()).toHaveLength(0);
     const parent = document.querySelector('[data-component="parent"]');
     const child = document.createElement("div");
     child.setAttribute("data-component", "child");
     parent.appendChild(child);
     const after = start({ root: document, components: [Parent, Child] });
-    expect(after[0].children.map((c) => c.name)).toEqual(["child"]);
+    expect(
+      after.children().map((c) => c.element.getAttribute("data-component")),
+    ).toEqual(["child"]);
   });
 
   it("scopes search to provided element root", () => {
@@ -292,15 +285,17 @@ describe("start", () => {
       static name = "B1";
     }
     const resultA = start({ root: rootA, components: [A, A1, B, B1] });
-    expect(resultA).toHaveLength(1);
-    expect(resultA[0].name).toBe("A");
-    expect(resultA[0].children.map((c) => c.name)).toEqual(["A1"]);
+    expect(resultA.element.getAttribute("data-component")).toBe("A");
+    expect(
+      resultA.children().map((c) => c.element.getAttribute("data-component")),
+    ).toEqual(["A1"]);
 
     const rootB = document.getElementById("b");
     const resultB = start({ root: rootB, components: [A, A1, B, B1] });
-    expect(resultB).toHaveLength(1);
-    expect(resultB[0].name).toBe("B");
-    expect(resultB[0].children.map((c) => c.name)).toEqual(["B1"]);
+    expect(resultB.element.getAttribute("data-component")).toBe("B");
+    expect(
+      resultB.children().map((c) => c.element.getAttribute("data-component")),
+    ).toEqual(["B1"]);
   });
 
   it("includes the root element itself if it has data-component", () => {
@@ -316,8 +311,9 @@ describe("start", () => {
       static name = "child";
     }
     const result = start({ root, components: [Root, Child] });
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe("root");
-    expect(result[0].children.map((c) => c.name)).toEqual(["child"]);
+    expect(result.element.getAttribute("data-component")).toBe("root");
+    expect(
+      result.children().map((c) => c.element.getAttribute("data-component")),
+    ).toEqual(["child"]);
   });
 });

@@ -44,17 +44,12 @@
 
       class App extends Component {
         static name = "app";
-
-        connect() {
-          console.log("App", this.children());
-        }
       }
 
       class Hello extends Component {
         static name = "hello";
 
         connect() {
-          console.log("Hello, Modest!", this.element);
           this.on(this.ref("button"), "click", () => this.greet());
         }
 
@@ -101,7 +96,6 @@
         `;
 
         connect() {
-          console.log("parent:", this.parent());
           this.on(this.ref("add-clock"), "click", (e) => {
             e.preventDefault();
             this.#addNewClock();
@@ -114,8 +108,8 @@
         }
       }
 
-      // TODO: return top level component
-      start({ root: document, components: [App,Hello, Search, Clock, ClockFactory] });
+      const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
+      console.log(app);
     </script>
 
     <p>
