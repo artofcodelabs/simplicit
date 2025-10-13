@@ -10,12 +10,10 @@ const start = (options = {}) => {
     : [];
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
-  initMatches(nodes, componentClasses);
+  const instances = initMatches(nodes, componentClasses);
   observe(searchRoot, componentClasses);
-  // TODO: initMatches should return instances
-  const roots = nodes.filter((n) => n.parent === null);
-  const instances = roots.map((n) => n.element.instance);
-  return instances.length === 1 ? instances[0] : instances;
+  const roots = instances.filter((i) => i.node.parent === null);
+  return roots.length === 1 ? roots[0] : roots; // TODO: array only?
 };
 
 export default start;
