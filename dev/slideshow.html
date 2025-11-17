@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Modest > Slideshow</title>
+  </head>
+  <body>
+    <h1>Modest > Slideshow</h1>
+
+    <div data-component="slideshow">
+      <button data-ref="previous"> ← </button>
+      <button data-ref="next"> → </button>
+
+      <div data-ref="slide">🐵 #1</div>
+      <div data-ref="slide">🙈 #2</div>
+      <div data-ref="slide">🙉 #3</div>
+      <div data-ref="slide">🙊 #4</div>
+    </div>
+
+    <script src="/loco-core.js"></script>
+    <script>
+      const { start, Component } = LocoCore;
+
+      class Slideshow extends Component {
+        static name = "slideshow";
+
+        constructor() {
+          super();
+          this.index = 0;
+          this.slidesNumber = 0;
+        }
+
+        connect() {
+          this.slidesNumber = this.ref("slide").length;
+          this.on(this.ref("previous"), "click", () => this.previous());
+          this.on(this.ref("next"), "click", () => this.next());
+          this.showCurrentSlide();
+        }
+
+        previous() {
+          this.index--;
+          if (this.index < 0) {
+            this.index = this.slidesNumber - 1;
+          }
+          this.showCurrentSlide();
+        }
+
+        next() {
+          this.index++;
+          if (this.index >= this.slidesNumber) {
+            this.index = 0;
+          }
+          this.showCurrentSlide();
+        }
+
+        showCurrentSlide() {
+          this.ref("slide").forEach((element, index) => {
+            element.hidden = index !== this.index;
+          });
+        }
+      }
+
+      const app = start({ components: [Slideshow] });
+    </script>
+
+    <p>
+      <a href="/">Modest</a>
+    </p>
+  </body>
+</html>

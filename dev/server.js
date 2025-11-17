@@ -23,6 +23,10 @@ app.get("/stimulus", (_, res) => {
   res.sendFile(path.join(__dirname, `${rootPath}/dev/stimulus.html`));
 });
 
+app.get("/slideshow", (_, res) => {
+  res.sendFile(path.join(__dirname, `${rootPath}/dev/slideshow.html`));
+});
+
 app.listen(4000, () => {
   console.log("Example app listening on port 4000!\n");
 });
