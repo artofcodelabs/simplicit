@@ -17,6 +17,8 @@
       <div data-ref="slide">🙊 #4</div>
     </div>
 
+    <!-- TODO: Add new slides -->
+
     <script src="/loco-core.js"></script>
     <script>
       const { start, Component } = LocoCore;
@@ -32,28 +34,23 @@
 
         connect() {
           this.slidesNumber = this.ref("slide").length;
-          this.on(this.ref("previous"), "click", () => this.previous());
-          this.on(this.ref("next"), "click", () => this.next());
-          this.showCurrentSlide();
+          this.on(this.ref("previous"), "click", () => this.#changeIndex(-1));
+          this.on(this.ref("next"), "click", () => this.#changeIndex(1));
+          this.#showCurrentSlide();
         }
 
-        previous() {
-          this.index--;
-          if (this.index < 0) {
-            this.index = this.slidesNumber - 1;
-          }
-          this.showCurrentSlide();
-        }
-
-        next() {
-          this.index++;
+        #changeIndex(diff = 0) {
+          this.index += diff;
           if (this.index >= this.slidesNumber) {
             this.index = 0;
           }
-          this.showCurrentSlide();
+          if (this.index < 0) {
+            this.index = this.slidesNumber - 1;
+          }
+          this.#showCurrentSlide();
         }
 
-        showCurrentSlide() {
+        #showCurrentSlide() {
           this.ref("slide").forEach((element, index) => {
             element.hidden = index !== this.index;
           });
