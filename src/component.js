@@ -1,3 +1,5 @@
+import { destructArray } from "./start/helpers";
+
 export default class Component {
   constructor() {
     this._cleanupCallbacks = [];
@@ -44,9 +46,7 @@ export default class Component {
     const list = Array.from(
       this.element.querySelectorAll(`[data-ref="${name}"]`),
     );
-    if (list.length === 0) return [];
-    if (list.length === 1) return list[0];
-    return list;
+    return destructArray(list);
   }
 
   refs() {
@@ -60,7 +60,7 @@ export default class Component {
     const result = {};
     Object.keys(temp).forEach((key) => {
       const arr = temp[key];
-      result[key] = arr.length === 1 ? arr[0] : arr;
+      result[key] = destructArray(arr);
     });
     return result;
   }
@@ -77,6 +77,6 @@ export default class Component {
     const instances = this.node.siblings
       .filter((n) => n.name === name)
       .map((n) => n.element.instance);
-    return instances.length === 1 ? instances[0] : instances;
+    return destructArray(instances);
   }
 }
