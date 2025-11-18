@@ -4,32 +4,10 @@
 
 # 🧐 What is Loco-JS-Core?
 
-Loco-JS-Core is a part of the Loco framework. It has been extracted from [Loco-JS](https://github.com/locoframework/loco-js) and can be used separately. Loco-JS-Core provides a logical structure for JavaScript code. This functionality was the origin of the Loco project. That's why it received a suffix **Core**. 
+Loco-JS-Core provides a logical structure for JavaScript code.
 
-Model–view–controller (usually known as MVC) frameworks like [Ruby on Rails](https://rubyonrails.org) are trendy on the back-end. The controller's action responds to the user input and converts it to commands for the model or view.  
-I wanted to be sure that _"the same"_ controller's action that handles a request on the back-end is also called on the front-end side. By "the same" - I mean an action with the same name and defined in a controller with the name corresponding to the one on the server-side. Namespacing is optional.
-
-The preceding clarification is only for the sake of understanding the connection between the front-end and back-end parts of the Loco framework. Both parts are loosely coupled in fact when it comes to this functionality. To pass controller related information to the front-end, the back-end part uses data attributes of the `<body>` HTML element. These attributes can be modified in various ways. This is why Loco-JS-Core can be used as a standalone library without a specific back-end companion.
-
-*Visualization of the Loco framework:*
-
-```
-Loco Framework
-|
-|--- Loco-Rails (back-end part)
-|       |
-|       |--- Loco-Rails-Core (logical structure for JS / can be used separately with Loco-JS-Core)
-|
-|--- Loco-JS (front-end part)
-        |
-        |--- Loco-JS-Core (logical structure for JS / can be used separately)
-        |
-        |--- Loco-JS-Model (model part / can be used separately)
-        |
-        |--- other built-in parts of Loco-JS
-
-        Loco-JS-UI - connects models with UI elements (a separate library)
-```
+Model–view–controller (known as MVC) frameworks like [Ruby on Rails](https://rubyonrails.org) are popular on the back-end. The controller's action handles a specific incoming request, orchestrates data and logic, and returns a response.
+I wanted to be sure that _"the same"_ controller's action that handles a request on the back-end is also called on the front-end side. By "the same" - I mean an action with the same name and defined in a controller with the corresponding name to the one on the server-side. Namespacing is optional.
 
 # 🤝 Dependencies
 
@@ -144,7 +122,7 @@ Object.assign(Admin, {
   Comments
 });
 
-const Controllers = { 
+const Controllers = {
   Admin,
   User
 };
@@ -161,6 +139,42 @@ Remember to polyfill `Object.assign` or assign controllers using a different met
 Loco-JS-Core exports `helpers` object that has the following properties:
 
 * **params** (getter) - facilitates fetching params from the URL
+
+# Components
+
+```html
+<body data-component="app" data-component-id="1"> <!-- instance -->
+  <div data-component="hello" data-component-id="2"> <!-- instance -->
+    <input data-ref="input" type="text">
+    <button data-ref="button">Greet</button>
+    <span data-ref="output"></span>
+  </div>
+
+  <div data-component="clock" data-component-id="3"> <!-- instance -->
+    <p data-ref="time"></p>
+  </div>
+</body>
+```
+
+```javascript
+// node
+{
+  name: "app",
+  element,
+  parent: null,
+  children: [],
+}
+
+// component instance
+{
+  element: node.element,
+  node: {
+    parent: node.parent,
+    children: node.children,
+  }
+  componentId: "1",
+}
+```
 
 # 👩🏽‍🔬 Tests
 
