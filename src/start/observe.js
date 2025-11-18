@@ -1,5 +1,6 @@
 import { dataComponentAttribute } from "./config";
 import { initComponent, extendElement } from "./init";
+import { createNode } from "./node";
 
 const instancesForElements = (elements, classByName) => {
   const instances = new Array();
@@ -8,7 +9,7 @@ const instancesForElements = (elements, classByName) => {
     const ComponentClass = classByName.get(name);
     if (!ComponentClass) continue;
 
-    const node = { element: el, parent: null, siblings: [], children: [] };
+    const node = createNode(el);
     const instance = initComponent(node, ComponentClass);
     extendElement(el, instance);
     instances.push(instance);

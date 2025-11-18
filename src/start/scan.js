@@ -1,4 +1,5 @@
 import { dataComponentAttribute } from "./config";
+import { createNode } from "./node";
 
 const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
@@ -16,13 +17,7 @@ const scanComponentElements = (searchRoot) => {
 
 export const buildElementTree = (searchRoot) => {
   const componentElements = scanComponentElements(searchRoot);
-  const nodes = componentElements.map((element) => ({
-    name: element.getAttribute(dataComponentAttribute),
-    element,
-    parent: null,
-    children: [],
-    siblings: [],
-  }));
+  const nodes = componentElements.map((element) => createNode(element));
 
   const elementToNode = new Map();
   for (const node of nodes) elementToNode.set(node.element, node);
