@@ -17,7 +17,9 @@
       <div data-ref="slide">🙊 #4</div>
     </div>
 
-    <!-- TODO: Add new slides -->
+    <div data-component="slideshow-factory">
+      <button data-ref="add-slide">Add slide</button>
+    </div>
 
     <script src="/loco-core.js"></script>
     <script>
@@ -29,14 +31,20 @@
         constructor() {
           super();
           this.index = 0;
-          this.slidesNumber = 0;
+        }
+
+        get slidesNumber() {
+          return this.ref("slide").length;
         }
 
         connect() {
-          this.slidesNumber = this.ref("slide").length;
           this.on(this.ref("previous"), "click", () => this.#changeIndex(-1));
           this.on(this.ref("next"), "click", () => this.#changeIndex(1));
           this.#showCurrentSlide();
+        }
+
+        addSlide(slide) {
+          this.element.appendChild(slide);
         }
 
         #changeIndex(diff = 0) {
@@ -57,7 +65,24 @@
         }
       }
 
-      const app = start({ components: [Slideshow] });
+      class SlideshowFactory extends Component {
+        static name = "slideshow-factory";
+
+        connect() {
+          this.on(this.ref("add-slide"), "click", () => this.#addSlide());
+        }
+
+        #addSlide() {
+          const slidesNumber = this.siblings("slideshow").slidesNumber;
+          const slide = document.createElement("div");
+          slide.dataset.ref = "slide";
+          slide.textContent = `🐒 #${slidesNumber + 1}`;
+          slide.hidden = true;
+          this.siblings("slideshow").addSlide(slide);
+        }
+      }
+
+      const app = start({ components: [Slideshow, SlideshowFactory] });
     </script>
 
     <p>

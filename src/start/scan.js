@@ -21,6 +21,7 @@ export const buildElementTree = (searchRoot) => {
     element,
     parent: null,
     children: [],
+    siblings: [],
   }));
 
   const elementToNode = new Map();
@@ -37,5 +38,11 @@ export const buildElementTree = (searchRoot) => {
       parentNode.children.push(node);
     }
   }
+
+  const rootNodes = nodes.filter((n) => n.parent === null);
+  for (const node of rootNodes) {
+    node.siblings = rootNodes.filter((n) => n !== node);
+  }
+
   return nodes;
 };

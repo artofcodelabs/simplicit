@@ -72,4 +72,11 @@ export default class Component {
   children() {
     return this.node.children.map((n) => n.element.instance);
   }
+
+  siblings(name) {
+    const instances = this.node.siblings
+      .filter((n) => n.name === name)
+      .map((n) => n.element.instance);
+    return instances.length === 1 ? instances[0] : instances;
+  }
 }

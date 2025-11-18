@@ -13,7 +13,7 @@ const start = (options = {}) => {
   const instances = initMatches(nodes, componentClasses);
   observe(searchRoot, componentClasses);
   const roots = instances.filter((i) => i.node.parent === null);
-  return roots.length === 1 ? roots[0] : roots; // TODO: array only?
+  return roots.length === 1 ? roots[0] : roots;
 };
 
 export default start;

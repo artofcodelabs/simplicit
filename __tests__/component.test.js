@@ -275,3 +275,64 @@ describe("children()", () => {
     }
   });
 });
+
+describe("siblings()", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns sibling root components matching the given name", () => {
+    document.body.innerHTML = `
+      <div data-component="alpha" id="alpha"></div>
+      <div data-component="beta" id="beta"></div>
+      <div data-component="gamma" id="gamma"></div>
+    `;
+
+    const captured = {};
+    class Alpha extends Component {
+      static name = "alpha";
+      connect() {
+        captured.self = this;
+        captured.betaSibling = this.siblings("beta");
+      }
+    }
+    class Beta extends Component {
+      static name = "beta";
+    }
+    class Gamma extends Component {
+      static name = "gamma";
+    }
+
+    start({ root: document, components: [Alpha, Beta, Gamma] });
+
+    const betaInstance = document.getElementById("beta").instance;
+    expect(captured.betaSibling).toBe(betaInstance);
+  });
+
+  it("returns an array when multiple siblings share the same name", () => {
+    document.body.innerHTML = `
+      <div data-component="alpha" id="alpha"></div>
+      <div data-component="beta" id="beta1"></div>
+      <div data-component="beta" id="beta2"></div>
+    `;
+
+    let siblings;
+    class Alpha extends Component {
+      static name = "alpha";
+      connect() {
+        siblings = this.siblings("beta");
+      }
+    }
+    class Beta extends Component {
+      static name = "beta";
+    }
+
+    start({ root: document, components: [Alpha, Beta] });
+
+    const beta1 = document.getElementById("beta1").instance;
+    const beta2 = document.getElementById("beta2").instance;
+
+    expect(Array.isArray(siblings)).toBe(true);
+    expect(new Set(siblings)).toEqual(new Set([beta1, beta2]));
+  });
+});
