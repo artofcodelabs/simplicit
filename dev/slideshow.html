@@ -7,6 +7,7 @@
   <body>
     <h1>Modest > Slideshow</h1>
 
+    <h2>Slideshow</h2>
     <div data-component="slideshow">
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
@@ -17,8 +18,11 @@
       <div data-ref="slide">🙊 #4</div>
     </div>
 
-    <div data-component="slideshow-factory">
+    <h2>Slideshow Manager</h2>
+    <div data-component="slideshow-manager">
       <button data-ref="add-slide">Add slide</button>
+      <button data-ref="show-slides">Show slides</button>
+      <button data-ref="hide-slides">Hide slides</button>
     </div>
 
     <script src="/loco-core.js"></script>
@@ -40,11 +44,21 @@
         connect() {
           this.on(this.ref("previous"), "click", () => this.#changeIndex(-1));
           this.on(this.ref("next"), "click", () => this.#changeIndex(1));
-          this.#showCurrentSlide();
+          this.hideSlides();
         }
 
         addSlide(slide) {
           this.element.appendChild(slide);
+        }
+
+        showSlides() {
+          this.ref("slide").forEach((slide) => slide.hidden = false);
+        }
+
+        hideSlides() {
+          this.ref("slide").forEach((slide, index) => {
+            slide.hidden = index !== this.index;
+          });
         }
 
         #changeIndex(diff = 0) {
@@ -55,21 +69,17 @@
           if (this.index < 0) {
             this.index = this.slidesNumber - 1;
           }
-          this.#showCurrentSlide();
-        }
-
-        #showCurrentSlide() {
-          this.ref("slide").forEach((element, index) => {
-            element.hidden = index !== this.index;
-          });
+          this.hideSlides();
         }
       }
 
-      class SlideshowFactory extends Component {
-        static name = "slideshow-factory";
+      class SlideshowManager extends Component {
+        static name = "slideshow-manager";
 
         connect() {
           this.on(this.ref("add-slide"), "click", () => this.#addSlide());
+          this.on(this.ref("show-slides"), "click", () => this.#showSlides());
+          this.on(this.ref("hide-slides"), "click", () => this.#hideSlides());
         }
 
         #addSlide() {
@@ -80,9 +90,17 @@
           slide.hidden = true;
           this.siblings("slideshow").addSlide(slide);
         }
+
+        #showSlides() {
+          this.siblings("slideshow").showSlides();
+        }
+
+        #hideSlides() {
+          this.siblings("slideshow").hideSlides();
+        }
       }
 
-      const app = start({ components: [Slideshow, SlideshowFactory] });
+      const app = start({ components: [Slideshow, SlideshowManager] });
     </script>
 
     <p>
