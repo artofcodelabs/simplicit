@@ -12,10 +12,10 @@
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
 
-      <div data-ref="slide">🐵 #1</div>
-      <div data-ref="slide">🙈 #2</div>
-      <div data-ref="slide">🙉 #3</div>
-      <div data-ref="slide">🙊 #4</div>
+      <div data-component="slide">🐵 #1</div>
+      <div data-component="slide">🙈 #2</div>
+      <div data-component="slide">🙉 #3</div>
+      <div data-component="slide">🙊 #4</div>
     </div>
 
     <h2>Slideshow Manager</h2>
@@ -29,6 +29,18 @@
     <script>
       const { start, Component } = LocoCore;
 
+      class Slide extends Component {
+        static name = "slide";
+
+        show() {
+          this.element.hidden = false;
+        }
+
+        hide() {
+          this.element.hidden = true;
+        }
+      }
+
       class Slideshow extends Component {
         static name = "slideshow";
 
@@ -38,7 +50,7 @@
         }
 
         get slidesNumber() {
-          return this.ref("slide").length;
+          return this.children().length;
         }
 
         connect() {
@@ -56,8 +68,8 @@
         }
 
         hideSlides() {
-          this.ref("slide").forEach((slide, index) => {
-            slide.hidden = index !== this.index;
+          this.children().forEach((slide, index) => {
+            (index === this.index) ? slide.show() : slide.hide();
           });
         }
 
@@ -100,7 +112,7 @@
         }
       }
 
-      const app = start({ components: [Slideshow, SlideshowManager] });
+      const app = start({ components: [Slide, Slideshow, SlideshowManager] });
     </script>
 
     <p>

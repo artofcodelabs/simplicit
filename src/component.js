@@ -69,6 +69,7 @@ export default class Component {
     return this.node.parent?.element.instance;
   }
 
+  // TODO: accept name as siblings()
   children() {
     return this.node.children.map((n) => n.element.instance);
   }
