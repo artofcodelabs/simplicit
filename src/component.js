@@ -77,9 +77,8 @@ export default class Component {
   }
 
   siblings(name) {
-    const instances = this.node.siblings
+    return this.node.siblings
       .filter((n) => n.name === name)
       .map((n) => n.element.instance);
-    return destructArray(instances);
   }
 }

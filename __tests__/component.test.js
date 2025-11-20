@@ -339,7 +339,10 @@ describe("siblings()", () => {
     start({ root: document, components: [Alpha, Beta, Gamma] });
 
     const betaInstance = document.getElementById("beta").instance;
-    expect(captured.betaSibling).toBe(betaInstance);
+
+    expect(Array.isArray(captured.betaSibling)).toBe(true);
+    expect(captured.betaSibling.length).toEqual(1);
+    expect(captured.betaSibling[0]).toBe(betaInstance);
   });
 
   it("returns an array when multiple siblings share the same name", () => {
