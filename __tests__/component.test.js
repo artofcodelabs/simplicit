@@ -193,7 +193,7 @@ describe("parent()", () => {
     class Root extends Component {
       static name = "root";
       connect() {
-        captured = this.parent();
+        captured = this.parent;
       }
     }
 
@@ -219,7 +219,7 @@ describe("parent()", () => {
     class Child extends Component {
       static name = "child";
       connect() {
-        captured.childParent = this.parent();
+        captured.childParent = this.parent;
       }
     }
 
@@ -271,7 +271,7 @@ describe("children()", () => {
     expect(captured.children).not.toContain(gc1);
     expect(captured.children).not.toContain(outside);
     for (const child of captured.children) {
-      expect(child.parent()).toBe(captured.self);
+      expect(child.parent).toBe(captured.self);
     }
   });
 

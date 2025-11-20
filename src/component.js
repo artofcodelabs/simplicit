@@ -6,6 +6,14 @@ export default class Component {
     this._isDisconnected = false;
   }
 
+  get element() {
+    return this.node.element;
+  }
+
+  get parent() {
+    return this.node.parent?.element.instance;
+  }
+
   addParent(parent) {
     this.node.parent = parent.node;
     parent.node.children.push(this.node);
@@ -49,6 +57,7 @@ export default class Component {
     return destructArray(list);
   }
 
+  // TODO: to getter?
   refs() {
     const temp = {};
     const elements = this.element.querySelectorAll("[data-ref]");
@@ -62,10 +71,6 @@ export default class Component {
       result[key] = destructArray(temp[key]);
     });
     return result;
-  }
-
-  parent() {
-    return this.node.parent?.element.instance;
   }
 
   children(name) {

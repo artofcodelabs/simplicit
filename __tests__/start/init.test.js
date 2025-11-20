@@ -16,7 +16,7 @@ describe("initComponent", () => {
     document.body.innerHTML = "";
   });
 
-  it("assigns element and exposes only structural node links (sanitized)", () => {
+  it("assigns node", () => {
     document.body.innerHTML = `
       <div data-component="dummy" id="root"></div>
     `;
@@ -44,8 +44,8 @@ describe("initComponent", () => {
     expect(instance.node.parent).toBe(parent);
     expect(instance.node.children).toBe(children);
     expect(instance.node.siblings).toBe(siblings);
-    expect("name" in instance.node).toBe(false);
-    expect("element" in instance.node).toBe(false);
+    expect(instance.node.name).toBe("dummy");
+    expect(instance.node.element).toBe(element);
   });
 });
 

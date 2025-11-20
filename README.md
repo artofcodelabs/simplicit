@@ -157,6 +157,12 @@ Loco-JS-Core exports `helpers` object that has the following properties:
 ```
 
 ```javascript
+// component instance
+{
+  node
+  componentId: "1",
+}
+
 // node
 {
   name: "app",
@@ -164,17 +170,6 @@ Loco-JS-Core exports `helpers` object that has the following properties:
   parent: null,
   children: [],
   siblings: [],
-}
-
-// component instance
-{
-  element: node.element,
-  node: {
-    parent: node.parent,
-    children: node.children,
-    siblings: node.siblings,
-  }
-  componentId: "1",
 }
 ```
 

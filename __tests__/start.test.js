@@ -145,10 +145,10 @@ describe("start", () => {
       start({ root: document, components: [Hello, Display] });
 
       expect(snapshots).toHaveLength(2);
-      // Both instances should have sanitized node
+      // Both instances should have full node object
       for (const s of snapshots) {
-        expect(s.hasNameKey).toBe(false);
-        expect(s.hasElementKey).toBe(false);
+        expect(s.hasNameKey).toBe(true);
+        expect(s.hasElementKey).toBe(true);
         expect(s.hasParent).toBe(true);
         expect(s.childrenCount).toBeGreaterThanOrEqual(0);
       }
@@ -216,10 +216,10 @@ describe("start", () => {
       "grandchild",
     );
     // parent references
-    expect(parent.parent()).toBeUndefined();
-    expect(parent.children()[0].parent()).toBe(parent);
-    expect(childB.parent()).toBe(parent);
-    expect(childB.children()[0].parent()).toBe(childB);
+    expect(parent.parent).toBeUndefined();
+    expect(parent.children()[0].parent).toBe(parent);
+    expect(childB.parent).toBe(parent);
+    expect(childB.children()[0].parent).toBe(childB);
   });
 
   it("reflects consistent relationships across multiple runs", () => {
