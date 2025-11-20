@@ -59,8 +59,7 @@ export default class Component {
     });
     const result = {};
     Object.keys(temp).forEach((key) => {
-      const arr = temp[key];
-      result[key] = destructArray(arr);
+      result[key] = destructArray(temp[key]);
     });
     return result;
   }
