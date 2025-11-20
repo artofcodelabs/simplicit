@@ -274,6 +274,39 @@ describe("children()", () => {
       expect(child.parent()).toBe(captured.self);
     }
   });
+
+  it("filters children by component name and collapses single child", () => {
+    document.body.innerHTML = `
+      <div data-component="parent" id="p">
+        <p><div data-component="child" id="c1"></div></p>
+        <div data-component="other-child" id="oc1"></div>
+      </div>
+    `;
+
+    let namedChildren;
+    let allChildren;
+    class Parent extends Component {
+      static name = "parent";
+      connect() {
+        namedChildren = this.children("child");
+        allChildren = this.children();
+      }
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    class OtherChild extends Component {
+      static name = "other-child";
+    }
+
+    start({ root: document, components: [Parent, Child, OtherChild] });
+
+    const c1 = document.getElementById("c1").instance;
+    const oc1 = document.getElementById("oc1").instance;
+
+    expect(namedChildren).toEqual([c1]);
+    expect(allChildren).toEqual([c1, oc1]);
+  });
 });
 
 describe("siblings()", () => {

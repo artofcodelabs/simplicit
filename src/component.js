@@ -68,9 +68,12 @@ export default class Component {
     return this.node.parent?.element.instance;
   }
 
-  // TODO: accept name as siblings()
-  children() {
-    return this.node.children.map((n) => n.element.instance);
+  children(name) {
+    let nodes = this.node.children;
+    if (name) {
+      nodes = nodes.filter((n) => n.name === name);
+    }
+    return nodes.map((n) => n.element.instance);
   }
 
   siblings(name) {
