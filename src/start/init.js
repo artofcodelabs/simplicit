@@ -2,8 +2,8 @@ import { generateComponentId } from "./id";
 
 export const initComponent = (node, ComponentClass) => {
   const instance = new ComponentClass();
-  instance.element = node.element;
-  const { parent, children, siblings } = { ...node };
+  const { element, parent, children, siblings } = node;
+  instance.element = element;
   instance.node = { parent, children, siblings };
   instance.componentId = generateComponentId();
   return instance;

@@ -1,4 +1,4 @@
-import { initMatches } from "../../src/start/init";
+import { initMatches, initComponent } from "../../src/start/init";
 import { Component } from "index";
 import { buildElementTree } from "../../src/start/scan";
 
@@ -10,6 +10,44 @@ class Hello extends Component {
     seen.push(this.element);
   }
 }
+
+describe("initComponent", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("assigns element and exposes only structural node links (sanitized)", () => {
+    document.body.innerHTML = `
+      <div data-component="dummy" id="root"></div>
+    `;
+
+    const element = document.getElementById("root");
+    const parent = { some: "parent-node" };
+    const children = [{ some: "child-node" }];
+    const siblings = [{ some: "sibling-node" }];
+
+    const node = {
+      name: "dummy",
+      element,
+      parent,
+      children,
+      siblings,
+    };
+
+    class Dummy extends Component {
+      static name = "dummy";
+    }
+
+    const instance = initComponent(node, Dummy);
+
+    expect(instance.element).toBe(element);
+    expect(instance.node.parent).toBe(parent);
+    expect(instance.node.children).toBe(children);
+    expect(instance.node.siblings).toBe(siblings);
+    expect("name" in instance.node).toBe(false);
+    expect("element" in instance.node).toBe(false);
+  });
+});
 
 describe("initializeMatches", () => {
   beforeEach(() => {
