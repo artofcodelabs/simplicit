@@ -32,6 +32,14 @@
       class Slide extends Component {
         static name = "slide";
 
+        static template = (text, show) => {
+          const slide = document.createElement("div");
+          slide.dataset.component = Slide.name;
+          slide.textContent = text;
+          slide.hidden = !show;
+          return slide;
+        }
+
         show() {
           this.element.hidden = false;
         }
@@ -50,7 +58,7 @@
         }
 
         get slidesNumber() {
-          return this.children().length;
+          return this.children("slide").length;
         }
 
         connect() {
@@ -64,7 +72,7 @@
         }
 
         showSlides() {
-          this.ref("slide").forEach((slide) => slide.hidden = false);
+          this.children().forEach((slide) => slide.show());
         }
 
         hideSlides() {
@@ -88,6 +96,15 @@
       class SlideshowManager extends Component {
         static name = "slideshow-manager";
 
+        constructor() {
+          super();
+          this.showAll = false;
+        }
+
+        get slideshow() {
+          return this.siblings("slideshow")[0];
+        }
+
         connect() {
           this.on(this.ref("add-slide"), "click", () => this.#addSlide());
           this.on(this.ref("show-slides"), "click", () => this.#showSlides());
@@ -95,20 +112,19 @@
         }
 
         #addSlide() {
-          const slidesNumber = this.siblings("slideshow").slidesNumber;
-          const slide = document.createElement("div");
-          slide.dataset.ref = "slide";
-          slide.textContent = `🐒 #${slidesNumber + 1}`;
-          slide.hidden = true;
-          this.siblings("slideshow").addSlide(slide);
+          const slidesNumber = this.slideshow.slidesNumber;
+          const slide = Slide.template(`🐒 #${slidesNumber + 1}`, this.showAll);
+          this.slideshow.addSlide(slide);
         }
 
         #showSlides() {
-          this.siblings("slideshow").showSlides();
+          this.showAll = true;
+          this.slideshow.showSlides();
         }
 
         #hideSlides() {
-          this.siblings("slideshow").hideSlides();
+          this.showAll = false;
+          this.slideshow.hideSlides();
         }
       }
 
