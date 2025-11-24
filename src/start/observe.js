@@ -32,11 +32,26 @@ const addedElements = (mutations) => {
 
       if (node.hasAttribute(dataComponentAttribute)) added.add(node);
       node
-        .querySelectorAll?.(`[${dataComponentAttribute}]`)
+        .querySelectorAll(`[${dataComponentAttribute}]`)
         .forEach((el) => added.add(el));
     }
   }
   return added;
+};
+
+const removedElements = (mutations) => {
+  const removed = new Set();
+  for (const m of mutations) {
+    for (const node of m.removedNodes) {
+      if (!(node instanceof Element)) continue;
+
+      if (node.hasAttribute(dataComponentAttribute)) removed.add(node);
+      node
+        .querySelectorAll(`[${dataComponentAttribute}]`)
+        .forEach((el) => removed.add(el));
+    }
+  }
+  return removed;
 };
 
 export const observe = (searchRoot, componentClasses) => {
@@ -46,6 +61,16 @@ export const observe = (searchRoot, componentClasses) => {
   }
 
   const observer = new MutationObserver((mutations) => {
+    // TODO: test
+    const removed = removedElements(mutations);
+    if (removed.size > 0) {
+      for (const el of removed) {
+        // TODO: delete check
+        if (typeof el.instance.disconnect === "function")
+          el.instance.disconnect();
+      }
+    }
+
     const added = addedElements(mutations);
     if (added.size === 0) return;
 
@@ -78,6 +103,7 @@ export const observe = (searchRoot, componentClasses) => {
     }
 
     for (const instance of instances) {
+      // TODO: delete check
       if (typeof instance.connect === "function") instance.connect();
     }
   });
