@@ -23,6 +23,7 @@
       <button data-ref="add-slide">Add slide</button>
       <button data-ref="show-slides">Show slides</button>
       <button data-ref="hide-slides">Hide slides</button>
+      <button data-ref="manage-slides">Manage slides</button>
     </div>
 
     <script src="/loco-core.js"></script>
@@ -46,6 +47,22 @@
 
         hide() {
           this.element.hidden = true;
+        }
+
+        showDeleteButton() {
+          const deleteButton = document.createElement("a");
+          deleteButton.href = "#";
+          deleteButton.textContent = " ❌";
+          deleteButton.style.textDecoration = "none";
+          this.on(deleteButton, "click", (e) => {
+            e.preventDefault();
+            this.#deleteSlide();
+          });
+          this.element.appendChild(deleteButton);
+        }
+
+        #deleteSlide() {
+          this.element.remove();
         }
       }
 
@@ -81,6 +98,10 @@
           });
         }
 
+        showDeleteButtons() {
+          this.children().forEach((slide) => slide.showDeleteButton());
+        }
+
         #changeIndex(diff = 0) {
           this.index += diff;
           if (this.index >= this.slidesNumber) {
@@ -109,6 +130,7 @@
           this.on(this.ref("add-slide"), "click", () => this.#addSlide());
           this.on(this.ref("show-slides"), "click", () => this.#showSlides());
           this.on(this.ref("hide-slides"), "click", () => this.#hideSlides());
+          this.on(this.ref("manage-slides"), "click", () => this.#manageSlides());
         }
 
         #addSlide() {
@@ -125,6 +147,10 @@
         #hideSlides() {
           this.showAll = false;
           this.slideshow.hideSlides();
+        }
+
+        #manageSlides() {
+          this.slideshow.showDeleteButtons();
         }
       }
 
