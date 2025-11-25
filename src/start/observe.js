@@ -63,11 +63,7 @@ export const observe = (searchRoot, componentClasses) => {
   const observer = new MutationObserver((mutations) => {
     const removed = removedElements(mutations);
     if (removed.size > 0) {
-      for (const el of removed) {
-        // TODO: delete check
-        if (typeof el.instance.disconnect === "function")
-          el.instance.disconnect();
-      }
+      for (const el of removed) el.instance.disconnect();
     }
 
     const added = addedElements(mutations);
@@ -102,7 +98,6 @@ export const observe = (searchRoot, componentClasses) => {
     }
 
     for (const instance of instances) {
-      // TODO: delete check
       if (typeof instance.connect === "function") instance.connect();
     }
   });
