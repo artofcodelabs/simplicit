@@ -41,6 +41,14 @@
           return slide;
         }
 
+        static deleteButtonTemplate = () => {
+          const deleteButton = document.createElement("a");
+          deleteButton.href = "#";
+          deleteButton.textContent = " ❌";
+          deleteButton.style.textDecoration = "none";
+          return deleteButton;
+        }
+
         show() {
           this.element.hidden = false;
         }
@@ -50,10 +58,7 @@
         }
 
         showDeleteButton() {
-          const deleteButton = document.createElement("a");
-          deleteButton.href = "#";
-          deleteButton.textContent = " ❌";
-          deleteButton.style.textDecoration = "none";
+          const deleteButton = this.constructor.deleteButtonTemplate();
           this.on(deleteButton, "click", (e) => {
             e.preventDefault();
             this.#deleteSlide();
