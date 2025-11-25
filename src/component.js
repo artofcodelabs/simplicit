@@ -57,7 +57,6 @@ export default class Component {
     return destructArray(list);
   }
 
-  // TODO: to getter?
   refs() {
     const temp = {};
     const elements = this.element.querySelectorAll("[data-ref]");
