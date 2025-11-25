@@ -61,7 +61,6 @@ export const observe = (searchRoot, componentClasses) => {
   }
 
   const observer = new MutationObserver((mutations) => {
-    // TODO: test
     const removed = removedElements(mutations);
     if (removed.size > 0) {
       for (const el of removed) {

@@ -18,6 +18,15 @@ class Child extends Component {
   static name = "child";
 }
 
+class Disposable extends Component {
+  static name = "disposable";
+
+  disconnect() {
+    super.disconnect();
+    this.wasDisconnected = true;
+  }
+}
+
 describe("ensureObservation", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
@@ -66,5 +75,24 @@ describe("ensureObservation", () => {
 
     expect(childEl.instance.node.parent).toBe(parentEl.instance.node);
     expect(parentEl.instance.node.children).toContain(childEl.instance.node);
+  });
+
+  it("calls disconnect on components whose elements are removed", async () => {
+    const root = document.body;
+    observe(root, [Disposable]);
+
+    const el = document.createElement("div");
+    el.setAttribute("data-component", "disposable");
+    root.appendChild(el);
+
+    await waitFor(() => !!el.instance);
+
+    const instance = el.instance;
+    expect(instance.wasDisconnected).toBeUndefined();
+
+    el.remove();
+
+    await waitFor(() => instance.wasDisconnected === true);
+    expect(instance.wasDisconnected).toBe(true);
   });
 });
