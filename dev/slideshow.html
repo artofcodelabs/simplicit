@@ -33,9 +33,12 @@
       class Slide extends Component {
         static name = "slide";
 
-        static template = (text, show) => {
+        static template = ({ text, show, manage = false }) => {
           const slide = document.createElement("div");
           slide.dataset.component = Slide.name;
+          if (manage) {
+            slide.dataset.mode = "manage";
+          }
           slide.textContent = text;
           slide.hidden = !show;
           return slide;
@@ -52,6 +55,12 @@
         constructor() {
           super();
           this.deleteButton = null;
+        }
+
+        connect() {
+          if (this.element.dataset.mode === "manage") {
+            this.showDeleteButton();
+          }
         }
 
         show() {
@@ -103,11 +112,9 @@
           this.hideSlides();
         }
 
-        addSlide(slide) {
+        addSlide({ text, show }) {
+          const slide = Slide.template({ text, show, manage: this.manageSlides });
           this.element.appendChild(slide);
-          if (this.manageSlides) {
-            slide.showDeleteButton(); // TODO: fix it
-          }
         }
 
         showSlides() {
@@ -158,8 +165,7 @@
 
         #addSlide() {
           const slidesNumber = this.slideshow.slidesNumber;
-          const slide = Slide.template(`🐒 #${slidesNumber + 1}`, this.showAll);
-          this.slideshow.addSlide(slide);
+          this.slideshow.addSlide({ text: `🐒 #${slidesNumber + 1}`, show: this.showAll });
         }
 
         #showSlides() {
