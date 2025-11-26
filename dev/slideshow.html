@@ -90,6 +90,7 @@
         constructor() {
           super();
           this.index = 0;
+          this.manageSlides = false;
         }
 
         get slidesNumber() {
@@ -104,6 +105,9 @@
 
         addSlide(slide) {
           this.element.appendChild(slide);
+          if (this.manageSlides) {
+            slide.showDeleteButton(); // TODO: fix it
+          }
         }
 
         showSlides() {
@@ -117,7 +121,8 @@
         }
 
         toggleDeleteButtons() {
-          this.children().forEach((slide) => slide.showDeleteButton());
+          this.manageSlides = !this.manageSlides;
+          this.children().forEach((slide) => this.manageSlides ? slide.showDeleteButton() : slide.hideDeleteButton());
         }
 
         #changeIndex(diff = 0) {
