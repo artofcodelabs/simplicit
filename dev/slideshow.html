@@ -49,6 +49,11 @@
           return deleteButton;
         }
 
+        constructor() {
+          super();
+          this.deleteButton = null;
+        }
+
         show() {
           this.element.hidden = false;
         }
@@ -58,12 +63,20 @@
         }
 
         showDeleteButton() {
-          const deleteButton = this.constructor.deleteButtonTemplate();
-          this.on(deleteButton, "click", (e) => {
+          if (this.deleteButton) {
+            this.deleteButton.hidden = false;
+            return;
+          }
+          this.deleteButton = this.constructor.deleteButtonTemplate();
+          this.on(this.deleteButton, "click", (e) => {
             e.preventDefault();
             this.#deleteSlide();
           });
-          this.element.appendChild(deleteButton);
+          this.element.appendChild(this.deleteButton);
+        }
+
+        hideDeleteButton() {
+          this.deleteButton.hidden = true;
         }
 
         #deleteSlide() {
@@ -103,7 +116,7 @@
           });
         }
 
-        showDeleteButtons() {
+        toggleDeleteButtons() {
           this.children().forEach((slide) => slide.showDeleteButton());
         }
 
@@ -155,7 +168,7 @@
         }
 
         #manageSlides() {
-          this.slideshow.showDeleteButtons();
+          this.slideshow.toggleDeleteButtons();
         }
       }
 
