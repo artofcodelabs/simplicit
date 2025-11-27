@@ -48,6 +48,7 @@ export default class Component {
     this._isDisconnected = true;
     const callbacks = this._cleanupCallbacks.splice(0);
     for (const cleanup of callbacks) cleanup();
+    this.#detachFromParent();
   }
 
   ref(name) {
@@ -84,5 +85,13 @@ export default class Component {
     return this.node.siblings
       .filter((n) => n.name === name)
       .map((n) => n.element.instance);
+  }
+
+  #detachFromParent() {
+    const parentNode = this.node.parent;
+    if (!parentNode) return;
+    const index = parentNode.children.indexOf(this.node);
+    if (index !== -1) parentNode.children.splice(index, 1);
+    this.node.parent = null;
   }
 }

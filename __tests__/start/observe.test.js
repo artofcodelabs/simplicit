@@ -95,4 +95,23 @@ describe("ensureObservation", () => {
     await waitFor(() => instance.wasDisconnected === true);
     expect(instance.wasDisconnected).toBe(true);
   });
+
+  it("updates parent children when a child component element is removed", async () => {
+    const root = document.body;
+    observe(root, [Parent, Child]);
+
+    const parentEl = document.createElement("div");
+    parentEl.setAttribute("data-component", "parent");
+    root.appendChild(parentEl);
+    await waitFor(() => !!parentEl.instance);
+
+    const childEl = document.createElement("div");
+    childEl.setAttribute("data-component", "child");
+    parentEl.appendChild(childEl);
+    await waitFor(() => parentEl.instance.children("child").length === 1);
+
+    childEl.remove();
+
+    await waitFor(() => parentEl.instance.children("child").length === 0);
+  });
 });
