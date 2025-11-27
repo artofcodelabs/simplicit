@@ -149,16 +149,13 @@
         }
 
         showSlides() {
-          this.children().forEach((slide, index) => {
-            slide.show();
-            slide.setCurrent(index === this.index);
-          });
+          this.children().forEach((slide) => slide.show());
         }
 
         hideSlides() {
           this.children().forEach((slide, index) => {
             const isCurrent = index === this.index;
-            isCurrent ? slide.show() : slide.hide();
+            if (!isCurrent) slide.hide();
             slide.setCurrent(isCurrent);
           });
         }
@@ -176,7 +173,10 @@
           if (this.index < 0) {
             this.index = this.slidesNumber - 1;
           }
-          this.hideSlides();
+          this.children().forEach((slide, index) => {
+            const isCurrent = index === this.index;
+            slide.setCurrent(isCurrent);
+          });
         }
       }
 
