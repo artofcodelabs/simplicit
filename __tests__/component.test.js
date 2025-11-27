@@ -65,8 +65,7 @@ describe("Component.ref", () => {
 
     start({ root: document, components: [Dummy] });
 
-    expect(Array.isArray(missing)).toBe(true);
-    expect(missing).toHaveLength(0);
+    expect(missing).toBeNull();
   });
 });
 

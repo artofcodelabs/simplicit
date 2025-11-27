@@ -33,13 +33,19 @@
       class Slide extends Component {
         static name = "slide";
 
-        static template = ({ text, show, manage = false }) => {
+        static template = ({ text, show, manage = false, current = false }) => {
           const slide = document.createElement("div");
           slide.dataset.component = Slide.name;
           if (manage) {
             slide.dataset.mode = "manage";
           }
-          slide.textContent = text;
+          if (current) {
+            const bold = document.createElement("b");
+            bold.textContent = text;
+            slide.appendChild(bold);
+          } else {
+            slide.textContent = text;
+          }
           slide.hidden = !show;
           return slide;
         }
@@ -69,6 +75,22 @@
 
         hide() {
           this.element.hidden = true;
+        }
+
+        setCurrent(isCurrent) {
+          let bold = this.ref("bold-text");
+          if (isCurrent) {
+            if (bold) return;
+            bold = document.createElement("b");
+            bold.textContent = this.element.textContent;
+            bold.dataset.ref = "bold-text";
+            this.element.textContent = "";
+            this.element.appendChild(bold);
+          } else {
+            if (!bold) return;
+            this.element.textContent = bold.textContent;
+            bold.remove();
+          }
         }
 
         showDeleteButton() {
@@ -113,17 +135,31 @@
         }
 
         addSlide({ text, show }) {
-          const slide = Slide.template({ text, show, manage: this.manageSlides });
+          const isFirstSlide = this.slidesNumber === 0;
+          const slide = Slide.template({
+            text,
+            show,
+            manage: this.manageSlides,
+            current: isFirstSlide,
+          });
           this.element.appendChild(slide);
+          if (isFirstSlide) {
+            this.index = 0; // TODO: isn't index already 0?
+          }
         }
 
         showSlides() {
-          this.children().forEach((slide) => slide.show());
+          this.children().forEach((slide, index) => {
+            slide.show();
+            slide.setCurrent(index === this.index);
+          });
         }
 
         hideSlides() {
           this.children().forEach((slide, index) => {
-            (index === this.index) ? slide.show() : slide.hide();
+            const isCurrent = index === this.index;
+            isCurrent ? slide.show() : slide.hide();
+            slide.setCurrent(isCurrent);
           });
         }
 
