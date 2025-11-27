@@ -40,14 +40,19 @@
             slide.dataset.mode = "manage";
           }
           if (current) {
-            const bold = document.createElement("b");
-            bold.textContent = text;
-            slide.appendChild(bold);
+            slide.appendChild(Slide.boldTextTemplate(text));
           } else {
             slide.textContent = text;
           }
           slide.hidden = !show;
           return slide;
+        }
+
+        static boldTextTemplate = (text) => {
+          const bold = document.createElement("b");
+          bold.textContent = text;
+          bold.dataset.ref = "bold-text";
+          return bold;
         }
 
         static deleteButtonTemplate = () => {
@@ -81,9 +86,7 @@
           let bold = this.ref("bold-text");
           if (isCurrent) {
             if (bold) return;
-            bold = document.createElement("b");
-            bold.textContent = this.element.textContent;
-            bold.dataset.ref = "bold-text";
+            bold = this.constructor.boldTextTemplate(this.element.textContent);
             this.element.textContent = "";
             this.element.appendChild(bold);
           } else {
