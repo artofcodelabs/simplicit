@@ -131,6 +131,7 @@
         connect() {
           this.on(this.ref("previous"), "click", () => this.#changeIndex(-1));
           this.on(this.ref("next"), "click", () => this.#changeIndex(1));
+          this.#setCurrentSlide();
           this.hideSlides();
         }
 
@@ -154,9 +155,7 @@
 
         hideSlides() {
           this.children().forEach((slide, index) => {
-            const isCurrent = index === this.index;
-            if (!isCurrent) slide.hide();
-            slide.setCurrent(isCurrent);
+            if (index !== this.index) slide.hide();
           });
         }
 
@@ -173,9 +172,12 @@
           if (this.index < 0) {
             this.index = this.slidesNumber - 1;
           }
+          this.#setCurrentSlide();
+        }
+
+        #setCurrentSlide() {
           this.children().forEach((slide, index) => {
-            const isCurrent = index === this.index;
-            slide.setCurrent(isCurrent);
+            slide.setCurrent(index === this.index);
           });
         }
       }
