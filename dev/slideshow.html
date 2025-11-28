@@ -12,10 +12,10 @@
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
 
-      <div data-component="slide">🐵 #1</div>
-      <div data-component="slide">🙈 #2</div>
-      <div data-component="slide">🙉 #3</div>
-      <div data-component="slide">🙊 #4</div>
+      <div data-component="slide"><span data-ref="caption">🐵 #1</span></div>
+      <div data-component="slide"><span data-ref="caption">🙈 #2</span></div>
+      <div data-component="slide"><span data-ref="caption">🙉 #3</span></div>
+      <div data-component="slide"><span data-ref="caption">🙊 #4</span></div>
     </div>
 
     <h2>Slideshow Manager</h2>
@@ -34,33 +34,27 @@
         static name = "slide";
 
         static template = ({ text, show, manage = false, current = false }) => {
-          const slide = document.createElement("div");
-          slide.dataset.component = Slide.name;
-          if (manage) {
-            slide.dataset.mode = "manage";
-          }
-          if (current) {
-            slide.appendChild(Slide.boldTextTemplate(text));
-          } else {
-            slide.textContent = text;
-          }
-          slide.hidden = !show;
-          return slide;
+          return `
+          <div
+            data-component="${Slide.name}"
+            ${manage ? `data-mode="manage"` : ""}
+            ${show ? "" : "hidden"}
+          >
+            ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
+          </div>
+          `
+        }
+
+        static captionTemplate = (text) => {
+          return `<span data-ref="caption">${text}</span>`;
         }
 
         static boldTextTemplate = (text) => {
-          const bold = document.createElement("b");
-          bold.textContent = text;
-          bold.dataset.ref = "bold-text";
-          return bold;
+          return `<b data-ref="bold-text">${text}</b>`;
         }
 
         static deleteButtonTemplate = () => {
-          const deleteButton = document.createElement("a");
-          deleteButton.href = "#";
-          deleteButton.textContent = " ❌";
-          deleteButton.style.textDecoration = "none";
-          return deleteButton;
+          return `<a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>`
         }
 
         constructor() {
@@ -86,27 +80,33 @@
           let bold = this.ref("bold-text");
           if (isCurrent) {
             if (bold) return;
-            bold = this.constructor.boldTextTemplate(this.element.textContent);
-            this.element.textContent = "";
-            this.element.appendChild(bold);
+            bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
+            this.element.insertAdjacentHTML("afterbegin", bold);
+            this.ref("caption").remove();
           } else {
             if (!bold) return;
-            this.element.textContent = bold.textContent;
+            const caption = this.constructor.captionTemplate(bold.textContent);
+            this.element.insertAdjacentHTML("afterbegin", caption);
             bold.remove();
           }
         }
 
         showDeleteButton() {
+          // TODO: don't show for current slide
+          // TODO: don't add but hide for simplicity
           if (this.deleteButton) {
             this.deleteButton.hidden = false;
             return;
           }
-          this.deleteButton = this.constructor.deleteButtonTemplate();
+          this.element.insertAdjacentHTML(
+            "beforeend",
+            this.constructor.deleteButtonTemplate(),
+          );
+          this.deleteButton = this.ref("delete");
           this.on(this.deleteButton, "click", (e) => {
             e.preventDefault();
             this.#deleteSlide();
           });
-          this.element.appendChild(this.deleteButton);
         }
 
         hideDeleteButton() {
@@ -140,13 +140,13 @@
 
         addSlide({ text, show }) {
           const isFirstSlide = this.slidesNumber === 0;
-          const slide = Slide.template({
+          const slideHtml = Slide.template({
             text,
             show,
             manage: this.manageSlides,
             current: isFirstSlide,
           });
-          this.element.appendChild(slide);
+          this.element.insertAdjacentHTML("beforeend", slideHtml);
           if (isFirstSlide) {
             this.index = 0; // TODO: isn't index already 0?
           }
