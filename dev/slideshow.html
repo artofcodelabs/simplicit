@@ -37,7 +37,7 @@
           return `
           <div
             data-component="${Slide.name}"
-            ${manage ? `data-mode="manage"` : ""}
+            data-mode="${manage ? "manage" : ""}"
             ${show ? "" : "hidden"}
           >
             ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
@@ -93,11 +93,24 @@
             this.element.insertAdjacentHTML("afterbegin", caption);
             bold.remove();
           }
+          this.#toggleDeleteButton();
         }
 
-        showDeleteButton() {
+        changeMode(mode) {
+          this.element.dataset.mode = mode;
+          this.#toggleDeleteButton();
+        }
+
+        #toggleDeleteButton() {
+          if (this.isCurrent() || this.element.dataset.mode !== "manage") {
+            this.#hideDeleteButton();
+          } else {
+            this.#showDeleteButton();
+          }
+        }
+
+        #showDeleteButton() {
           if (this.isCurrent()) return;
-          // TODO: don't add but hide for simplicity
           if (this.deleteButton) {
             this.deleteButton.hidden = false;
             return;
@@ -113,7 +126,8 @@
           });
         }
 
-        hideDeleteButton() {
+        #hideDeleteButton() {
+          if (this.deleteButton === null) return;
           this.deleteButton.hidden = true;
         }
       }
@@ -164,7 +178,7 @@
 
         toggleDeleteButtons() {
           this.manageSlides = !this.manageSlides;
-          this.children().forEach((slide) => this.manageSlides ? slide.showDeleteButton() : slide.hideDeleteButton());
+          this.children().forEach((slide) => slide.changeMode(this.manageSlides ? "manage" : ""));
         }
 
         #changeIndex(diff = 0) {
