@@ -62,6 +62,10 @@
           this.deleteButton = null;
         }
 
+        isCurrent() {
+          return this.ref("bold-text") !== null;
+        }
+
         connect() {
           if (this.element.dataset.mode === "manage") {
             this.showDeleteButton();
@@ -92,7 +96,7 @@
         }
 
         showDeleteButton() {
-          // TODO: don't show for current slide
+          if (this.isCurrent()) return;
           // TODO: don't add but hide for simplicity
           if (this.deleteButton) {
             this.deleteButton.hidden = false;
@@ -105,16 +109,12 @@
           this.deleteButton = this.ref("delete");
           this.on(this.deleteButton, "click", (e) => {
             e.preventDefault();
-            this.#deleteSlide();
+            this.element.remove();
           });
         }
 
         hideDeleteButton() {
           this.deleteButton.hidden = true;
-        }
-
-        #deleteSlide() {
-          this.element.remove();
         }
       }
 
