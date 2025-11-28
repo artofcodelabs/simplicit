@@ -62,14 +62,14 @@
           this.deleteButton = null;
         }
 
-        isCurrent() {
-          return this.ref("bold-text") !== null;
-        }
-
         connect() {
           if (this.element.dataset.mode === "manage") {
             this.showDeleteButton();
           }
+        }
+
+        isCurrent() {
+          return this.ref("bold-text") !== null;
         }
 
         show() {
