@@ -77,6 +77,7 @@
         }
 
         hide() {
+          if (this.isCurrent()) return;
           this.element.hidden = true;
         }
 
@@ -184,9 +185,7 @@
 
         hideSlides() {
           this.showAll = false;
-          this.children().forEach((slide, index) => {
-            if (index !== this.index) slide.hide();
-          });
+          this.children().forEach((slide) => slide.hide());
         }
 
         toggleDeleteButtons() {
