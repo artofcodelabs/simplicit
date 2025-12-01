@@ -164,11 +164,11 @@
           this.hideSlides();
         }
 
-        addSlide({ text, show }) {
+        addSlide(text) {
           const isFirstSlide = this.slidesNumber === 0;
           const slideHtml = Slide.template({
             text,
-            show,
+            show: this.showAll,
             manage: this.manageSlides,
             current: isFirstSlide,
           });
@@ -214,11 +214,6 @@
       class SlideshowManager extends Component {
         static name = "slideshow-manager";
 
-        constructor() {
-          super();
-          this.showAll = false;
-        }
-
         get slideshow() {
           return this.siblings("slideshow")[0];
         }
@@ -232,16 +227,14 @@
 
         #addSlide() {
           const slidesNumber = this.slideshow.slidesNumber;
-          this.slideshow.addSlide({ text: `🐒 #${slidesNumber + 1}`, show: this.showAll });
+          this.slideshow.addSlide(`🐒 #${slidesNumber + 1}`);
         }
 
         #showSlides() {
-          this.showAll = true;
           this.slideshow.showSlides();
         }
 
         #hideSlides() {
-          this.showAll = false;
           this.slideshow.hideSlides();
         }
 
