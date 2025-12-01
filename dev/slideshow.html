@@ -64,7 +64,7 @@
 
         connect() {
           if (this.element.dataset.mode === "manage") {
-            this.showDeleteButton();
+            this.#showDeleteButton();
           }
         }
 
@@ -80,18 +80,16 @@
           this.element.hidden = true;
         }
 
-        setCurrent(isCurrent) {
-          let bold = this.ref("bold-text");
-          if (isCurrent) {
+        setCurrent({ current, show }) {
+          const bold = this.ref("bold-text");
+          if (current) {
             if (bold) return;
-            bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
-            this.element.insertAdjacentHTML("afterbegin", bold);
-            this.ref("caption").remove();
+            this.#captionToBold();
+            this.show();
           } else {
             if (!bold) return;
-            const caption = this.constructor.captionTemplate(bold.textContent);
-            this.element.insertAdjacentHTML("afterbegin", caption);
-            bold.remove();
+            this.#boldToCaption(bold);
+            show ? this.show() : this.hide();
           }
           this.#toggleDeleteButton();
         }
@@ -99,6 +97,18 @@
         changeMode(mode) {
           this.element.dataset.mode = mode;
           this.#toggleDeleteButton();
+        }
+
+        #captionToBold() {
+          const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
+          this.element.insertAdjacentHTML("afterbegin", bold);
+          this.ref("caption").remove();
+        }
+
+        #boldToCaption(bold) {
+          const caption = this.constructor.captionTemplate(bold.textContent);
+          this.element.insertAdjacentHTML("afterbegin", caption);
+          bold.remove();
         }
 
         #toggleDeleteButton() {
@@ -138,6 +148,7 @@
         constructor() {
           super();
           this.index = 0;
+          this.showAll = false;
           this.manageSlides = false;
         }
 
@@ -167,10 +178,12 @@
         }
 
         showSlides() {
+          this.showAll = true;
           this.children().forEach((slide) => slide.show());
         }
 
         hideSlides() {
+          this.showAll = false;
           this.children().forEach((slide, index) => {
             if (index !== this.index) slide.hide();
           });
@@ -194,7 +207,7 @@
 
         #setCurrentSlide() {
           this.children().forEach((slide, index) => {
-            slide.setCurrent(index === this.index);
+            slide.setCurrent({ current: index === this.index, show: this.showAll });
           });
         }
       }
