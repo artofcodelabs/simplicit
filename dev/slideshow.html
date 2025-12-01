@@ -148,7 +148,6 @@
 
         constructor() {
           super();
-          this.index = 0;
           this.showAll = false;
           this.manageSlides = false;
         }
@@ -157,9 +156,15 @@
           return this.children("slide").length;
         }
 
+        get currentSlideIndex() {
+          let index = this.children("slide").findIndex((slide) => slide.isCurrent());
+          if (index === -1) index = 0;
+          return index;
+        }
+
         connect() {
-          this.on(this.ref("previous"), "click", () => this.#changeIndex(-1));
-          this.on(this.ref("next"), "click", () => this.#changeIndex(1));
+          this.on(this.ref("previous"), "click", () => this.#changeSlideIndex(-1));
+          this.on(this.ref("next"), "click", () => this.#changeSlideIndex(1));
           this.#setCurrentSlide();
           this.hideSlides();
         }
@@ -173,14 +178,12 @@
             current: isFirstSlide,
           });
           this.element.insertAdjacentHTML("beforeend", slideHtml);
-          if (isFirstSlide) {
-            this.index = 0; // TODO: isn't index already 0?
-          }
         }
 
         showSlides() {
           this.showAll = true;
           this.children().forEach((slide) => slide.show());
+          // TODO: enable manage slides button
         }
 
         hideSlides() {
@@ -193,20 +196,21 @@
           this.children().forEach((slide) => slide.changeMode(this.manageSlides ? "manage" : ""));
         }
 
-        #changeIndex(diff = 0) {
-          this.index += diff;
-          if (this.index >= this.slidesNumber) {
-            this.index = 0;
+        #changeSlideIndex(diff = 0) {
+          let newIndex = this.currentSlideIndex + diff;
+          if (newIndex >= this.slidesNumber) {
+            newIndex = 0;
           }
-          if (this.index < 0) {
-            this.index = this.slidesNumber - 1;
+          if (newIndex < 0) {
+            newIndex = this.slidesNumber - 1;
           }
-          this.#setCurrentSlide();
+          this.#setCurrentSlide(newIndex);
         }
 
-        #setCurrentSlide() {
+        #setCurrentSlide(newIndex) {
+          newIndex = newIndex ?? this.currentSlideIndex;
           this.children().forEach((slide, index) => {
-            slide.setCurrent({ current: index === this.index, show: this.showAll });
+            slide.setCurrent({ current: index === newIndex, show: this.showAll });
           });
         }
       }
