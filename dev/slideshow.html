@@ -33,7 +33,7 @@
       class Slide extends Component {
         static name = "slide";
 
-        static template = ({ text, show, manage = false, current = false }) => {
+        static template = ({ text, show = true, manage = false, current = false }) => {
           return `
           <div
             data-component="${Slide.name}"
