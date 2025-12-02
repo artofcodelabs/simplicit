@@ -23,7 +23,7 @@
       <button data-ref="add-slide">Add slide</button>
       <button data-ref="show-slides">Show slides</button>
       <button data-ref="hide-slides">Hide slides</button>
-      <button data-ref="manage-slides">Manage slides</button>
+      <button data-ref="manage-slides" disabled>Manage slides</button>
     </div>
 
     <script src="/loco-core.js"></script>
@@ -183,7 +183,6 @@
         showSlides() {
           this.showAll = true;
           this.children().forEach((slide) => slide.show());
-          // TODO: enable manage slides button
         }
 
         hideSlides() {
@@ -218,6 +217,11 @@
       class SlideshowManager extends Component {
         static name = "slideshow-manager";
 
+        constructor() {
+          super();
+          this.manageSlides = false;
+        }
+
         get slideshow() {
           return this.siblings("slideshow")[0];
         }
@@ -236,13 +240,19 @@
 
         #showSlides() {
           this.slideshow.showSlides();
+          this.ref("manage-slides").disabled = false;
         }
 
         #hideSlides() {
           this.slideshow.hideSlides();
+          this.ref("manage-slides").disabled = true;
+          if (this.manageSlides) {
+            this.#manageSlides();
+          }
         }
 
         #manageSlides() {
+          this.manageSlides = !this.manageSlides;
           this.slideshow.toggleDeleteButtons();
         }
       }
