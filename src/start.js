@@ -4,6 +4,7 @@ import { initMatches } from "./start/init";
 import { observe } from "./start/observe";
 import { destructArray } from "./start/helpers";
 
+// TODO: be able to add component classes after start() has been called
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
   const componentClasses = Array.isArray(options.components)

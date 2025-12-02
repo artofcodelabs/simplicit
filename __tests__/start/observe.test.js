@@ -96,6 +96,43 @@ describe("ensureObservation", () => {
     expect(instance.wasDisconnected).toBe(true);
   });
 
+  it("does not throw when component elements are removed before initialization", () => {
+    const root = document.body;
+    const OriginalMutationObserver = global.MutationObserver;
+
+    class FakeMutationObserver {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {
+        const el = document.createElement("div");
+        el.setAttribute("data-component", "disposable");
+        const record = {
+          addedNodes: [el],
+          removedNodes: [el],
+        };
+        this.callback([record]);
+      }
+
+      disconnect() {}
+
+      takeRecords() {
+        return [];
+      }
+    }
+
+    global.MutationObserver = FakeMutationObserver;
+
+    try {
+      expect(() => {
+        observe(root, [Disposable]);
+      }).not.toThrow();
+    } finally {
+      global.MutationObserver = OriginalMutationObserver;
+    }
+  });
+
   it("updates parent children when a child component element is removed", async () => {
     const root = document.body;
     observe(root, [Parent, Child]);
