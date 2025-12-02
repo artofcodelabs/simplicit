@@ -114,4 +114,35 @@ describe("ensureObservation", () => {
 
     await waitFor(() => parentEl.instance.children("child").length === 0);
   });
+
+  it("populates siblings for dynamically added sibling components", async () => {
+    const root = document.body;
+    observe(root, [Parent, Child]);
+
+    const parentEl = document.createElement("div");
+    parentEl.setAttribute("data-component", "parent");
+    root.appendChild(parentEl);
+    await waitFor(() => !!parentEl.instance);
+
+    const childEl1 = document.createElement("div");
+    childEl1.setAttribute("data-component", "child");
+    parentEl.appendChild(childEl1);
+
+    const childEl2 = document.createElement("div");
+    childEl2.setAttribute("data-component", "child");
+    parentEl.appendChild(childEl2);
+
+    await waitFor(() => !!childEl1.instance && !!childEl2.instance);
+
+    const c1 = childEl1.instance;
+    const c2 = childEl2.instance;
+
+    await waitFor(
+      () =>
+        c1.siblings("child").length === 1 && c2.siblings("child").length === 1,
+    );
+
+    expect(c1.siblings("child")).toEqual([c2]);
+    expect(c2.siblings("child")).toEqual([c1]);
+  });
 });

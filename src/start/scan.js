@@ -34,9 +34,17 @@ export const buildElementTree = (searchRoot) => {
     }
   }
 
-  const rootNodes = nodes.filter((n) => n.parent === null);
-  for (const node of rootNodes) {
-    node.siblings = rootNodes.filter((n) => n !== node);
+  const groupByParent = new Map();
+  for (const node of nodes) {
+    const key = node.parent ?? null;
+    if (!groupByParent.has(key)) groupByParent.set(key, []);
+    groupByParent.get(key).push(node);
+  }
+
+  for (const group of groupByParent.values()) {
+    for (const node of group) {
+      node.siblings = group.filter((n) => n !== node);
+    }
   }
 
   return nodes;

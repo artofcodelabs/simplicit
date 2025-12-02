@@ -75,6 +75,7 @@ export const observe = (searchRoot, componentClasses) => {
     const instances = instancesForElements(filtered, classByName);
 
     for (const instance of instances) {
+      // Link to parent instances (if any) and update children relationships.
       const parentEl = instance.element.parentElement?.closest(
         `[${dataComponentAttribute}]`,
       );
@@ -94,6 +95,21 @@ export const observe = (searchRoot, componentClasses) => {
           instance.node.children.push(childInstance.node);
           childInstance.node.parent = instance.node;
         }
+      }
+    }
+
+    // After parent/child links are established, update siblings for all
+    // parents that gained new children in this mutation batch.
+    const parentsToUpdate = new Set();
+    for (const instance of instances) {
+      if (instance.node.parent) {
+        parentsToUpdate.add(instance.node.parent);
+      }
+    }
+    for (const parentNode of parentsToUpdate) {
+      const children = parentNode.children;
+      for (const childNode of children) {
+        childNode.siblings = children.filter((n) => n !== childNode);
       }
     }
 

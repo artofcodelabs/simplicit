@@ -370,4 +370,39 @@ describe("siblings()", () => {
     expect(Array.isArray(siblings)).toBe(true);
     expect(new Set(siblings)).toEqual(new Set([beta1, beta2]));
   });
+
+  it("returns sibling components for nested components with the same parent", () => {
+    document.body.innerHTML = `
+      <div data-component="parent" id="p">
+        <div data-component="child" id="c1"></div>
+        <div data-component="child" id="c2"></div>
+      </div>
+    `;
+
+    const captured = {};
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class Child extends Component {
+      static name = "child";
+      connect() {
+        if (!captured.first) {
+          captured.first = this;
+        } else {
+          captured.second = this;
+        }
+      }
+    }
+
+    start({ root: document, components: [Parent, Child] });
+
+    const { first, second } = captured;
+    const firstSiblings = first.siblings("child");
+    const secondSiblings = second.siblings("child");
+
+    expect(firstSiblings).toHaveLength(1);
+    expect(firstSiblings[0]).toBe(second);
+    expect(secondSiblings).toHaveLength(1);
+    expect(secondSiblings[0]).toBe(first);
+  });
 });
