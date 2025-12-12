@@ -2,7 +2,6 @@ import { buildElementTree } from "./start/scan";
 import { validate } from "./start/validate";
 import { initMatches } from "./start/init";
 import { observe } from "./start/observe";
-import { destructArray } from "./start/helpers";
 
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
@@ -16,7 +15,7 @@ const start = (options = {}) => {
   const roots = instances.filter((i) => i.node.parent === null);
 
   return {
-    roots: destructArray(roots), // TODO: array only
+    roots: roots,
     addComponents(newComponents) {
       if (newComponents.length === 0) return null;
 
