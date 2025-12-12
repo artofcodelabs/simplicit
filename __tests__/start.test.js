@@ -172,7 +172,8 @@ describe("start", () => {
     class Hello extends Component {
       static name = "hello";
     }
-    const result = start({ components: [Hello] });
+    const app = start({ components: [Hello] });
+    const result = app.roots;
     expect(result).toBeInstanceOf(Hello);
     expect(result.element).toBeInstanceOf(HTMLElement);
     expect(result.children()).toHaveLength(0);
@@ -201,11 +202,11 @@ describe("start", () => {
     class Grandchild extends Component {
       static name = "grandchild";
     }
-    const result = start({
+    const app = start({
       root: document,
       components: [Parent, ChildA, ChildB, Grandchild],
     });
-    const parent = result;
+    const parent = app.roots;
     expect(parent.element.getAttribute("data-component")).toBe("parent");
     expect(
       parent.children().map((c) => c.element.getAttribute("data-component")),
@@ -234,8 +235,8 @@ describe("start", () => {
     class Child extends Component {
       static name = "child";
     }
-    const first = start({ root: document, components: [Parent, Child] });
-    const second = start({ root: document, components: [Parent, Child] });
+    const first = start({ root: document, components: [Parent, Child] }).roots;
+    const second = start({ root: document, components: [Parent, Child] }).roots;
     expect(first.children()).toHaveLength(1);
     expect(second.children()).toHaveLength(1);
   });
@@ -250,13 +251,13 @@ describe("start", () => {
     class Child extends Component {
       static name = "child";
     }
-    const before = start({ root: document, components: [Parent] });
+    const before = start({ root: document, components: [Parent] }).roots;
     expect(before.children()).toHaveLength(0);
     const parent = document.querySelector('[data-component="parent"]');
     const child = document.createElement("div");
     child.setAttribute("data-component", "child");
     parent.appendChild(child);
-    const after = start({ root: document, components: [Parent, Child] });
+    const after = start({ root: document, components: [Parent, Child] }).roots;
     expect(
       after.children().map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["child"]);
@@ -284,14 +285,14 @@ describe("start", () => {
     class B1 extends Component {
       static name = "B1";
     }
-    const resultA = start({ root: rootA, components: [A, A1, B, B1] });
+    const resultA = start({ root: rootA, components: [A, A1, B, B1] }).roots;
     expect(resultA.element.getAttribute("data-component")).toBe("A");
     expect(
       resultA.children().map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["A1"]);
 
     const rootB = document.getElementById("b");
-    const resultB = start({ root: rootB, components: [A, A1, B, B1] });
+    const resultB = start({ root: rootB, components: [A, A1, B, B1] }).roots;
     expect(resultB.element.getAttribute("data-component")).toBe("B");
     expect(
       resultB.children().map((c) => c.element.getAttribute("data-component")),
@@ -310,10 +311,42 @@ describe("start", () => {
     class Child extends Component {
       static name = "child";
     }
-    const result = start({ root, components: [Root, Child] });
+    const app = start({ root, components: [Root, Child] });
+    const result = app.roots;
     expect(result.element.getAttribute("data-component")).toBe("root");
     expect(
       result.children().map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["child"]);
+  });
+
+  it("allows adding component classes after start() has been called", () => {
+    document.body.innerHTML = `
+      <div data-component="parent"></div>
+    `;
+
+    class Parent extends Component {
+      static name = "parent";
+    }
+
+    class Child extends Component {
+      static name = "child";
+    }
+
+    const app = start({ root: document, components: [Parent] });
+    const parent = app.roots;
+
+    const parentEl = document.querySelector('[data-component="parent"]');
+    const childEl = document.createElement("div");
+    childEl.setAttribute("data-component", "child");
+    parentEl.appendChild(childEl);
+
+    expect(childEl.instance).toBeUndefined();
+
+    const added = app.addComponents([Child]);
+
+    expect(added).toBeInstanceOf(Array);
+    expect(added[0]).toBeInstanceOf(Child);
+    expect(childEl.instance).toBeInstanceOf(Child);
+    expect(parent.children("child")).toEqual([childEl.instance]);
   });
 });

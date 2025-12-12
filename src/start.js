@@ -4,18 +4,33 @@ import { initMatches } from "./start/init";
 import { observe } from "./start/observe";
 import { destructArray } from "./start/helpers";
 
-// TODO: be able to add component classes after start() has been called
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
-  const componentClasses = Array.isArray(options.components)
-    ? options.components
-    : [];
+  const componentClasses = [...(options.components ?? [])];
+
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
+
   const instances = initMatches(nodes, componentClasses);
-  observe(searchRoot, componentClasses);
+  const observer = observe(searchRoot, componentClasses);
   const roots = instances.filter((i) => i.node.parent === null);
-  return destructArray(roots);
+
+  return {
+    roots: destructArray(roots), // TODO: array only
+    addComponents(newComponents) {
+      if (newComponents.length === 0) return null;
+
+      for (const ComponentClass of newComponents) {
+        if (!componentClasses.includes(ComponentClass)) {
+          componentClasses.push(ComponentClass);
+        }
+      }
+      const updatedNodes = buildElementTree(searchRoot);
+      validate(updatedNodes, componentClasses);
+
+      return observer.addComponents(newComponents);
+    },
+  };
 };
 
 export default start;

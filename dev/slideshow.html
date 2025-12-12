@@ -16,6 +16,17 @@
       <div data-component="slide"><span data-ref="caption">🙈 #2</span></div>
       <div data-component="slide"><span data-ref="caption">🙉 #3</span></div>
       <div data-component="slide"><span data-ref="caption">🙊 #4</span></div>
+
+      <script type="application/json" id="slides-data">
+        {
+          "slide": [
+            { "text": "🐵 #A" },
+            { "text": "🙈 #B" },
+            { "text": "🙉 #C" },
+            { "text": "🙊 #D" }
+          ]
+        }
+      </script>
     </div>
 
     <h2>Slideshow Manager</h2>
@@ -258,6 +269,12 @@
       }
 
       const app = start({ components: [Slide, Slideshow, SlideshowManager] });
+      console.log(app);
+
+      const slidesData = JSON.parse(document.getElementById("slides-data").textContent);
+      for (const [key, val] of Object.entries(slidesData)) {
+        console.log(key, val);
+      }
     </script>
 
     <p>
