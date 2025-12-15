@@ -122,7 +122,6 @@ export const observe = (searchRoot, componentClasses = []) => {
       if (!ComponentClass || typeof ComponentClass !== "function") continue;
       classByName.set(ComponentClass.name, ComponentClass);
     }
-
     const existing = existingElements(searchRoot);
     const filtered = filterElements(existing, classByName);
     if (filtered.length === 0) return [];

@@ -16,6 +16,7 @@ const start = (options = {}) => {
 
   return {
     roots: roots,
+    components: componentClasses,
     addComponents(newComponents) {
       if (newComponents.length === 0) return null;
 

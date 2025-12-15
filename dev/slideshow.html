@@ -269,12 +269,17 @@
       }
 
       const app = start({ components: [Slide, Slideshow, SlideshowManager] });
-      console.log(app);
+      console.log(app.components);
 
-      const slidesData = JSON.parse(document.getElementById("slides-data").textContent);
-      for (const [key, val] of Object.entries(slidesData)) {
-        console.log(key, val);
+      const slidesDataElement = document.getElementById("slides-data");
+      const slidesData = JSON.parse(slidesDataElement.textContent);
+      let slidesHtml = "";
+      for (const [, slides] of Object.entries(slidesData)) {
+        slides.forEach((slide) => {
+          slidesHtml += Slide.template({ ...slide, show: false });
+        });
       }
+      slidesDataElement.insertAdjacentHTML("afterend", slidesHtml);
     </script>
 
     <p>
