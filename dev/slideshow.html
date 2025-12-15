@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <title>Modest > Slideshow</title>
+    <style>
+      [data-component="slide"] > p {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
   </head>
   <body>
     <h1>Modest > Slideshow</h1>
@@ -12,10 +18,10 @@
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
 
-      <div data-component="slide"><span data-ref="caption">🐵 #1</span></div>
-      <div data-component="slide"><span data-ref="caption">🙈 #2</span></div>
-      <div data-component="slide"><span data-ref="caption">🙉 #3</span></div>
-      <div data-component="slide"><span data-ref="caption">🙊 #4</span></div>
+      <div data-component="slide"><p data-ref="content"><span data-ref="caption">🐵 #1</span></p></div>
+      <div data-component="slide"><p data-ref="content"><span data-ref="caption">🙈 #2</span></p></div>
+      <div data-component="slide"><p data-ref="content"><span data-ref="caption">🙉 #3</span></p></div>
+      <div data-component="slide"><p data-ref="content"><span data-ref="caption">🙊 #4</span></p></div>
 
       <script type="application/json" id="slides-data">
         {
@@ -51,7 +57,9 @@
             data-mode="${manage ? "manage" : ""}"
             ${show ? "" : "hidden"}
           >
-            ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
+            <p data-ref="content">
+              ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
+            </p>
           </div>
           `
         }
@@ -113,13 +121,13 @@
 
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
-          this.element.insertAdjacentHTML("afterbegin", bold);
+          this.ref("content").insertAdjacentHTML("afterbegin", bold);
           this.ref("caption").remove();
         }
 
         #boldToCaption(bold) {
           const caption = this.constructor.captionTemplate(bold.textContent);
-          this.element.insertAdjacentHTML("afterbegin", caption);
+          this.ref("content").insertAdjacentHTML("afterbegin", caption);
           bold.remove();
         }
 
@@ -137,7 +145,7 @@
             this.deleteButton.hidden = false;
             return;
           }
-          this.element.insertAdjacentHTML(
+          this.ref("content").insertAdjacentHTML(
             "beforeend",
             this.constructor.deleteButtonTemplate(),
           );
