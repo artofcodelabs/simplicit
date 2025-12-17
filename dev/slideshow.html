@@ -12,10 +12,22 @@
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
 
-      <div data-component="slide"><span data-ref="caption">🐵 #1</span></div>
-      <div data-component="slide"><span data-ref="caption">🙈 #2</span></div>
-      <div data-component="slide"><span data-ref="caption">🙉 #3</span></div>
-      <div data-component="slide"><span data-ref="caption">🙊 #4</span></div>
+      <div data-component="slide">
+        <span data-ref="caption">🐵 #1</span>
+        <a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>
+      </div>
+      <div data-component="slide">
+        <span data-ref="caption">🙈 #2</span>
+        <a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>
+      </div>
+      <div data-component="slide">
+        <span data-ref="caption">🙉 #3</span>
+        <a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>
+      </div>
+      <div data-component="slide">
+        <span data-ref="caption">🙊 #4</span>
+        <a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>
+      </div>
 
       <script type="application/json" id="slides-data">
         {
@@ -52,6 +64,7 @@
             ${show ? "" : "hidden"}
           >
             ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
+            <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
           </div>
           `
         }
@@ -64,19 +77,12 @@
           return `<b data-ref="bold-text">${text}</b>`;
         }
 
-        static deleteButtonTemplate = () => {
-          return `<a href="#" data-ref="delete" style="text-decoration: none;"> ❌</a>`
-        }
-
-        constructor() {
-          super();
-          this.deleteButton = null;
-        }
-
         connect() {
-          if (this.element.dataset.mode === "manage") {
-            this.#showDeleteButton();
-          }
+          this.on(this.ref("delete"), "click", (e) => {
+            e.preventDefault();
+            this.element.remove();
+          });
+          this.on(this.ref('caption'), 'click', () => console.log("editing caption..."));
         }
 
         isCurrent() {
@@ -133,24 +139,11 @@
 
         #showDeleteButton() {
           if (this.isCurrent()) return;
-          if (this.deleteButton) {
-            this.deleteButton.hidden = false;
-            return;
-          }
-          this.element.insertAdjacentHTML(
-            "beforeend",
-            this.constructor.deleteButtonTemplate(),
-          );
-          this.deleteButton = this.ref("delete");
-          this.on(this.deleteButton, "click", (e) => {
-            e.preventDefault();
-            this.element.remove();
-          });
+          this.ref("delete").hidden = false;
         }
 
         #hideDeleteButton() {
-          if (this.deleteButton === null) return;
-          this.deleteButton.hidden = true;
+          this.ref("delete").hidden = true;
         }
       }
 
@@ -193,7 +186,7 @@
 
         showSlides() {
           this.showAll = true;
-          this.children().forEach((slide) => slide.show());
+          this.children().forEach((slide) => slide.show()); // TODO: children("slide") required
         }
 
         hideSlides() {
