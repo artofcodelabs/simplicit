@@ -1,4 +1,4 @@
-const processedAttr = "data-loco-script-processed";
+const processedAttr = "data-script-processed";
 
 const isJsonTemplateScript = (node) =>
   node instanceof HTMLScriptElement &&
