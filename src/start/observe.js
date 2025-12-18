@@ -4,6 +4,9 @@ import { createNode } from "./node";
 
 const isScriptElement = (el) => el.tagName === "SCRIPT";
 
+const validNode = (node) =>
+  !isScriptElement(node) && node.hasAttribute(dataComponentAttribute);
+
 const instancesForElements = (elements, classByName) => {
   const instances = new Array();
   for (const el of elements) {
@@ -33,9 +36,7 @@ const addedElements = (mutations) => {
     for (const node of m.addedNodes) {
       if (!(node instanceof Element)) continue;
 
-      if (node.hasAttribute(dataComponentAttribute) && !isScriptElement(node)) {
-        added.add(node);
-      }
+      if (validNode(node)) added.add(node);
       node.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
         if (!isScriptElement(el)) added.add(el);
       });
@@ -50,9 +51,7 @@ const removedElements = (mutations) => {
     for (const node of m.removedNodes) {
       if (!(node instanceof Element)) continue;
 
-      if (node.hasAttribute(dataComponentAttribute) && !isScriptElement(node)) {
-        removed.add(node);
-      }
+      if (validNode(node)) removed.add(node);
       node.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
         if (!isScriptElement(el)) removed.add(el);
       });
@@ -64,12 +63,7 @@ const removedElements = (mutations) => {
 const existingElements = (searchRoot) => {
   const elements = new Set();
   if (searchRoot instanceof Element) {
-    if (
-      searchRoot.hasAttribute(dataComponentAttribute) &&
-      !isScriptElement(searchRoot)
-    ) {
-      elements.add(searchRoot);
-    }
+    if (validNode(searchRoot)) elements.add(searchRoot);
   }
   if (typeof searchRoot.querySelectorAll === "function") {
     searchRoot.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
