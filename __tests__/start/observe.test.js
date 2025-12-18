@@ -32,6 +32,18 @@ describe("ensureObservation", () => {
     document.body.innerHTML = "";
   });
 
+  it("does not auto-initialize <script> elements even if they have data-component", async () => {
+    const root = document.body;
+    observe(root, [Clock]);
+
+    const script = document.createElement("script");
+    script.setAttribute("data-component", "clock");
+    root.appendChild(script);
+
+    await expect(waitFor(() => !!script.instance)).rejects.toThrow("timeout");
+    expect(script.instance).toBeUndefined();
+  });
+
   it("auto-initializes components added after observation begins", async () => {
     const root = document.body;
     observe(root, [Clock]);

@@ -19,6 +19,21 @@ describe("buildElementTree (scanning)", () => {
       elements.some((e) => e.getAttribute("data-component") === "child"),
     ).toBe(true);
   });
+
+  it("skips <script> elements even if they have the data-component attribute", () => {
+    document.body.innerHTML = `
+      <div data-component="root">
+        <script data-component="script-comp"></script>
+        <div data-component="child"></div>
+      </div>
+    `;
+    const root = document.querySelector('[data-component="root"]');
+    const nodes = buildElementTree(root);
+    const names = nodes.map((n) => n.name);
+    expect(names).toContain("root");
+    expect(names).toContain("child");
+    expect(names).not.toContain("script-comp");
+  });
 });
 
 describe("buildElementTree", () => {

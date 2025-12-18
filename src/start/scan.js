@@ -4,7 +4,7 @@ import { createNode } from "./node";
 const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
     searchRoot.querySelectorAll(`[${dataComponentAttribute}]`),
-  );
+  ).filter((el) => el.tagName !== "SCRIPT");
   if (
     searchRoot instanceof Element &&
     searchRoot.hasAttribute(dataComponentAttribute) &&
