@@ -20,18 +20,19 @@ const start = (options = {}) => {
     roots: roots,
     components: componentClasses,
     addComponents(newComponents) {
-      if (newComponents.length === 0) return null;
+      const filteredNewComponents = newComponents.filter(
+        (ComponentClass) =>
+          typeof ComponentClass === "function" &&
+          !componentClasses.includes(ComponentClass),
+      );
+      if (filteredNewComponents.length === 0) return null;
 
-      for (const ComponentClass of newComponents) {
-        if (!componentClasses.includes(ComponentClass)) {
-          componentClasses.push(ComponentClass);
-        }
-      }
+      componentClasses.push(...filteredNewComponents);
       const updatedNodes = buildElementTree(searchRoot);
       validate(updatedNodes, componentClasses);
 
-      const newInstances = observer.addComponents(newComponents);
-      scriptObserver.addComponents(newComponents);
+      const newInstances = observer.addComponents(filteredNewComponents);
+      scriptObserver.addComponents(filteredNewComponents);
       return newInstances;
     },
   };

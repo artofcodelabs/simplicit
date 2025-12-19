@@ -8,7 +8,7 @@ const validNode = (node) =>
   !isScriptElement(node) && node.hasAttribute(dataComponentAttribute);
 
 const instancesForElements = (elements, classByName) => {
-  const instances = new Array();
+  const instances = [];
   for (const el of elements) {
     const name = el.getAttribute(dataComponentAttribute);
     const ComponentClass = classByName.get(name);
@@ -123,7 +123,6 @@ export const observe = (searchRoot, componentClasses = []) => {
 
   const addComponents = (newComponentClasses = []) => {
     for (const ComponentClass of newComponentClasses) {
-      if (!ComponentClass || typeof ComponentClass !== "function") continue;
       classByName.set(ComponentClass.name, ComponentClass);
     }
     const existing = existingElements(searchRoot);

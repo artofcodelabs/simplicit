@@ -61,13 +61,8 @@ export const observeScripts = (searchRoot, componentClasses) => {
 
   return {
     addComponents(newComponentClasses = []) {
-      for (const ComponentClass of newComponentClasses) {
-        if (!ComponentClass || typeof ComponentClass !== "function") continue;
-        if (!componentClasses.includes(ComponentClass)) {
-          componentClasses.push(ComponentClass);
-        }
-      }
-      processScripts(searchRoot, newComponentClasses);
+      componentClasses.push(...newComponentClasses);
+      processScripts(searchRoot, componentClasses);
     },
     disconnect() {
       observer.disconnect();
