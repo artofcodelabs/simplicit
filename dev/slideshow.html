@@ -13,19 +13,7 @@
       <button data-ref="next"> → </button>
 
       <div data-component="slide">
-        <span data-ref="caption">🐵 #1</span>
-        <a href="#" data-ref="delete" style="text-decoration: none;" hidden> ❌</a>
-      </div>
-      <div data-component="slide">
-        <span data-ref="caption">🙈 #2</span>
-        <a href="#" data-ref="delete" style="text-decoration: none;" hidden> ❌</a>
-      </div>
-      <div data-component="slide">
-        <span data-ref="caption">🙉 #3</span>
-        <a href="#" data-ref="delete" style="text-decoration: none;" hidden> ❌</a>
-      </div>
-      <div data-component="slide">
-        <span data-ref="caption">🙊 #4</span>
+        <span data-ref="caption" style="cursor: pointer;">🐵 #1</span>
         <a href="#" data-ref="delete" style="text-decoration: none;" hidden> ❌</a>
       </div>
 
@@ -54,25 +42,30 @@
       class Slide extends Component {
         static name = "slide";
 
-        static template = ({ text, show = false, manage = false, current = false }) => {
+        static template = ({ text, show = false, manage = false }) => {
           return `
           <div
             data-component="${Slide.name}"
             data-mode="${manage ? "manage" : ""}"
             ${show ? "" : "hidden"}
           >
-            ${current ? Slide.boldTextTemplate(text) : Slide.captionTemplate(text)}
+            ${Slide.captionTemplate(text)}
             <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
           </div>
           `
         }
 
         static captionTemplate = (text) => {
-          return `<span data-ref="caption">${text}</span>`;
+          return `<span data-ref="caption" style="cursor: pointer;">${text}</span>`;
         }
 
         static boldTextTemplate = (text) => {
           return `<b data-ref="bold-text">${text}</b>`;
+        }
+
+        constructor() {
+          super();
+          this.disableCaptionClick = null;
         }
 
         connect() {
@@ -80,7 +73,7 @@
             e.preventDefault();
             this.element.remove();
           });
-          this.on(this.ref('caption'), 'click', () => console.log("editing caption..."));
+          this.#addCaptionClick();
         }
 
         isCurrent() {
@@ -96,42 +89,44 @@
           this.element.hidden = true;
         }
 
-        setCurrent({ current, show }) {
-          const bold = this.ref("bold-text");
+        changeCurrent({ current, show }) {
           if (current) {
-            if (bold) return;
+            if (this.isCurrent()) return;
             this.#captionToBold();
+            this.#hideDeleteButton();
             this.show();
           } else {
-            if (!bold) return;
-            this.#boldToCaption(bold);
+            if (!this.isCurrent()) return;
+            this.#boldToCaption();
+            this.#displayDeleteButton();
             show ? this.show() : this.hide();
           }
-          this.#toggleDeleteButton();
         }
 
         changeMode(mode) {
           this.element.dataset.mode = mode;
-          this.#toggleDeleteButton();
+          this.#displayDeleteButton();
         }
 
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
           this.element.insertAdjacentHTML("afterbegin", bold);
+          this.disableCaptionClick();
           this.ref("caption").remove();
         }
 
-        #boldToCaption(bold) {
-          const caption = this.constructor.captionTemplate(bold.textContent);
+        #boldToCaption() {
+          const caption = this.constructor.captionTemplate(this.ref("bold-text").textContent);
           this.element.insertAdjacentHTML("afterbegin", caption);
-          bold.remove();
+          this.ref("bold-text").remove();
+          this.#addCaptionClick();
         }
 
-        #toggleDeleteButton() {
-          if (this.isCurrent() || this.element.dataset.mode !== "manage") {
-            this.#hideDeleteButton();
-          } else {
+        #displayDeleteButton() {
+          if (this.element.dataset.mode === "manage") {
             this.#showDeleteButton();
+          } else {
+            this.#hideDeleteButton();
           }
         }
 
@@ -142,6 +137,12 @@
 
         #hideDeleteButton() {
           this.ref("delete").hidden = true;
+        }
+
+        #addCaptionClick() {
+          this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
+            console.log("editing caption...")
+          });
         }
       }
 
@@ -167,7 +168,7 @@
         connect() {
           this.on(this.ref("previous"), "click", () => this.#changeSlideIndex(-1));
           this.on(this.ref("next"), "click", () => this.#changeSlideIndex(1));
-          this.#setCurrentSlide();
+          this.#setCurrentSlide(0);
           this.hideSlides();
         }
 
@@ -184,7 +185,7 @@
 
         showSlides() {
           this.showAll = true;
-          this.children().forEach((slide) => slide.show()); // TODO: children("slide") required
+          this.children().forEach((slide) => slide.show());
         }
 
         hideSlides() {
@@ -209,9 +210,8 @@
         }
 
         #setCurrentSlide(newIndex) {
-          newIndex = newIndex ?? this.currentSlideIndex;
           this.children().forEach((slide, index) => {
-            slide.setCurrent({ current: index === newIndex, show: this.showAll });
+            slide.changeCurrent({ current: index === newIndex, show: this.showAll });
           });
         }
       }
