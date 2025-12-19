@@ -13,9 +13,8 @@ const start = (options = {}) => {
 
   const instances = initMatches(nodes, componentClasses);
   const observer = observe(searchRoot, componentClasses);
+  const scriptObserver = observeScripts(searchRoot, componentClasses);
   const roots = instances.filter((i) => i.node.parent === null);
-
-  observeScripts(searchRoot, componentClasses);
 
   return {
     roots: roots,
@@ -31,7 +30,9 @@ const start = (options = {}) => {
       const updatedNodes = buildElementTree(searchRoot);
       validate(updatedNodes, componentClasses);
 
-      return observer.addComponents(newComponents);
+      const newInstances = observer.addComponents(newComponents);
+      scriptObserver.addComponents(newComponents);
+      return newInstances;
     },
   };
 };

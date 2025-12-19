@@ -21,11 +21,7 @@ const processScript = (script, componentClasses) => {
 
   const componentName = script.dataset.component;
   const componentClass = componentClasses.find((c) => c.name === componentName);
-  if (!componentClass) {
-    throw new Error(
-      `Script data-component="${componentName}" not found in componentClasses`,
-    );
-  }
+  if (!componentClass) return;
 
   const targetId = script.dataset.target;
   const targetEl = document.getElementById(targetId);
@@ -64,6 +60,15 @@ export const observeScripts = (searchRoot, componentClasses) => {
   observer.observe(searchRoot, { childList: true, subtree: true });
 
   return {
+    addComponents(newComponentClasses = []) {
+      for (const ComponentClass of newComponentClasses) {
+        if (!ComponentClass || typeof ComponentClass !== "function") continue;
+        if (!componentClasses.includes(ComponentClass)) {
+          componentClasses.push(ComponentClass);
+        }
+      }
+      processScripts(searchRoot, newComponentClasses);
+    },
     disconnect() {
       observer.disconnect();
     },
