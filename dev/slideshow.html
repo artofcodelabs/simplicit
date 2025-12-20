@@ -12,11 +12,6 @@
       <button data-ref="previous"> ← </button>
       <button data-ref="next"> → </button>
 
-      <div data-component="slide">
-        <span data-ref="caption" style="cursor: pointer;">🐵 #1</span>
-        <a href="#" data-ref="delete" style="text-decoration: none;" hidden> ❌</a>
-      </div>
-
       <script type="application/json" data-component="slide" data-target="slideshow" data-position="beforeend">
         [
           { "text": "🐵 #A" },
@@ -74,6 +69,7 @@
             this.element.remove();
           });
           this.#addCaptionClick();
+          this.parent.checkIn(this);
         }
 
         isCurrent() {
@@ -156,16 +152,20 @@
         }
 
         get currentSlideIndex() {
-          let index = this.children("slide").findIndex((slide) => slide.isCurrent());
-          if (index === -1) index = 0;
-          return index;
+          return this.children("slide").findIndex((slide) => slide.isCurrent());
         }
 
         connect() {
           this.on(this.ref("previous"), "click", () => this.#changeSlideIndex(-1));
           this.on(this.ref("next"), "click", () => this.#changeSlideIndex(1));
-          this.#setCurrentSlide(0);
-          this.hideSlides();
+        }
+
+        checkIn(slide) {
+          if (this.currentSlideIndex !== -1) return;
+          const initCurrentSlideIndex = 0;
+          if (this.children("slide").findIndex((s) => s === slide) === initCurrentSlideIndex) {
+            this.#changeCurrentSlide(initCurrentSlideIndex);
+          }
         }
 
         addSlide(text) {
@@ -200,10 +200,10 @@
           if (newIndex < 0) {
             newIndex = this.slidesNumber - 1;
           }
-          this.#setCurrentSlide(newIndex);
+          this.#changeCurrentSlide(newIndex);
         }
 
-        #setCurrentSlide(newIndex) {
+        #changeCurrentSlide(newIndex) {
           this.children().forEach((slide, index) => {
             slide.changeCurrent({ current: index === newIndex, show: this.showAll });
           });
