@@ -98,14 +98,14 @@
           } else {
             if (!this.isCurrent()) return;
             this.#boldToCaption();
-            this.#displayDeleteButton();
+            this.#handleDeleteButton();
             show ? this.show() : this.hide();
           }
         }
 
         changeMode(mode) {
           this.element.dataset.mode = mode;
-          this.#displayDeleteButton();
+          this.#handleDeleteButton();
         }
 
         #captionToBold() {
@@ -118,21 +118,17 @@
         #boldToCaption() {
           const caption = this.constructor.captionTemplate(this.ref("bold-text").textContent);
           this.element.insertAdjacentHTML("afterbegin", caption);
-          this.ref("bold-text").remove();
           this.#addCaptionClick();
+          this.ref("bold-text").remove();
         }
 
-        #displayDeleteButton() {
+        #handleDeleteButton() {
           if (this.element.dataset.mode === "manage") {
-            this.#showDeleteButton();
+            if (this.isCurrent()) return;
+            this.ref("delete").hidden = false;
           } else {
             this.#hideDeleteButton();
           }
-        }
-
-        #showDeleteButton() {
-          if (this.isCurrent()) return;
-          this.ref("delete").hidden = false;
         }
 
         #hideDeleteButton() {
