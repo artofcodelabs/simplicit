@@ -169,12 +169,10 @@
         }
 
         addSlide(text) {
-          const isFirstSlide = this.slidesNumber === 0;
           const slideHtml = Slide.template({
             text,
             show: this.showAll,
             manage: this.manageSlides,
-            current: isFirstSlide,
           });
           this.element.insertAdjacentHTML("beforeend", slideHtml);
         }
