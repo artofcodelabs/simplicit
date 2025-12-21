@@ -16,6 +16,7 @@ const collectScripts = (node) => {
   return scripts;
 };
 
+// TODO: component without template
 const processScript = (script, componentClasses) => {
   if (script.hasAttribute(processedAttr)) return;
 

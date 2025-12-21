@@ -41,39 +41,52 @@
           return `
           <div
             data-component="${Slide.name}"
-            data-mode="${manage ? "manage" : ""}"
             ${show ? "" : "hidden"}
           >
-            ${Slide.captionTemplate(text)}
+            ${Slide.captionTemplate(text, manage)}
             <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
           </div>
-          `
+          `;
         }
 
-        static captionTemplate = (text) => {
-          return `<span data-ref="caption" style="cursor: pointer;">${text}</span>`;
+        static captionTemplate = (text, manage) => {
+          return `
+          <span data-ref="caption" style="cursor: ${manage ? "pointer" : "default"};">
+            ${text}
+          </span>
+          `;
         }
 
         static boldTextTemplate = (text) => {
           return `<b data-ref="bold-text">${text}</b>`;
         }
 
-        constructor() {
-          super();
-          this.disableCaptionClick = null;
+        static editTemplate = (text) => {
+          return `<input type="text" data-ref="edit" value="${text}" />`;
         }
 
+        constructor() {
+          super();
+          this.disableCaptionClick = () => {}; // TODO: null
+        }
+
+        // rendered
         connect() {
           this.on(this.ref("delete"), "click", (e) => {
             e.preventDefault();
             this.element.remove();
           });
-          this.#addCaptionClick();
           this.parent.checkIn(this);
         }
 
+        // TODO:to private
         isCurrent() {
           return this.ref("bold-text") !== null;
+        }
+
+        // TODO:to private
+        isInManagement() {
+          return this.ref("delete").hidden === false;
         }
 
         show() {
@@ -85,30 +98,30 @@
           this.element.hidden = true;
         }
 
-        changeCurrent({ current, show }) {
+        changeCurrent({ current, show, manage }) {
           if (current) {
             if (this.isCurrent()) return;
+            this.changeMode(false);
             this.#captionToBold();
-            this.#hideDeleteButton();
             this.show();
           } else {
             if (!this.isCurrent()) return;
             this.#boldToCaption();
-            this.#handleDeleteButton();
             show ? this.show() : this.hide();
+            this.changeMode(manage);
           }
         }
 
-        changeMode(mode) {
-          this.element.dataset.mode = mode;
-          this.#handleDeleteButton();
+        changeMode(manage) {
+          if (this.isCurrent()) return;
+
+          manage ? this.#enableManagement() : this.#disableManagement();
         }
 
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
           this.element.insertAdjacentHTML("afterbegin", bold);
-          this.disableCaptionClick();
-          this.ref("caption").remove();
+          this.#removeCaption();
         }
 
         #boldToCaption() {
@@ -118,22 +131,34 @@
           this.ref("bold-text").remove();
         }
 
-        #handleDeleteButton() {
-          if (this.element.dataset.mode === "manage") {
-            if (this.isCurrent()) return;
-            this.ref("delete").hidden = false;
-          } else {
-            this.#hideDeleteButton();
-          }
+        #captionToEdit() {
+          const edit = this.constructor.editTemplate(this.ref("caption").textContent);
+          this.element.insertAdjacentHTML("afterbegin", edit);
+          this.#removeCaption();
         }
 
-        #hideDeleteButton() {
+        #removeCaption() {
+          this.disableCaptionClick();
+          this.ref("caption").remove();
+        }
+
+        #enableManagement() {
+          this.ref("delete").hidden = false;
+          this.ref("caption").style.cursor = "pointer";
+          this.#addCaptionClick();
+        }
+
+        #disableManagement() {
+          if (!this.isInManagement()) return; // TODO: move it
+
           this.ref("delete").hidden = true;
+          this.ref("caption").style.cursor = "default";
+          this.disableCaptionClick();
         }
 
         #addCaptionClick() {
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
-            console.log("editing caption...")
+            this.#captionToEdit();
           });
         }
       }
@@ -162,7 +187,7 @@
 
         checkIn(slide) {
           if (this.currentSlideIndex !== -1) return;
-          const initCurrentSlideIndex = 0;
+          const initCurrentSlideIndex = 1;
           if (this.children("slide").findIndex((s) => s === slide) === initCurrentSlideIndex) {
             this.#changeCurrentSlide(initCurrentSlideIndex);
           }
@@ -189,12 +214,12 @@
 
         showDeleteButtons() {
           this.manageSlides = true;
-          this.children().forEach((slide) => slide.changeMode("manage"));
+          this.children().forEach((slide) => slide.changeMode(true));
         }
 
         hideDeleteButtons() {
           this.manageSlides = false;
-          this.children().forEach((slide) => slide.changeMode(""));
+          this.children().forEach((slide) => slide.changeMode(false));
         }
 
         #changeCurrentSlideIndex(diff = 0) {
@@ -210,7 +235,7 @@
 
         #changeCurrentSlide(newIndex) {
           this.children().forEach((slide, index) => {
-            slide.changeCurrent({ current: index === newIndex, show: this.showAll });
+            slide.changeCurrent({ current: index === newIndex, show: this.showAll, manage: this.manageSlides });
           });
         }
       }
