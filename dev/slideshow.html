@@ -156,8 +156,8 @@
         }
 
         connect() {
-          this.on(this.ref("previous"), "click", () => this.#changeSlideIndex(-1));
-          this.on(this.ref("next"), "click", () => this.#changeSlideIndex(1));
+          this.on(this.ref("previous"), "click", () => this.#changeCurrentSlideIndex(-1));
+          this.on(this.ref("next"), "click", () => this.#changeCurrentSlideIndex(1));
         }
 
         checkIn(slide) {
@@ -187,12 +187,17 @@
           this.children().forEach((slide) => slide.hide());
         }
 
-        toggleDeleteButtons() {
-          this.manageSlides = !this.manageSlides;
-          this.children().forEach((slide) => slide.changeMode(this.manageSlides ? "manage" : ""));
+        showDeleteButtons() {
+          this.manageSlides = true;
+          this.children().forEach((slide) => slide.changeMode("manage"));
         }
 
-        #changeSlideIndex(diff = 0) {
+        hideDeleteButtons() {
+          this.manageSlides = false;
+          this.children().forEach((slide) => slide.changeMode(""));
+        }
+
+        #changeCurrentSlideIndex(diff = 0) {
           let newIndex = this.currentSlideIndex + diff;
           if (newIndex >= this.slidesNumber) {
             newIndex = 0;
@@ -242,14 +247,17 @@
         #hideSlides() {
           this.slideshow.hideSlides();
           this.ref("manage-slides").disabled = true;
-          if (this.manageSlides) {
-            this.#manageSlides();
-          }
+          this.manageSlides = false;
+          this.slideshow.hideDeleteButtons();
         }
 
         #manageSlides() {
           this.manageSlides = !this.manageSlides;
-          this.slideshow.toggleDeleteButtons();
+          if (this.manageSlides) {
+            this.slideshow.showDeleteButtons();
+          } else {
+            this.slideshow.hideDeleteButtons();
+          }
         }
       }
 
