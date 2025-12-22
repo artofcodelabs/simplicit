@@ -79,14 +79,8 @@
           this.parent.checkIn(this);
         }
 
-        // TODO:to private
         isCurrent() {
           return this.ref("bold-text") !== null;
-        }
-
-        // TODO:to private
-        isInManagement() {
-          return this.ref("delete").hidden === false;
         }
 
         show() {
@@ -149,8 +143,6 @@
         }
 
         #disableManagement() {
-          if (!this.isInManagement()) return; // TODO: move it
-
           this.ref("delete").hidden = true;
           this.ref("caption").style.cursor = "default";
           this.disableCaptionClick();
