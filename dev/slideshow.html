@@ -76,6 +76,7 @@
             e.preventDefault();
             this.element.remove();
           });
+          if (this.#isInManagement()) this.#addCaptionClick();
           this.parent.checkIn(this);
         }
 
@@ -112,6 +113,10 @@
           manage ? this.#enableManagement() : this.#disableManagement();
         }
 
+        #isInManagement() {
+          return this.ref("delete").hidden === false;
+        }
+
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
           this.element.insertAdjacentHTML("afterbegin", bold);
@@ -143,9 +148,9 @@
         }
 
         #disableManagement() {
-          this.ref("delete").hidden = true;
-          this.ref("caption").style.cursor = "default";
           this.disableCaptionClick();
+          this.ref("caption").style.cursor = "default";
+          this.ref("delete").hidden = true;
         }
 
         #addCaptionClick() {
