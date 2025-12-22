@@ -67,7 +67,7 @@
 
         constructor() {
           super();
-          this.disableCaptionClick = () => {}; // TODO: null
+          this.disableCaptionClick = null;
         }
 
         // rendered
@@ -76,7 +76,7 @@
             e.preventDefault();
             this.element.remove();
           });
-          if (this.#isInManagement()) this.#addCaptionClick();
+          this.#addCaptionClick();
           this.parent.checkIn(this);
         }
 
@@ -110,7 +110,11 @@
         changeMode(manage) {
           if (this.isCurrent()) return;
 
-          manage ? this.#enableManagement() : this.#disableManagement();
+          if ( manage && !this.#isInManagement() ) {
+            this.#enableManagement();
+          } else if ( !manage && this.#isInManagement() ) {
+            this.#disableManagement();
+          }
         }
 
         #isInManagement() {
@@ -155,6 +159,8 @@
 
         #addCaptionClick() {
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
+            if (!this.#isInManagement()) return;
+
             this.#captionToEdit();
           });
         }
