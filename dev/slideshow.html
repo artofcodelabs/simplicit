@@ -37,6 +37,7 @@
       class Slide extends Component {
         static name = "slide";
 
+        // render
         static template = ({ text, show = false, manage = false }) => {
           return `
           <div
@@ -67,6 +68,7 @@
 
         constructor() {
           super();
+          this.current = false;
           this.disableCaptionClick = null;
         }
 
@@ -80,35 +82,31 @@
           this.parent.checkIn(this);
         }
 
-        isCurrent() {
-          return this.ref("bold-text") !== null;
-        }
-
         show() {
           this.element.hidden = false;
         }
 
         hide() {
-          if (this.isCurrent()) return;
+          if (this.current) return;
           this.element.hidden = true;
         }
 
         changeCurrent({ current, show, manage }) {
-          if (current) {
-            if (this.isCurrent()) return;
-            this.changeMode(false);
+          if (current && !this.current) {
+            this.#disableManagement();
             this.#captionToBold();
+            this.current = true;
             this.show();
-          } else {
-            if (!this.isCurrent()) return;
+          } else if (!current && this.current) {
             this.#boldToCaption();
-            show ? this.show() : this.hide();
+            this.current = false;
             this.changeMode(manage);
+            show ? this.show() : this.hide();
           }
         }
 
         changeMode(manage) {
-          if (this.isCurrent()) return;
+          if (this.current) return;
 
           if ( manage && !this.#isInManagement() ) {
             this.#enableManagement();
@@ -119,6 +117,14 @@
 
         #isInManagement() {
           return this.ref("delete").hidden === false;
+        }
+
+        #addCaptionClick() {
+          this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
+            if (!this.#isInManagement()) return;
+
+            this.#captionToEdit();
+          });
         }
 
         #captionToBold() {
@@ -134,15 +140,15 @@
           this.ref("bold-text").remove();
         }
 
+        #removeCaption() {
+          this.disableCaptionClick();
+          this.ref("caption").remove();
+        }
+
         #captionToEdit() {
           const edit = this.constructor.editTemplate(this.ref("caption").textContent);
           this.element.insertAdjacentHTML("afterbegin", edit);
           this.#removeCaption();
-        }
-
-        #removeCaption() {
-          this.disableCaptionClick();
-          this.ref("caption").remove();
         }
 
         #enableManagement() {
@@ -155,14 +161,6 @@
           this.disableCaptionClick();
           this.ref("caption").style.cursor = "default";
           this.ref("delete").hidden = true;
-        }
-
-        #addCaptionClick() {
-          this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
-            if (!this.#isInManagement()) return;
-
-            this.#captionToEdit();
-          });
         }
       }
 
@@ -180,7 +178,7 @@
         }
 
         get currentSlideIndex() {
-          return this.children("slide").findIndex((slide) => slide.isCurrent());
+          return this.children("slide").findIndex((slide) => slide.current);
         }
 
         connect() {
