@@ -72,11 +72,13 @@
         constructor() {
           super();
           this.current = false;
+          this.caption = null
           this.disableCaptionClick = null;
         }
 
         // rendered
         connect() {
+          this.caption = this.ref("caption").textContent.trim();
           this.on(this.ref("delete"), "click", (e) => {
             e.preventDefault();
             this.element.remove();
@@ -142,13 +144,13 @@
         }
 
         #captionToBold() {
-          const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
+          const bold = this.constructor.boldTextTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", bold);
           this.#removeCaption();
         }
 
         #boldToCaption() {
-          const caption = this.constructor.captionTemplate(this.ref("bold-text").textContent);
+          const caption = this.constructor.captionTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", caption);
           this.#addCaptionClick();
           this.ref("bold-text").remove();
@@ -160,7 +162,7 @@
         }
 
         #captionToEdit() {
-          const edit = this.constructor.editTemplate(this.ref("caption").textContent.trim());
+          const edit = this.constructor.editTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", edit);
           this.#addEditSubmit();
           this.ref("edit").focus();
@@ -169,7 +171,7 @@
         }
 
         #editToCaption() {
-          const caption = this.constructor.captionTemplate(this.ref("edit").value);
+          const caption = this.constructor.captionTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", caption);
           // TODO: remove event listener
           this.ref("edit-form").remove();
