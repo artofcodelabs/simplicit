@@ -64,7 +64,7 @@
         static editTemplate = (text) => {
           return `
           <form data-ref="edit-form">
-            <input type="text" value="${text}" />
+            <input data-ref="edit" type="text" value="${text}" />
           </form>
           `;
         }
@@ -137,7 +137,7 @@
         #addEditSubmit() {
           this.on(this.ref("edit-form"), "submit", (e) => {
             e.preventDefault();
-            console.log("submit", this.ref("edit-form").querySelector("input").value);
+            console.log("submit", this.ref("edit").value);
           });
         }
 
@@ -163,7 +163,8 @@
           const edit = this.constructor.editTemplate(this.ref("caption").textContent.trim());
           this.element.insertAdjacentHTML("afterbegin", edit);
           this.#addEditSubmit();
-          this.ref("edit-form").querySelector("input").focus(); // TODO: move to the end
+          this.ref("edit").focus();
+          this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
           this.#removeCaption();
         }
 
