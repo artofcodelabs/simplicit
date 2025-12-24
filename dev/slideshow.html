@@ -37,7 +37,6 @@
       class Slide extends Component {
         static name = "slide";
 
-        // render
         static template = ({ text, show = false, manage = false }) => {
           return `
           <div
@@ -63,7 +62,11 @@
         }
 
         static editTemplate = (text) => {
-          return `<input type="text" data-ref="edit" value="${text}" />`;
+          return `
+          <form data-ref="edit-form">
+            <input type="text" value="${text}" />
+          </form>
+          `;
         }
 
         constructor() {
@@ -131,6 +134,13 @@
           });
         }
 
+        #addEditSubmit() {
+          this.on(this.ref("edit-form"), "submit", (e) => {
+            e.preventDefault();
+            console.log("submit", this.ref("edit-form").querySelector("input").value);
+          });
+        }
+
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.ref("caption").textContent);
           this.element.insertAdjacentHTML("afterbegin", bold);
@@ -152,13 +162,16 @@
         #captionToEdit() {
           const edit = this.constructor.editTemplate(this.ref("caption").textContent.trim());
           this.element.insertAdjacentHTML("afterbegin", edit);
+          this.#addEditSubmit();
+          this.ref("edit-form").querySelector("input").focus(); // TODO: move to the end
           this.#removeCaption();
         }
 
         #editToCaption() {
           const caption = this.constructor.captionTemplate(this.ref("edit").value);
           this.element.insertAdjacentHTML("afterbegin", caption);
-          this.ref("edit").remove();
+          // TODO: remove event listener
+          this.ref("edit-form").remove();
         }
 
         #enableManagement() {
