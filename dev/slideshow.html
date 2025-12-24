@@ -108,20 +108,24 @@
         changeMode(manage) {
           if (this.current) return;
 
-          if ( manage && !this.#isInManagement() ) {
+          if ( manage && !this.#isManaging() ) {
             this.#enableManagement();
-          } else if ( !manage && this.#isInManagement() ) {
+          } else if ( !manage && this.#isManaging() ) {
             this.#disableManagement();
           }
         }
 
-        #isInManagement() {
+        #isManaging() {
           return this.ref("delete").hidden === false;
+        }
+
+        #isEditing() {
+          return this.ref("edit") !== null;
         }
 
         #addCaptionClick() {
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
-            if (!this.#isInManagement()) return;
+            if (!this.#isManaging()) return;
 
             this.#captionToEdit();
           });
@@ -146,9 +150,15 @@
         }
 
         #captionToEdit() {
-          const edit = this.constructor.editTemplate(this.ref("caption").textContent);
+          const edit = this.constructor.editTemplate(this.ref("caption").textContent.trim());
           this.element.insertAdjacentHTML("afterbegin", edit);
           this.#removeCaption();
+        }
+
+        #editToCaption() {
+          const caption = this.constructor.captionTemplate(this.ref("edit").value);
+          this.element.insertAdjacentHTML("afterbegin", caption);
+          this.ref("edit").remove();
         }
 
         #enableManagement() {
@@ -157,6 +167,7 @@
         }
 
         #disableManagement() {
+          if (this.#isEditing()) this.#editToCaption();
           this.ref("caption").style.cursor = "default";
           this.ref("delete").hidden = true;
         }
