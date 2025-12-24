@@ -74,6 +74,7 @@
           this.current = false;
           this.caption = null
           this.disableCaptionClick = null;
+          this.disableEditSubmit = null;
         }
 
         // rendered
@@ -137,9 +138,10 @@
         }
 
         #addEditSubmit() {
-          this.on(this.ref("edit-form"), "submit", (e) => {
+          this.disableEditSubmit = this.on(this.ref("edit-form"), "submit", (e) => {
             e.preventDefault();
-            console.log("submit", this.ref("edit").value);
+            this.caption = this.ref("edit").value;
+            this.#editToCaption();
           });
         }
 
@@ -173,7 +175,7 @@
         #editToCaption() {
           const caption = this.constructor.captionTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", caption);
-          // TODO: remove event listener
+          this.disableEditSubmit();
           this.ref("edit-form").remove();
         }
 
