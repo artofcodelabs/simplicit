@@ -154,11 +154,9 @@
         #enableManagement() {
           this.ref("delete").hidden = false;
           this.ref("caption").style.cursor = "pointer";
-          this.#addCaptionClick();
         }
 
         #disableManagement() {
-          this.disableCaptionClick();
           this.ref("caption").style.cursor = "default";
           this.ref("delete").hidden = true;
         }
