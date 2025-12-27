@@ -75,6 +75,7 @@
           this.caption = null
           this.disableCaptionClick = null;
           this.disableEditSubmit = null;
+          this.disableEditKeydown = null;
         }
 
         // rendered
@@ -145,6 +146,14 @@
           });
         }
 
+        #addEditKeydown() {
+          this.disableEditKeydown = this.on(this.ref("edit"), "keydown", (e) => {
+            if (e.key !== "Escape") return;
+            e.preventDefault();
+            this.#editToCaption();
+          });
+        }
+
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", bold);
@@ -167,15 +176,18 @@
           const edit = this.constructor.editTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", edit);
           this.#addEditSubmit();
+          this.#addEditKeydown();
           this.ref("edit").focus();
           this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
           this.#removeCaption();
         }
 
         #editToCaption() {
-          const caption = this.constructor.captionTemplate(this.caption);
+          const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
           this.element.insertAdjacentHTML("afterbegin", caption);
+          this.#addCaptionClick();
           this.disableEditSubmit();
+          this.disableEditKeydown();
           this.ref("edit-form").remove();
         }
 
