@@ -122,10 +122,11 @@
           }
         }
 
-        modifyCaption({ editable = true }) {
+        editable(editable) {
           if (this.current) return;
           if (this.#isEditing()) return;
-          this.ref("caption").style.cursor = editable ? "pointer" : "default";
+
+          this.#modifyCaption({ cursor: editable ? "pointer" : "default" });
         }
 
         #isEditable() {
@@ -144,7 +145,7 @@
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
             if (!this.#isManaging()) return;
             if (!this.#isEditable()) return;
-            this.parent.slideIsEditing();
+            this.parent.slideIsBeingEdited();
             this.#captionToEdit();
           });
         }
@@ -169,6 +170,10 @@
           const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
           this.element.insertAdjacentHTML("afterbegin", caption);
           this.#addCaptionClick();
+        }
+
+        #modifyCaption({ cursor }) {
+          this.ref("caption").style.cursor = cursor;
         }
 
         #removeCaption() {
@@ -210,7 +215,7 @@
         #editToCaption() {
           this.#removeEdit();
           this.#renderCaption();
-          this.parent.slideStoppedEditing();
+          this.parent.slideStoppedBeingEdited();
         }
 
         #enableManagement() {
@@ -255,12 +260,12 @@
           }
         }
 
-        slideIsEditing() {
-          this.children("slide").forEach((slide) => slide.modifyCaption({ editable: false }));
+        slideIsBeingEdited() {
+          this.children("slide").forEach((slide) => slide.editable(false));
         }
 
-        slideStoppedEditing() {
-          this.children("slide").forEach((slide) => slide.modifyCaption({ editable: true }));
+        slideStoppedBeingEdited() {
+          this.children("slide").forEach((slide) => slide.editable(true));
         }
 
         addSlide(text) {
