@@ -115,9 +115,9 @@
         changeMode(manage) {
           if (this.current) return;
 
-          if ( manage && !this.#isManaging() ) {
+          if (manage && !this.#isManaging()) {
             this.#enableManagement();
-          } else if ( !manage && this.#isManaging() ) {
+          } else if (!manage && this.#isManaging()) {
             this.#disableManagement();
           }
         }
@@ -165,10 +165,25 @@
           this.ref("caption").remove();
         }
 
+        #renderEdit() {
+          const edit = this.constructor.editTemplate(this.caption);
+          this.element.insertAdjacentHTML("afterbegin", edit);
+          this.#addEditSubmit();
+          this.#addEditKeydown();
+          this.ref("edit").focus();
+          this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
+        }
+
+        #removeEdit() {
+          this.disableEditSubmit();
+          this.disableEditKeydown();
+          this.ref("edit-form").remove();
+        }
+
         #captionToBold() {
+          this.#removeCaption();
           const bold = this.constructor.boldTextTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", bold);
-          this.#removeCaption();
         }
 
         #boldToCaption() {
@@ -177,19 +192,12 @@
         }
 
         #captionToEdit() {
-          const edit = this.constructor.editTemplate(this.caption);
-          this.element.insertAdjacentHTML("afterbegin", edit);
-          this.#addEditSubmit();
-          this.#addEditKeydown();
-          this.ref("edit").focus();
-          this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
           this.#removeCaption();
+          this.#renderEdit();
         }
 
         #editToCaption() {
-          this.disableEditSubmit();
-          this.disableEditKeydown();
-          this.ref("edit-form").remove();
+          this.#removeEdit();
           this.#renderCaption();
         }
 
