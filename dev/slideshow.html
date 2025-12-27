@@ -122,17 +122,18 @@
           }
         }
 
-        #isManaging() {
-          return this.ref("delete").hidden === false;
+        isEditing() {
+          return this.ref("edit") !== null;
         }
 
-        #isEditing() {
-          return this.ref("edit") !== null;
+        #isManaging() {
+          return this.ref("delete").hidden === false;
         }
 
         #addCaptionClick() {
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
             if (!this.#isManaging()) return;
+            if (this.parent.isSlideEditing()) return;
 
             this.#captionToEdit();
           });
@@ -207,7 +208,7 @@
         }
 
         #disableManagement() {
-          if (this.#isEditing()) this.#editToCaption();
+          if (this.isEditing()) this.#editToCaption();
           this.ref("caption").style.cursor = "default";
           this.ref("delete").hidden = true;
         }
@@ -241,6 +242,10 @@
           if (this.children("slide").findIndex((s) => s === slide) === initCurrentSlideIndex) {
             this.#changeCurrentSlide(initCurrentSlideIndex);
           }
+        }
+
+        isSlideEditing() {
+          return this.children("slide").some((slide) => slide.isEditing());
         }
 
         addSlide(text) {
