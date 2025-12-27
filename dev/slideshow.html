@@ -154,6 +154,17 @@
           });
         }
 
+        #renderCaption() {
+          const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
+          this.element.insertAdjacentHTML("afterbegin", caption);
+          this.#addCaptionClick();
+        }
+
+        #removeCaption() {
+          this.disableCaptionClick();
+          this.ref("caption").remove();
+        }
+
         #captionToBold() {
           const bold = this.constructor.boldTextTemplate(this.caption);
           this.element.insertAdjacentHTML("afterbegin", bold);
@@ -161,15 +172,8 @@
         }
 
         #boldToCaption() {
-          const caption = this.constructor.captionTemplate(this.caption);
-          this.element.insertAdjacentHTML("afterbegin", caption);
-          this.#addCaptionClick();
           this.ref("bold-text").remove();
-        }
-
-        #removeCaption() {
-          this.disableCaptionClick();
-          this.ref("caption").remove();
+          this.#renderCaption();
         }
 
         #captionToEdit() {
@@ -183,12 +187,10 @@
         }
 
         #editToCaption() {
-          const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
-          this.element.insertAdjacentHTML("afterbegin", caption);
-          this.#addCaptionClick();
           this.disableEditSubmit();
           this.disableEditKeydown();
           this.ref("edit-form").remove();
+          this.#renderCaption();
         }
 
         #enableManagement() {
