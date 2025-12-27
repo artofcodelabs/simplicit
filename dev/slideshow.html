@@ -72,7 +72,7 @@
         constructor() {
           super();
           this.current = false;
-          this.caption = null
+          this.caption = null;
           this.disableCaptionClick = null;
           this.disableEditSubmit = null;
           this.disableEditKeydown = null;
@@ -122,7 +122,17 @@
           }
         }
 
-        isEditing() {
+        modifyCaption({ editable = true }) {
+          if (this.current) return;
+          if (this.#isEditing()) return;
+          this.ref("caption").style.cursor = editable ? "pointer" : "default";
+        }
+
+        #isEditable() {
+          return this.ref("caption").style.cursor === "pointer";
+        }
+
+        #isEditing() {
           return this.ref("edit") !== null;
         }
 
@@ -133,8 +143,8 @@
         #addCaptionClick() {
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
             if (!this.#isManaging()) return;
-            if (this.parent.isSlideEditing()) return;
-
+            if (!this.#isEditable()) return;
+            this.parent.slideIsEditing();
             this.#captionToEdit();
           });
         }
@@ -200,6 +210,7 @@
         #editToCaption() {
           this.#removeEdit();
           this.#renderCaption();
+          this.parent.slideStoppedEditing();
         }
 
         #enableManagement() {
@@ -208,7 +219,7 @@
         }
 
         #disableManagement() {
-          if (this.isEditing()) this.#editToCaption();
+          if (this.#isEditing()) this.#editToCaption();
           this.ref("caption").style.cursor = "default";
           this.ref("delete").hidden = true;
         }
@@ -244,8 +255,12 @@
           }
         }
 
-        isSlideEditing() {
-          return this.children("slide").some((slide) => slide.isEditing());
+        slideIsEditing() {
+          this.children("slide").forEach((slide) => slide.modifyCaption({ editable: false }));
+        }
+
+        slideStoppedEditing() {
+          this.children("slide").forEach((slide) => slide.modifyCaption({ editable: true }));
         }
 
         addSlide(text) {
