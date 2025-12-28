@@ -207,20 +207,23 @@ describe("start", () => {
       components: [Parent, ChildA, ChildB, Grandchild],
     });
     const parent = app.roots[0];
+    const children = ["child-a", "child-b", "grandchild"];
     expect(parent.element.getAttribute("data-component")).toBe("parent");
     expect(
-      parent.children().map((c) => c.element.getAttribute("data-component")),
+      parent
+        .children(children)
+        .map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["child-a", "child-b"]);
-    const childB = parent.children()[1];
-    expect(childB.children()).toHaveLength(1);
-    expect(childB.children()[0].element.getAttribute("data-component")).toBe(
-      "grandchild",
-    );
+    const childB = parent.children(children)[1];
+    expect(childB.children(children)).toHaveLength(1);
+    expect(
+      childB.children(children)[0].element.getAttribute("data-component"),
+    ).toBe("grandchild");
     // parent references
     expect(parent.parent).toBeUndefined();
-    expect(parent.children()[0].parent).toBe(parent);
+    expect(parent.children(children)[0].parent).toBe(parent);
     expect(childB.parent).toBe(parent);
-    expect(childB.children()[0].parent).toBe(childB);
+    expect(childB.children(children)[0].parent).toBe(childB);
   });
 
   it("reflects consistent relationships across multiple runs", () => {
@@ -239,8 +242,8 @@ describe("start", () => {
       .roots[0];
     const second = start({ root: document, components: [Parent, Child] })
       .roots[0];
-    expect(first.children()).toHaveLength(1);
-    expect(second.children()).toHaveLength(1);
+    expect(first.children("child")).toHaveLength(1);
+    expect(second.children("child")).toHaveLength(1);
   });
 
   it("reflects DOM changes between calls", () => {
@@ -254,7 +257,7 @@ describe("start", () => {
       static name = "child";
     }
     const before = start({ root: document, components: [Parent] }).roots[0];
-    expect(before.children()).toHaveLength(0);
+    expect(before.children("child")).toHaveLength(0);
     const parent = document.querySelector('[data-component="parent"]');
     const child = document.createElement("div");
     child.setAttribute("data-component", "child");
@@ -262,7 +265,9 @@ describe("start", () => {
     const after = start({ root: document, components: [Parent, Child] })
       .roots[0];
     expect(
-      after.children().map((c) => c.element.getAttribute("data-component")),
+      after
+        .children("child")
+        .map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["child"]);
   });
 
@@ -291,14 +296,18 @@ describe("start", () => {
     const resultA = start({ root: rootA, components: [A, A1, B, B1] }).roots[0];
     expect(resultA.element.getAttribute("data-component")).toBe("A");
     expect(
-      resultA.children().map((c) => c.element.getAttribute("data-component")),
+      resultA
+        .children("A1")
+        .map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["A1"]);
 
     const rootB = document.getElementById("b");
     const resultB = start({ root: rootB, components: [A, A1, B, B1] }).roots[0];
     expect(resultB.element.getAttribute("data-component")).toBe("B");
     expect(
-      resultB.children().map((c) => c.element.getAttribute("data-component")),
+      resultB
+        .children("B1")
+        .map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["B1"]);
   });
 
@@ -318,7 +327,9 @@ describe("start", () => {
     const result = app.roots[0];
     expect(result.element.getAttribute("data-component")).toBe("root");
     expect(
-      result.children().map((c) => c.element.getAttribute("data-component")),
+      result
+        .children("child")
+        .map((c) => c.element.getAttribute("data-component")),
     ).toEqual(["child"]);
   });
 

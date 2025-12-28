@@ -228,7 +228,7 @@ describe("parent()", () => {
   });
 });
 
-describe("children()", () => {
+describe("children(name)", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
@@ -248,7 +248,7 @@ describe("children()", () => {
     class Parent extends Component {
       static name = "parent";
       connect() {
-        captured.children = this.children();
+        captured.children = this.children(["child", "grandchild"]);
         captured.self = this;
       }
     }
@@ -288,7 +288,7 @@ describe("children()", () => {
       static name = "parent";
       connect() {
         namedChildren = this.children("child");
-        allChildren = this.children();
+        allChildren = this.children(["child", "other-child"]);
       }
     }
     class Child extends Component {

@@ -73,12 +73,13 @@ export default class Component {
     return result;
   }
 
+  // TODO: dry children and siblings
   children(name) {
-    let nodes = this.node.children;
-    if (name) {
-      nodes = nodes.filter((n) => n.name === name);
-    }
-    return nodes.map((n) => n.element.instance);
+    const names = Array.isArray(name) ? name : [name];
+    const nameSet = new Set(names);
+    return this.node.children
+      .filter((n) => nameSet.has(n.name))
+      .map((n) => n.element.instance);
   }
 
   siblings(name) {

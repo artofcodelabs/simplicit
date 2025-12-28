@@ -271,22 +271,22 @@
 
         showSlides() {
           this.showAll = true;
-          this.children().forEach((slide) => slide.show());
+          this.children("slide").forEach((slide) => slide.show());
         }
 
         hideSlides() {
           this.showAll = false;
-          this.children().forEach((slide) => slide.hide());
+          this.children("slide").forEach((slide) => slide.hide());
         }
 
         showDeleteButtons() {
           this.manageSlides = true;
-          this.children().forEach((slide) => slide.changeMode(true));
+          this.children("slide").forEach((slide) => slide.changeMode(true));
         }
 
         hideDeleteButtons() {
           this.manageSlides = false;
-          this.children().forEach((slide) => slide.changeMode(false));
+          this.children("slide").forEach((slide) => slide.changeMode(false));
         }
 
         #changeCurrentSlideIndex(diff = 0) {
@@ -301,7 +301,7 @@
         }
 
         #changeCurrentSlide(newIndex) {
-          this.children().forEach((slide, index) => {
+          this.children("slide").forEach((slide, index) => {
             slide.changeCurrent({ current: index === newIndex, show: this.showAll, manage: this.manageSlides });
           });
         }
@@ -354,7 +354,6 @@
       }
 
       const app = start({ components: [Slide, Slideshow, SlideshowManager] });
-      console.log(app.components);
     </script>
 
     <p>
