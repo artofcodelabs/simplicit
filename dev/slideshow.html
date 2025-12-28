@@ -145,7 +145,7 @@
           this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
             if (!this.#isManaging()) return;
             if (!this.#isEditable()) return;
-            this.parent.slideIsBeingEdited();
+            this.siblings("slide").forEach((slide) => slide.editable(false));
             this.#captionToEdit();
           });
         }
@@ -215,7 +215,7 @@
         #editToCaption() {
           this.#removeEdit();
           this.#renderCaption();
-          this.parent.slideStoppedBeingEdited();
+          this.siblings("slide").forEach((slide) => slide.editable(true));
         }
 
         #enableManagement() {
@@ -258,14 +258,6 @@
           if (this.children("slide").findIndex((s) => s === slide) === initCurrentSlideIndex) {
             this.#changeCurrentSlide(initCurrentSlideIndex);
           }
-        }
-
-        slideIsBeingEdited() {
-          this.children("slide").forEach((slide) => slide.editable(false));
-        }
-
-        slideStoppedBeingEdited() {
-          this.children("slide").forEach((slide) => slide.editable(true));
         }
 
         addSlide(text) {
