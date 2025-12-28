@@ -73,18 +73,19 @@ export default class Component {
     return result;
   }
 
-  // TODO: dry children and siblings
   children(name) {
-    const names = Array.isArray(name) ? name : [name];
-    const nameSet = new Set(names);
-    return this.node.children
-      .filter((n) => nameSet.has(n.name))
-      .map((n) => n.element.instance);
+    return this.#related("children", name);
   }
 
   siblings(name) {
-    return this.node.siblings
-      .filter((n) => n.name === name)
+    return this.#related("siblings", name);
+  }
+
+  #related(type, name) {
+    const names = Array.isArray(name) ? name : [name];
+    const nameSet = new Set(names);
+    return this.node[type]
+      .filter((n) => nameSet.has(n.name))
       .map((n) => n.element.instance);
   }
 
