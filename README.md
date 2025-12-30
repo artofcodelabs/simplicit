@@ -176,7 +176,11 @@ Loco-JS-Core exports `helpers` object that has the following properties:
 # 👩🏽‍🔬 Tests
 
 ```bash
+npx playwright install
+
 npm run test
+
+npx playwright test --headed e2e/slideshow.spec.js
 ```
 
 # 📜 License

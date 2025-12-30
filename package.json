@@ -16,7 +16,9 @@
     "build": "webpack --mode=production --node-env=production -c webpack.config.js --progress",
     "server": "node dev/server.js",
     "start": "webpack -c webpack.config.js --watch --progress",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
+    "test": "npm run test:jest && npm run test:e2e",
+    "test:jest": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test:e2e": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -32,6 +34,7 @@
   "homepage": "http://locoframework.org",
   "devDependencies": {
     "@eslint/js": "^9.34.0",
+    "@playwright/test": "^1.55.0",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
