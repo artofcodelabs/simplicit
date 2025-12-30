@@ -13,9 +13,9 @@
     "format": "prettier --write .",
     "lint": "eslint . --ext .js --fix",
     "lint-staged": "lint-staged",
-    "build": "webpack --mode=production --node-env=production -c webpack.config.cjs --progress",
-    "server": "node dev/server.cjs",
-    "start": "webpack -c webpack.config.cjs --watch --progress",
+    "build": "webpack --mode=production --node-env=production -c webpack.config.js --progress",
+    "server": "node dev/server.js",
+    "start": "webpack -c webpack.config.js --watch --progress",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "repository": {

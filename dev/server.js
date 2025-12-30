@@ -1,17 +1,23 @@
-const path = require("path");
-const express = require("express");
-const webpack = require("webpack");
-const webpackDevMiddleware = require("webpack-dev-middleware");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import express from "express";
+import webpack from "webpack";
+import webpackDevMiddleware from "webpack-dev-middleware";
+
+import webpackConfig from "../webpack.config.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const rootPath = "..";
 
 const app = express();
-const config = require(`${rootPath}/webpack.config.cjs`);
-const compiler = webpack(config);
+const compiler = webpack(webpackConfig);
 
 app.use(
   webpackDevMiddleware(compiler, {
-    publicPath: config.output.publicPath,
+    publicPath: webpackConfig.output.publicPath,
   }),
 );
 
