@@ -1,5 +1,5 @@
-import { dataComponentAttribute } from "./config";
-import { createNode } from "./node";
+import { dataComponentAttribute } from "./config.js";
+import { createNode } from "./node.js";
 
 const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(

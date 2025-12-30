@@ -2,16 +2,21 @@
   "name": "loco-js-core",
   "version": "0.3.0",
   "description": "Loco-JS-Core provides a logical structure for JavaScript code",
-  "main": "dist/loco-core.js",
+  "type": "module",
+  "main": "dist/loco-core.mjs",
+  "module": "dist/loco-core.mjs",
+  "exports": {
+    ".": "./dist/loco-core.mjs"
+  },
   "scripts": {
     "prepare": "husky",
     "format": "prettier --write .",
     "lint": "eslint . --ext .js --fix",
     "lint-staged": "lint-staged",
-    "build": "webpack --mode=production --node-env=production -c webpack.config.js --progress",
-    "server": "node dev/server.js",
-    "start": "webpack -c webpack.config.js --watch --progress",
-    "test": "jest"
+    "build": "webpack --mode=production --node-env=production -c webpack.config.cjs --progress",
+    "server": "node dev/server.cjs",
+    "start": "webpack -c webpack.config.cjs --watch --progress",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "repository": {
     "type": "git",
@@ -26,11 +31,7 @@
   "license": "MIT",
   "homepage": "http://locoframework.org",
   "devDependencies": {
-    "@babel/core": "^7.28.3",
-    "@babel/preset-env": "^7.28.3",
     "@eslint/js": "^9.34.0",
-    "babel-jest": "^30.0.5",
-    "babel-loader": "^10.0.0",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",

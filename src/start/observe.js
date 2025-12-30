@@ -1,6 +1,6 @@
-import { dataComponentAttribute } from "./config";
-import { initComponent, extendElement } from "./init";
-import { createNode } from "./node";
+import { dataComponentAttribute } from "./config.js";
+import { initComponent, extendElement } from "./init.js";
+import { createNode } from "./node.js";
 
 const isScriptElement = (el) => el.tagName === "SCRIPT";
 

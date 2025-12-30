@@ -1,4 +1,4 @@
-import { destructArray } from "./start/helpers";
+import { destructArray } from "./start/helpers.js";
 
 export default class Component {
   constructor() {

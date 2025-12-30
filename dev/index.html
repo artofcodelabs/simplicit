@@ -40,9 +40,15 @@
       </p>
     </div>
 
-    <script src="/loco-core.js"></script>
-    <script>
-      const { start, Component } = LocoCore;
+    <script type="importmap">
+      {
+        "imports": {
+          "LocoCore": "/loco-core.mjs"
+        }
+      }
+    </script>
+    <script type="module">
+      import { start, Component } from "LocoCore";
 
       class App extends Component {
         static name = "app";

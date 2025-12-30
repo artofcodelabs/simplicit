@@ -30,9 +30,15 @@
       <button data-ref="manage-slides" disabled>Manage slides</button>
     </div>
 
-    <script src="/loco-core.js"></script>
-    <script>
-      const { start, Component } = LocoCore;
+    <script type="importmap">
+      {
+        "imports": {
+          "LocoCore": "/loco-core.mjs"
+        }
+      }
+    </script>
+    <script type="module">
+      import { start, Component } from "LocoCore";
 
       class Slide extends Component {
         static name = "slide";
@@ -78,7 +84,7 @@
           this.disableEditKeydown = null;
         }
 
-        // rendered
+        // TODO: rendered
         connect() {
           this.caption = this.ref("caption").textContent.trim();
           this.on(this.ref("delete"), "click", (e) => {

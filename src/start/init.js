@@ -1,4 +1,4 @@
-import { generateComponentId } from "./id";
+import { generateComponentId } from "./id.js";
 
 export const initComponent = (node, ComponentClass) => {
   const instance = new ComponentClass();

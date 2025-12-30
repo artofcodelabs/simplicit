@@ -1,8 +1,8 @@
-import { buildElementTree } from "./start/scan";
-import { validate } from "./start/validate";
-import { initMatches } from "./start/init";
-import { observe } from "./start/observe";
-import { observeScripts } from "./start/observeScripts";
+import { buildElementTree } from "./start/scan.js";
+import { validate } from "./start/validate.js";
+import { initMatches } from "./start/init.js";
+import { observe } from "./start/observe.js";
+import { observeScripts } from "./start/observeScripts.js";
 
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;

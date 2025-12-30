@@ -6,7 +6,7 @@ const webpackDevMiddleware = require("webpack-dev-middleware");
 const rootPath = "..";
 
 const app = express();
-const config = require(`${rootPath}/webpack.config.js`);
+const config = require(`${rootPath}/webpack.config.cjs`);
 const compiler = webpack(config);
 
 app.use(
