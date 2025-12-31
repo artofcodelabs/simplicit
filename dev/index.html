@@ -23,7 +23,7 @@
     <form data-component="search">
       <input type="checkbox" data-ref="checkbox" id="projects"> <label data-ref="label" for="projects">Projects</label>
       <input type="checkbox" data-ref="checkbox" id="messages"> <label data-ref="label" for="messages">Messages</label>
-      <a href="#" data-ref="link">Select all</a>
+      <a href="#" data-ref="selectAll">Select all</a>
     </form>
 
     <h2>Clock</h2>
@@ -71,8 +71,8 @@
         static name = "search";
 
         connect() {
-          const { checkbox, link } = this.refs();
-          this.on(link, "click", (e) => {
+          const { checkbox, selectAll } = this.refs();
+          this.on(selectAll, "click", (e) => {
             e.preventDefault();
             checkbox.forEach((input) => input.checked = true);
           });
@@ -117,7 +117,6 @@
       }
 
       const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
-      console.log(app);
     </script>
 
     <p>

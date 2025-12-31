@@ -9,7 +9,7 @@ export default {
     baseURL: "http://localhost:4000",
   },
   webServer: {
-    command: "npm run server",
+    command: "npm run start",
     url: "http://localhost:4000/slideshow",
     reuseExistingServer: true,
     timeout: 30_000,
