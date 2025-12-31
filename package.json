@@ -14,8 +14,7 @@
     "lint": "eslint . --ext .js --fix",
     "lint-staged": "lint-staged",
     "build": "webpack --mode=production --node-env=production -c webpack.config.js --progress",
-    "server": "node dev/server.js",
-    "start": "webpack -c webpack.config.js --watch --progress",
+    "start": "node dev/server.js",
     "test": "npm run test:jest && npm run test:e2e",
     "test:jest": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "test:e2e": "playwright test"
