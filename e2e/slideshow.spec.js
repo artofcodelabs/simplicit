@@ -67,6 +67,13 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await expect(
     page.locator('#slideshow div[data-component="slide"]:visible'),
   ).toHaveCount(5);
+  // Ensure the newly added slide is the last slide.
+  await expect(
+    page
+      .locator('#slideshow div[data-component="slide"]:visible')
+      .last()
+      .locator('[data-ref="caption"], [data-ref="bold-text"]'),
+  ).toContainText("🐒 #5");
 
   // 3) Enable management
   await manageSlides.click();
@@ -113,12 +120,20 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await manageSlides.click();
   await expect(
     page.locator(
-      '#slideshow [data-component="slide"] [data-ref="delete"]:not([hidden])',
+      '#slideshow div[data-component="slide"] [data-ref="delete"]:not([hidden])',
     ),
   ).toHaveCount(0);
 
   // 8) Click next 2 times to have slide 🐵 #A as current
   await next.click();
   await next.click();
+  await expect(current).toHaveText("🐵 #A");
+
+  // Hide slides -> only the current slide should remain visible (🐵 #A).
+  const hideSlides = manager.locator('button[data-ref="hide-slides"]');
+  await hideSlides.click();
+  await expect(
+    page.locator('#slideshow div[data-component="slide"]:visible'),
+  ).toHaveCount(1);
   await expect(current).toHaveText("🐵 #A");
 });
