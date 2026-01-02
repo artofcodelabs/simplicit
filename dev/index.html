@@ -55,11 +55,7 @@
       class App extends Component {
         static name = "app";
 
-        connect() {
-          this.interval(() => this.#countClocks(), 1000);
-        }
-
-        #countClocks() {
+        countClocks() {
           this.ref("clocks").textContent = this.descendants("clock").length;
         }
       }
@@ -97,6 +93,7 @@
           this.interval(() => {
             this.displayTime();
           }, 1000);
+          this.ancestor("app").countClocks();
         }
 
         displayTime() {

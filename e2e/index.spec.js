@@ -52,5 +52,5 @@ test("adding 2 clocks updates the clock count to 3", async ({ page }) => {
   await addClock.click();
   await addClock.click();
 
-  await expect(clocksCount).toHaveText("3", { timeout: 5_000 });
+  await expect(clocksCount).toHaveText("3");
 });
