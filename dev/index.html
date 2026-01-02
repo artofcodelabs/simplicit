@@ -7,6 +7,8 @@
   <body data-component="app">
     <h1>Modest</h1>
 
+    <p>Clocks: <span data-ref="clocks">0</span></p>
+
     <h2>Hello</h2>
     <div data-component="hello">
       <input data-ref="input" type="text">
@@ -52,6 +54,14 @@
 
       class App extends Component {
         static name = "app";
+
+        connect() {
+          this.interval(() => this.#countClocks(), 1000);
+        }
+
+        #countClocks() {
+          this.ref("clocks").textContent = this.descendants("clock").length;
+        }
       }
 
       class Hello extends Component {

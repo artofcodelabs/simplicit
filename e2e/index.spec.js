@@ -40,3 +40,17 @@ test("clock interval is cleaned up when the clock element is removed", async ({
   const after = await page.evaluate(() => window.__intervalIds.size);
   expect(after).toBe(before - 1);
 });
+
+test("adding 2 clocks updates the clock count to 3", async ({ page }) => {
+  await page.goto("/");
+
+  const clocksCount = page.locator('[data-ref="clocks"]');
+  const addClock = page.locator(
+    '[data-component="clock-factory"] [data-ref="add-clock"]',
+  );
+
+  await addClock.click();
+  await addClock.click();
+
+  await expect(clocksCount).toHaveText("3", { timeout: 5_000 });
+});
