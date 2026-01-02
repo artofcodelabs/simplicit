@@ -81,6 +81,34 @@ export default class Component {
     return this.#related("siblings", name);
   }
 
+  ancestor(name) {
+    let node = this.node.parent;
+    while (node) {
+      if (node.name === name) return node.element.instance;
+      node = node.parent;
+    }
+    return null;
+  }
+
+  descendants(name) {
+    const out = [];
+    const visited = new Set();
+
+    const walk = (node) => {
+      for (const child of node.children) {
+        if (visited.has(child)) continue;
+        visited.add(child);
+        if (child.name === name) {
+          out.push(child.element.instance);
+        }
+        walk(child);
+      }
+    };
+
+    walk(this.node);
+    return out;
+  }
+
   #related(type, name) {
     const names = Array.isArray(name) ? name : [name];
     const nameSet = new Set(names);

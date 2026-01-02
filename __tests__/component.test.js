@@ -406,3 +406,86 @@ describe("siblings()", () => {
     expect(secondSiblings[0]).toBe(first);
   });
 });
+
+describe("ancestor(name)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns the nearest matching ancestor by name (or null)", () => {
+    document.body.innerHTML = `
+      <div data-component="grandparent" id="gp">
+        <div data-component="parent" id="p">
+          <div data-component="child" id="c"></div>
+        </div>
+      </div>
+    `;
+
+    const captured = {};
+    class Grandparent extends Component {
+      static name = "grandparent";
+    }
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class Child extends Component {
+      static name = "child";
+      connect() {
+        captured.parent = this.ancestor("parent");
+        captured.grandparent = this.ancestor("grandparent");
+        captured.none = this.ancestor("missing");
+      }
+    }
+
+    start({ root: document, components: [Grandparent, Parent, Child] });
+
+    expect(captured.parent).toBe(document.getElementById("p").instance);
+    expect(captured.grandparent).toBe(document.getElementById("gp").instance);
+    expect(captured.none).toBeNull();
+  });
+});
+
+describe("descendants(name)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("returns a flat array of descendants across multiple levels/branches", () => {
+    document.body.innerHTML = `
+      <div data-component="root" id="root">
+        <div data-component="child" id="c1">
+          <div data-component="leaf" id="l1"></div>
+        </div>
+        <div data-component="child" id="c2">
+          <div data-component="mid" id="m1">
+            <div data-component="leaf" id="l2"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const captured = {};
+    class Root extends Component {
+      static name = "root";
+      connect() {
+        captured.leaves = this.descendants("leaf");
+      }
+    }
+    class Child extends Component {
+      static name = "child";
+    }
+    class Mid extends Component {
+      static name = "mid";
+    }
+    class Leaf extends Component {
+      static name = "leaf";
+    }
+
+    start({ root: document, components: [Root, Child, Mid, Leaf] });
+
+    const l1 = document.getElementById("l1").instance;
+    const l2 = document.getElementById("l2").instance;
+
+    expect(captured.leaves).toEqual([l1, l2]);
+  });
+});
