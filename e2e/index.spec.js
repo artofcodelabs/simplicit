@@ -31,7 +31,7 @@ test("clock interval is cleaned up when the clock element is removed", async ({
   // One interval should be registered by the Clock component.
   expect(before).toBeGreaterThan(0);
 
-  // Remove the clock element (Loco should disconnect and clear the interval).
+  // Remove the clock element (Simplicit should disconnect and clear the interval).
   await clock.evaluate((el) => el.remove());
 
   // Give mutation observers / cleanup a tick.

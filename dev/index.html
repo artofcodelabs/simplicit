@@ -1,134 +1,137 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Modest</title>
-  </head>
-  <body data-component="app">
-    <h1>Modest</h1>
 
-    <p>Clocks: <span data-ref="clocks">0</span></p>
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplest</title>
+</head>
 
-    <h2>Hello</h2>
-    <div data-component="hello">
-      <input data-ref="input" type="text">
-      <button data-ref="button">Greet</button>
-      <span data-ref="output"></span>
+<body data-component="app">
+  <h1>Simplest</h1>
+
+  <p>Clocks: <span data-ref="clocks">0</span></p>
+
+  <h2>Hello</h2>
+  <div data-component="hello">
+    <input data-ref="input" type="text">
+    <button data-ref="button">Greet</button>
+    <span data-ref="output"></span>
+  </div>
+
+  <div data-component="hello">
+    <input data-ref="input" type="text">
+    <button data-ref="button">Greet</button>
+    <span data-ref="output"></span>
+  </div>
+
+  <form data-component="search">
+    <input type="checkbox" data-ref="checkbox" id="projects"> <label data-ref="label" for="projects">Projects</label>
+    <input type="checkbox" data-ref="checkbox" id="messages"> <label data-ref="label" for="messages">Messages</label>
+    <a href="#" data-ref="selectAll">Select all</a>
+  </form>
+
+  <h2>Clock</h2>
+  <div data-component="clock">
+    <p data-ref="time"></p>
+  </div>
+
+  <div data-component="clock-factory">
+    <div data-ref="shelf">
     </div>
 
-    <div data-component="hello">
-      <input data-ref="input" type="text">
-      <button data-ref="button">Greet</button>
-      <span data-ref="output"></span>
-    </div>
+    <p>
+      <a href="#" data-ref="add-clock">Add new clock</a>
+    </p>
+  </div>
 
-    <form data-component="search">
-      <input type="checkbox" data-ref="checkbox" id="projects"> <label data-ref="label" for="projects">Projects</label>
-      <input type="checkbox" data-ref="checkbox" id="messages"> <label data-ref="label" for="messages">Messages</label>
-      <a href="#" data-ref="selectAll">Select all</a>
-    </form>
-
-    <h2>Clock</h2>
-    <div data-component="clock">
-      <p data-ref="time"></p>
-    </div>
-
-    <div data-component="clock-factory">
-      <div data-ref="shelf">
-      </div>
-
-      <p>
-        <a href="#" data-ref="add-clock">Add new clock</a>
-      </p>
-    </div>
-
-    <script type="importmap">
+  <script type="importmap">
       {
         "imports": {
-          "LocoCore": "/loco-core.mjs"
+          "Simplicit": "/simplicit.mjs"
         }
       }
     </script>
-    <script type="module">
-      import { start, Component } from "LocoCore";
+  <script type="module">
+    import { start, Component } from "Simplicit";
 
-      class App extends Component {
-        static name = "app";
+    class App extends Component {
+      static name = "app";
 
-        countClocks() {
-          this.ref("clocks").textContent = this.descendants("clock").length;
-        }
+      countClocks() {
+        this.ref("clocks").textContent = this.descendants("clock").length;
+      }
+    }
+
+    class Hello extends Component {
+      static name = "hello";
+
+      connect() {
+        this.on(this.ref("button"), "click", () => this.greet());
       }
 
-      class Hello extends Component {
-        static name = "hello";
-
-        connect() {
-          this.on(this.ref("button"), "click", () => this.greet());
-        }
-
-        greet() {
-          const { input, output } = this.refs();
-          output.textContent = `Hello, ${input.value}!`;
-        }
+      greet() {
+        const { input, output } = this.refs();
+        output.textContent = `Hello, ${input.value}!`;
       }
+    }
 
-      class Search extends Component {
-        static name = "search";
+    class Search extends Component {
+      static name = "search";
 
-        connect() {
-          const { checkbox, selectAll } = this.refs();
-          this.on(selectAll, "click", (e) => {
-            e.preventDefault();
-            checkbox.forEach((input) => input.checked = true);
-          });
-        }
+      connect() {
+        const { checkbox, selectAll } = this.refs();
+        this.on(selectAll, "click", (e) => {
+          e.preventDefault();
+          checkbox.forEach((input) => input.checked = true);
+        });
       }
+    }
 
-      class Clock extends Component {
-        static name = "clock";
+    class Clock extends Component {
+      static name = "clock";
 
-        connect() {
+      connect() {
+        this.displayTime();
+        this.interval(() => {
           this.displayTime();
-          this.interval(() => {
-            this.displayTime();
-          }, 1000);
-          this.ancestor("app").countClocks();
-        }
-
-        displayTime() {
-          this.ref("time").textContent = new Date().toLocaleTimeString();
-        }
+        }, 1000);
+        this.ancestor("app").countClocks();
       }
 
-      class ClockFactory extends Component {
-        static name = "clock-factory";
+      displayTime() {
+        this.ref("time").textContent = new Date().toLocaleTimeString();
+      }
+    }
 
-        static clockTemplate = `
+    class ClockFactory extends Component {
+      static name = "clock-factory";
+
+      static clockTemplate = `
           <div data-component="clock">
             <p data-ref="time"></p>
           </div>
         `;
 
-        connect() {
-          this.on(this.ref("add-clock"), "click", (e) => {
-            e.preventDefault();
-            this.#addNewClock();
-          });
-        }
-
-        #addNewClock() {
-          const shelf = this.ref("shelf");
-          shelf.insertAdjacentHTML("beforeend", ClockFactory.clockTemplate);
-        }
+      connect() {
+        this.on(this.ref("add-clock"), "click", (e) => {
+          e.preventDefault();
+          this.#addNewClock();
+        });
       }
 
-      const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
-    </script>
+      #addNewClock() {
+        const shelf = this.ref("shelf");
+        shelf.insertAdjacentHTML("beforeend", ClockFactory.clockTemplate);
+      }
+    }
 
-    <p>
-      <a href="/stimulus">Stimulus</a> |&nbsp;
-      <a href="/slideshow">Slideshow</a>
-    </p>
-  </body>
+    const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
+  </script>
+
+  <p>
+    <a href="/stimulus">Stimulus</a> |&nbsp;
+    <a href="/slideshow">Slideshow</a>
+  </p>
+</body>
+
 </html>

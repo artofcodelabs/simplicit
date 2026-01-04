@@ -1,12 +1,12 @@
 {
-  "name": "loco-js-core",
-  "version": "0.3.0",
-  "description": "Loco-JS-Core provides a logical structure for JavaScript code",
+  "name": "simplicit",
+  "version": "0.4.0",
+  "description": "A truly modest yet powerful JavaScript framework.",
   "type": "module",
-  "main": "dist/loco-core.mjs",
-  "module": "dist/loco-core.mjs",
+  "main": "dist/simplicit.mjs",
+  "module": "dist/simplicit.mjs",
   "exports": {
-    ".": "./dist/loco-core.mjs"
+    ".": "./dist/simplicit.mjs"
   },
   "scripts": {
     "prepare": "husky",
@@ -21,16 +21,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/himn1/loco-js-core.git"
+    "url": "https://github.com/artofcodelabs/simplicit.git"
   },
   "keywords": [
-    "core",
-    "loco",
+    "simplicit",
     "framework"
   ],
   "author": "Zbigniew Humeniuk <hello@artofcode.co>",
   "license": "MIT",
-  "homepage": "http://locoframework.org",
+  "homepage": "https://github.com/artofcodelabs/simplicit",
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@playwright/test": "^1.55.0",

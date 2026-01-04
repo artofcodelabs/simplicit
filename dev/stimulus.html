@@ -1,60 +1,63 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Stimulus</title>
-  </head>
-  <body>
-    <h1>Stimulus</h1>
 
-    <div data-controller="hello">
-      <input data-hello-target="name" type="text">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stimulus</title>
+</head>
 
-      <button data-action="click->hello#greet">
-        Greet
-      </button>
+<body>
+  <h1>Stimulus</h1>
 
-      <span data-hello-target="output">
-      </span>
-    </div>
+  <div data-controller="hello">
+    <input data-hello-target="name" type="text">
 
-    <div data-controller="hello">
-      <input data-hello-target="name" type="text">
+    <button data-action="click->hello#greet">
+      Greet
+    </button>
 
-      <button data-action="click->hello#greet">
-        Greet
-      </button>
+    <span data-hello-target="output">
+    </span>
+  </div>
 
-      <span data-hello-target="output">
-      </span>
-    </div>
+  <div data-controller="hello">
+    <input data-hello-target="name" type="text">
 
-    <script type="module">
-      import {
-        Application,
-        Controller,
-      } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js";
+    <button data-action="click->hello#greet">
+      Greet
+    </button>
 
-      window.Stimulus = Application.start();
+    <span data-hello-target="output">
+    </span>
+  </div>
 
-      Stimulus.register(
-        "hello",
-        class extends Controller {
-          static targets = ["name", "output"];
+  <script type="module">
+    import {
+      Application,
+      Controller,
+    } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js";
 
-          connect() {
-            console.log("Hello, Stimulus!", this.element)
-          }
+    window.Stimulus = Application.start();
 
-          greet() {
-            this.outputTarget.textContent = `Hello, ${this.nameTarget.value}!`
-          }
-        },
-      );
-    </script>
+    Stimulus.register(
+      "hello",
+      class extends Controller {
+        static targets = ["name", "output"];
 
-    <p>
-      <a href="/">Modest</a>
-    </p>
-  </body>
+        connect() {
+          console.log("Hello, Stimulus!", this.element)
+        }
+
+        greet() {
+          this.outputTarget.textContent = `Hello, ${this.nameTarget.value}!`
+        }
+      },
+    );
+  </script>
+
+  <p>
+    <a href="/">Simplest</a>
+  </p>
+</body>
+
 </html>

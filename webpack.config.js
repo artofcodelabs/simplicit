@@ -12,7 +12,7 @@ export default {
   output: {
     path: path.resolve(__dirname, "dist"),
     publicPath: "/",
-    filename: "loco-core.mjs",
+    filename: "simplicit.mjs",
     library: { type: "module" },
     clean: true,
   },
