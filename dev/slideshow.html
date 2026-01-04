@@ -1,0 +1,371 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplest > Slideshow</title>
+</head>
+
+<body>
+  <h1>Simplest > Slideshow</h1>
+
+  <h2>Slideshow</h2>
+  <div data-component="slideshow" id="slideshow">
+    <button data-ref="previous"> ← </button>
+    <button data-ref="next"> → </button>
+
+    <script type="application/json" data-component="slide" data-target="slideshow" data-position="beforeend">
+        [
+          { "text": "🐵 #A" },
+          { "text": "🙈 #B" },
+          { "text": "🙉 #C" },
+          { "text": "🙊 #D" }
+        ]
+      </script>
+  </div>
+
+  <h2>Slideshow Manager</h2>
+  <div data-component="slideshow-manager">
+    <button data-ref="add-slide">Add slide</button>
+    <button data-ref="show-slides">Show slides</button>
+    <button data-ref="hide-slides">Hide slides</button>
+    <button data-ref="manage-slides" disabled>Manage slides</button>
+  </div>
+
+  <script type="importmap">
+      {
+        "imports": {
+          "Simplicit": "/simplicit.mjs"
+        }
+      }
+    </script>
+  <script type="module">
+    import { start, Component } from "Simplicit";
+
+    class Slide extends Component {
+      static name = "slide";
+
+      static template = ({ text, show = false, manage = false }) => {
+        return `
+          <div
+            data-component="${Slide.name}"
+            ${show ? "" : "hidden"}
+          >
+            ${Slide.captionTemplate(text, manage)}
+            <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
+          </div>
+          `;
+      }
+
+      static captionTemplate = (text, manage) => {
+        return `
+          <span data-ref="caption" style="cursor: ${manage ? "pointer" : "default"};">
+            ${text}
+          </span>
+          `;
+      }
+
+      static boldTextTemplate = (text) => {
+        return `<b data-ref="bold-text">${text}</b>`;
+      }
+
+      static editTemplate = (text) => {
+        return `
+          <form data-ref="edit-form" style="display:inline;">
+            <input data-ref="edit" type="text" value="${text}" />
+          </form>
+          `;
+      }
+
+      constructor() {
+        super();
+        this.current = false;
+        this.caption = null;
+        this.disableCaptionClick = null;
+        this.disableEditSubmit = null;
+        this.disableEditKeydown = null;
+      }
+
+      connect() {
+        this.caption = this.ref("caption").textContent.trim();
+        this.on(this.ref("delete"), "click", (e) => {
+          e.preventDefault();
+          this.element.remove();
+        });
+        this.#addCaptionClick();
+        this.parent.checkIn(this);
+      }
+
+      show() {
+        this.element.hidden = false;
+      }
+
+      hide() {
+        if (this.current) return;
+        this.element.hidden = true;
+      }
+
+      changeCurrent({ current, show, manage }) {
+        if (current && !this.current) {
+          this.#disableManagement();
+          this.#captionToBold();
+          this.current = true;
+          this.show();
+        } else if (!current && this.current) {
+          this.#boldToCaption();
+          this.current = false;
+          this.changeManagement(manage);
+          show ? this.show() : this.hide();
+        }
+      }
+
+      changeManagement(manage) {
+        if (this.current) return;
+
+        if (manage && !this.#isManaging()) {
+          this.#enableManagement();
+        } else if (!manage && this.#isManaging()) {
+          this.#disableManagement();
+        }
+      }
+
+      editable(editable) {
+        if (this.current) return;
+        if (this.#isEditing()) return;
+
+        this.#modifyCaption({ cursor: editable ? "pointer" : "default" });
+      }
+
+      #isEditable() {
+        return this.ref("caption").style.cursor === "pointer";
+      }
+
+      #isEditing() {
+        return this.ref("edit") !== null;
+      }
+
+      #isManaging() {
+        return this.ref("delete").hidden === false;
+      }
+
+      #addCaptionClick() {
+        this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
+          if (!this.#isManaging()) return;
+          if (!this.#isEditable()) return;
+          this.siblings("slide").forEach((slide) => slide.editable(false));
+          this.#captionToEdit();
+        });
+      }
+
+      #addEditSubmit() {
+        this.disableEditSubmit = this.on(this.ref("edit-form"), "submit", (e) => {
+          e.preventDefault();
+          this.caption = this.ref("edit").value;
+          this.#editToCaption();
+        });
+      }
+
+      #addEditKeydown() {
+        this.disableEditKeydown = this.on(this.ref("edit"), "keydown", (e) => {
+          if (e.key !== "Escape") return;
+          e.preventDefault();
+          this.#editToCaption();
+        });
+      }
+
+      #renderCaption() {
+        const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
+        this.element.insertAdjacentHTML("afterbegin", caption);
+        this.#addCaptionClick();
+      }
+
+      #modifyCaption({ cursor }) {
+        this.ref("caption").style.cursor = cursor;
+      }
+
+      #removeCaption() {
+        this.disableCaptionClick();
+        this.ref("caption").remove();
+      }
+
+      #renderEdit() {
+        const edit = this.constructor.editTemplate(this.caption);
+        this.element.insertAdjacentHTML("afterbegin", edit);
+        this.#addEditSubmit();
+        this.#addEditKeydown();
+        this.ref("edit").focus();
+        this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
+      }
+
+      #removeEdit() {
+        this.disableEditSubmit();
+        this.disableEditKeydown();
+        this.ref("edit-form").remove();
+      }
+
+      #captionToBold() {
+        this.#removeCaption();
+        const bold = this.constructor.boldTextTemplate(this.caption);
+        this.element.insertAdjacentHTML("afterbegin", bold);
+      }
+
+      #boldToCaption() {
+        this.ref("bold-text").remove();
+        this.#renderCaption();
+      }
+
+      #captionToEdit() {
+        this.#removeCaption();
+        this.#renderEdit();
+      }
+
+      #editToCaption() {
+        this.#removeEdit();
+        this.#renderCaption();
+        this.siblings("slide").forEach((slide) => slide.editable(true));
+      }
+
+      #enableManagement() {
+        this.ref("delete").hidden = false;
+        this.ref("caption").style.cursor = "pointer";
+      }
+
+      #disableManagement() {
+        if (this.#isEditing()) this.#editToCaption();
+        this.ref("caption").style.cursor = "default";
+        this.ref("delete").hidden = true;
+      }
+    }
+
+    class Slideshow extends Component {
+      static name = "slideshow";
+
+      constructor() {
+        super();
+        this.showAll = false;
+        this.manageSlides = false;
+      }
+
+      get slidesNumber() {
+        return this.children("slide").length;
+      }
+
+      get currentSlideIndex() {
+        return this.children("slide").findIndex((slide) => slide.current);
+      }
+
+      connect() {
+        this.on(this.ref("previous"), "click", () => this.#changeCurrentSlideIndex(-1));
+        this.on(this.ref("next"), "click", () => this.#changeCurrentSlideIndex(1));
+      }
+
+      checkIn(slide) {
+        if (this.currentSlideIndex !== -1) return;
+        const initCurrentSlideIndex = 1;
+        if (this.children("slide").findIndex((s) => s === slide) === initCurrentSlideIndex) {
+          this.#changeCurrentSlide(initCurrentSlideIndex);
+        }
+      }
+
+      addSlide(text) {
+        const slideHtml = Slide.template({
+          text,
+          show: this.showAll,
+          manage: this.manageSlides,
+        });
+        this.element.insertAdjacentHTML("beforeend", slideHtml);
+      }
+
+      showSlides() {
+        this.showAll = true;
+        this.children("slide").forEach((slide) => slide.show());
+      }
+
+      hideSlides() {
+        this.showAll = false;
+        this.children("slide").forEach((slide) => slide.hide());
+      }
+
+      enableManagement() {
+        this.manageSlides = true;
+        this.children("slide").forEach((slide) => slide.changeManagement(true));
+      }
+
+      disableManagement() {
+        this.manageSlides = false;
+        this.children("slide").forEach((slide) => slide.changeManagement(false));
+      }
+
+      #changeCurrentSlideIndex(diff = 0) {
+        let newIndex = this.currentSlideIndex + diff;
+        if (newIndex >= this.slidesNumber) {
+          newIndex = 0;
+        }
+        if (newIndex < 0) {
+          newIndex = this.slidesNumber - 1;
+        }
+        this.#changeCurrentSlide(newIndex);
+      }
+
+      #changeCurrentSlide(newIndex) {
+        this.children("slide").forEach((slide, index) => {
+          slide.changeCurrent({ current: index === newIndex, show: this.showAll, manage: this.manageSlides });
+        });
+      }
+    }
+
+    class SlideshowManager extends Component {
+      static name = "slideshow-manager";
+
+      constructor() {
+        super();
+        this.manageSlides = false;
+      }
+
+      get slideshow() {
+        return this.siblings("slideshow")[0];
+      }
+
+      connect() {
+        this.on(this.ref("add-slide"), "click", () => this.#addSlide());
+        this.on(this.ref("show-slides"), "click", () => this.#showSlides());
+        this.on(this.ref("hide-slides"), "click", () => this.#hideSlides());
+        this.on(this.ref("manage-slides"), "click", () => this.#manageSlides());
+      }
+
+      #addSlide() {
+        const slidesNumber = this.slideshow.slidesNumber;
+        this.slideshow.addSlide(`🐒 #${slidesNumber + 1}`);
+      }
+
+      #showSlides() {
+        this.ref("manage-slides").disabled = false;
+        this.slideshow.showSlides();
+      }
+
+      #hideSlides() {
+        this.manageSlides = false;
+        this.ref("manage-slides").disabled = true;
+        this.slideshow.hideSlides();
+        this.slideshow.disableManagement();
+      }
+
+      #manageSlides() {
+        this.manageSlides = !this.manageSlides;
+        if (this.manageSlides) {
+          this.slideshow.enableManagement();
+        } else {
+          this.slideshow.disableManagement();
+        }
+      }
+    }
+
+    const app = start({ components: [Slide, Slideshow, SlideshowManager] });
+  </script>
+
+  <p>
+    <a href="/">Simplest</a>
+  </p>
+</body>
+
+</html>
