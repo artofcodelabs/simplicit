@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 const processedAttr = "data-script-processed";
 
 const isJsonTemplateScript = (node) =>
@@ -35,7 +37,7 @@ const processScript = (script, componentClasses) => {
   arr.forEach((templateData) => {
     html += componentClass.template(templateData);
   });
-  targetEl.insertAdjacentHTML(position, html);
+  targetEl.insertAdjacentHTML(position, DOMPurify.sanitize(html));
   script.setAttribute(processedAttr, "true");
 };
 

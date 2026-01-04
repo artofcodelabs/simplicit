@@ -30,6 +30,9 @@
   "author": "Zbigniew Humeniuk <hello@artofcode.co>",
   "license": "MIT",
   "homepage": "https://github.com/artofcodelabs/simplicit",
+  "dependencies": {
+    "dompurify": "^3.3.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@playwright/test": "^1.55.0",

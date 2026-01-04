@@ -11,7 +11,7 @@ I wanted to be sure that _"the same"_ controller's action that handles a request
 
 # 🤝 Dependencies
 
-🎊 Simplicit has no dependencies. 🎉
+🎊 Simplicit relies only on `dompurify` for sanitizing HTML. 🎉
 
 # 📥 Installation
 
