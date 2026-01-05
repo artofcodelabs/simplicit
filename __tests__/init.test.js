@@ -52,3 +52,69 @@ it("allows accessing namespace controller and controller from each other", () =>
   expect(namespaceController.controller).toBe(controller);
   expect(controller.namespaceController).toBe(namespaceController);
 });
+
+it("supports nested namespaces (e.g. Main/Panel)", () => {
+  let nestedCounter = 0;
+
+  const Panel = {
+    initialize: () => {
+      nestedCounter += 10;
+    },
+    deinitialize: () => {
+      nestedCounter -= 10;
+    },
+  };
+
+  class Pages {
+    initialize() {
+      nestedCounter += 2;
+    }
+    deinitialize() {
+      nestedCounter -= 2;
+    }
+    index() {
+      nestedCounter += 3;
+    }
+  }
+
+  const NestedControllers = {
+    Main: {
+      Panel: Object.assign(Panel, { Pages }),
+    },
+  };
+
+  document.body.setAttribute("data-namespace", "Main/Panel");
+  document.body.setAttribute("data-controller", "Pages");
+  document.body.setAttribute("data-action", "index");
+
+  expect(nestedCounter).toEqual(0);
+  init(NestedControllers);
+  expect(nestedCounter).toEqual(15);
+
+  init(NestedControllers);
+  expect(nestedCounter).toEqual(18);
+});
+
+it("falls back to top-level controller when namespace path is missing", () => {
+  let local = 0;
+
+  class Pages {
+    initialize() {
+      local += 1;
+    }
+    list() {
+      local += 2;
+    }
+  }
+
+  const Controllers = {
+    Pages,
+  };
+
+  document.body.setAttribute("data-namespace", "");
+  document.body.setAttribute("data-controller", "Pages");
+  document.body.setAttribute("data-action", "list");
+
+  init(Controllers);
+  expect(local).toEqual(3);
+});
