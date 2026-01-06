@@ -107,18 +107,24 @@ Then it resolves the matching controller(s), runs lifecycle hooks, and calls the
 
 Resolution rules (simplified):
 
-* If `data-namespace` resolves, Simplicit uses `Controllers.Main.Panel.Pages` as a controller.
-* Otherwise it falls back to `Controllers.Pages`.
+* If `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main.Panel`), Simplicit initializes the namespace controller and resolves the page controller under it (e.g. `Controllers.Main.Panel.Pages`).
+* Otherwise it skips the namespace controller and falls back to `Controllers.Pages`.
 
 Call order (per controller):
 
 * If a method exists as **static** or **instance**, Simplicit will call it.
 * On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
 
+```javascript
+namespaceController = new Controllers.Main.Panel;
+Controllers.Main.Panel.initialize();               // if exists
+namespaceController.initialize();                  // if exists
 
-
-}
-
+controller = new Controllers.Main.Panel.Pages;
+Controllers.Main.Panel.Pages.initialize();         // if exists
+controller.initialize();                           // if exists
+Controllers.Main.Panel.Pages.index();              // if exists
+controller.index();                                // if exists
 ```
 
 You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
