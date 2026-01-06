@@ -90,21 +90,13 @@ export default {
 };
 ```
 
+### 👷🏻‍♂️ How does it work?
 
-```javascript
-import { init } from 'simplicit';
 
-import Main from './js/controllers/main';
 
-const Controllers = { Main };
-
-document.addEventListener("DOMContentLoaded", function() {
-  init(Controllers);
-});
 
 ```
 
-The `init` function returns an object with 3 properties: `namespaceController`, `controller` and `action`. They store instances of current controllers and the action name.
 
 
 

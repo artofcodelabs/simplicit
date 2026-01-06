@@ -118,3 +118,26 @@ it("falls back to top-level controller when namespace path is missing", () => {
   init(Controllers);
   expect(local).toEqual(3);
 });
+
+it("falls back to top-level controller when data-namespace is missing", () => {
+  let local = 0;
+
+  class Pages {
+    initialize() {
+      local += 1;
+    }
+    list() {
+      local += 2;
+    }
+  }
+
+  const Controllers = {
+    Pages,
+  };
+
+  document.body.setAttribute("data-controller", "Pages");
+  document.body.setAttribute("data-action", "list");
+
+  init(Controllers);
+  expect(local).toEqual(3);
+});
