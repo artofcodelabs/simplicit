@@ -16,90 +16,11 @@ Simplicit relies only on `dompurify` for sanitizing HTML.
 $ npm install --save simplicit
 ```
 
-# 👷🏻‍♂️ How does it work?
-
-After the document is loaded, Simplicit checks the following `<body>`'s data attributes:
-
-* data-namespace
-* data-controller
-* data-action
-
-Then, it initializes given controllers and calls given methods based on their values. Example:
-
-```html
-<body data-namespace="Main/Panel" data-controller="Pages" data-action="index">
-</body>
-```
-
-Simplicit will act like this (a simplified version):
-
-```javascript
-import { init } from "simplicit";
-
-// all controllers are assigned to Controllers object
-
-namespaceController = new Controllers.Main;
-Controllers.Main.initialize();               // if exists
-namespaceController.initialize();            // if exists
-
-controller = new Controllers.Main.Pages;
-Controllers.Main.Pages.initialize();         // if exists
-controller.initialize();                     // if exists
-Controllers.Main.Pages.index();              // if exists
-controller.index();                          // if exists
-```
-
-What's essential is that Simplicit looks not only for instance methods but static ones as well. If some controller is not defined, Simplicit skips it. The same situation is with methods. You don't have to create controllers for every page that you have. You can use Simplicit only on desired ones. It does not want to take over your front-end. Augment with JavaScript only these pages that you want.
-
-If the namespace controller is not defined, Simplicit skips it and assumes `Controllers.Pages` as a controller.
-
 # 🎮 Usage
 
-```javascript
-import { init } from 'simplicit';
+## Controllers
 
-import Main from './js/controllers/main';
-
-const Controllers = { Main };
-
-document.addEventListener("DOMContentLoaded", function() {
-  init(Controllers);
-});
-
-```
-
-The `init` function returns an object with 3 properties: `namespaceController`, `controller` and `action`. They store instances of current controllers and the action name.
-
-# 💀 Anatomy of the controller
-
-*Exemplary controller:*
-
-```javascript
-// js/controllers/admin/coupons.js
-
-import { helpers } from "simplicit";
-
-import New from "views/admin/coupons/new";
-import List from "views/admin/coupons/list";
-
-class Coupons {
-  // Simplicit supports static and instance methods
-  static index() {
-    new List().render();
-  }
-
-  new() {
-    const view = new New({ planId: helpers.params.id });
-    view.render();
-  }
-}
-
-export default Coupons;
-```
-
-# 🔩 Merging controllers
-
-As you can see in the `Usage` section, Simplicit must have access to all defined controllers to initialize them and to call given methods on them. Therefore, they have to be merged with an object that holds controllers and is passed to the `init` function.
+Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
 
 _Example:_
 
@@ -108,11 +29,11 @@ _Example:_
 
 import { init } from 'simplicit';
 
-import Admin from "./controllers/admin"; // namespace controller
-import User from "./controllers/user";   // namespace controller
+import Admin from "./controllers/Admin.js"; // namespace controller
+import User from "./controllers/User.js";   // namespace controller
 
-import Articles from "./controllers/admin/Articles";
-import Comments from "./controllers/admin/Comments";
+import Articles from "./controllers/admin/Articles.js";
+import Comments from "./controllers/admin/Comments.js";
 
 Object.assign(Admin, {
   Articles,
@@ -129,7 +50,70 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 ```
 
-Remember to polyfill `Object.assign` or assign controllers using a different method.
+### 💀 Anatomy of the controller
+
+Example controller:
+
+```javascript
+// js/controllers/admin/Articles.js
+
+import { helpers } from "simplicit";
+
+import Index from "views/admin/articles/Index.js";
+import Show from "views/admin/articles/Show.js";
+
+class Articles {
+  // Simplicit supports both static and instance actions
+  static index() {
+    Index.render();
+  }
+
+  show() {
+    Show.render({ id: helpers.params.id });
+  }
+}
+
+export default Articles;
+```
+
+Minimal view example (one possible approach):
+
+```javascript
+// views/admin/articles/Show.js
+
+export default {
+  render: ({ id }) => {
+    const el = document.getElementById("app");
+    el.textContent = `Article ${id}`;
+    // If you need data loading, you can fetch here and update the DOM after.
+  },
+};
+```
+
+
+```javascript
+import { init } from 'simplicit';
+
+import Main from './js/controllers/main';
+
+const Controllers = { Main };
+
+document.addEventListener("DOMContentLoaded", function() {
+  init(Controllers);
+});
+
+```
+
+The `init` function returns an object with 3 properties: `namespaceController`, `controller` and `action`. They store instances of current controllers and the action name.
+
+
+
+
+
+
+}
+
+```
 
 # 🛠 Helpers
 
