@@ -1,17 +1,16 @@
-> Simplicit provides a logical structure for JavaScript code
-
 # 🧐 What is Simplicit?
 
-Simplicit provides a logical structure for JavaScript code.
+Simplicit is a small library for structuring front-end JavaScript around **controllers** and **components**.
 
-Model–view–controller (known as MVC) frameworks like [Ruby on Rails](https://rubyonrails.org) are popular on the back-end. The controller's action handles a specific incoming request, orchestrates data and logic, and returns a response.
-I wanted to be sure that _"the same"_ controller's action that handles a request on the back-end is also called on the front-end side. By "the same" - I mean an action with the same name and defined in a controller with the corresponding name to the one on the server-side. Namespacing is optional.
+On the MVC side, it mirrors the “controller/action” convention you may know from frameworks like [Ruby on Rails](https://rubyonrails.org): based on `<body>` attributes, it finds the corresponding controller and calls its lifecycle hooks and action method.
+
+On the component side, it provides a lightweight runtime (`start()` + `Component`) that instantiates and binds components from `data-component`, builds parent/child relationships, and automatically tears them down when elements are removed from the DOM.
 
 # 🤝 Dependencies
 
-🎊 Simplicit relies only on `dompurify` for sanitizing HTML. 🎉
+Simplicit relies only on `dompurify` for sanitizing HTML.
 
-# 📥 Installation
+# 📲 Installation
 
 ```bash
 $ npm install --save simplicit
