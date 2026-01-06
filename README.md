@@ -92,20 +92,38 @@ export default {
 
 ### 👷🏻‍♂️ How does it work?
 
+On `DOMContentLoaded`, Simplicit reads these `<body>` attributes:
 
+* `data-namespace` (optional): a namespace path like `Main` or `Main/Panel`
+* `data-controller`: controller name (e.g. `Pages`)
+* `data-action`: action name (e.g. `index`)
 
-
+```html
+<body data-namespace="Main/Panel" data-controller="Pages" data-action="index">
+</body>
 ```
 
+Then it resolves the matching controller(s), runs lifecycle hooks, and calls the action.
 
+Resolution rules (simplified):
 
+* If `data-namespace` resolves, Simplicit uses `Controllers.Main.Panel.Pages` as a controller.
+* Otherwise it falls back to `Controllers.Pages`.
 
+Call order (per controller):
+
+* If a method exists as **static** or **instance**, Simplicit will call it.
+* On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
 
 
 
 }
 
 ```
+
+You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
+
+The `init` function returns `{ namespaceController, controller, action }`.
 
 # 🛠 Helpers
 
