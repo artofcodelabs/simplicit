@@ -18,122 +18,9 @@ $ npm install --save simplicit
 
 # 🎮 Usage
 
-## Controllers
-
-Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
-
-_Example:_
-
-```javascript
-// js/index.js (entry point)
-
-import { init } from 'simplicit';
-
-import Admin from "./controllers/Admin.js"; // namespace controller
-import User from "./controllers/User.js";   // namespace controller
-
-import Articles from "./controllers/admin/Articles.js";
-import Comments from "./controllers/admin/Comments.js";
-
-Object.assign(Admin, {
-  Articles,
-  Comments
-});
-
-const Controllers = {
-  Admin,
-  User
-};
-
-document.addEventListener("DOMContentLoaded", function() {
-  init(Controllers);
-});
-```
-
-### 💀 Anatomy of the controller
-
-Example controller:
-
-```javascript
-// js/controllers/admin/Articles.js
-
-import { helpers } from "simplicit";
-
-import Index from "views/admin/articles/Index.js";
-import Show from "views/admin/articles/Show.js";
-
-class Articles {
-  // Simplicit supports both static and instance actions
-  static index() {
-    Index.render();
-  }
-
-  show() {
-    Show.render({ id: helpers.params.id });
-  }
-}
-
-export default Articles;
-```
-
-Minimal view example (one possible approach):
-
-```javascript
-// views/admin/articles/Show.js
-
-export default {
-  render: ({ id }) => {
-    const el = document.getElementById("app");
-    el.textContent = `Article ${id}`;
-    // If you need data loading, you can fetch here and update the DOM after.
-  },
-};
-```
-
-### 👷🏻‍♂️ How does it work?
-
-On `DOMContentLoaded`, Simplicit reads these `<body>` attributes:
-
-* `data-namespace` (optional): a namespace path like `Main` or `Main/Panel`
-* `data-controller`: controller name (e.g. `Pages`)
-* `data-action`: action name (e.g. `index`)
-
-```html
-<body data-namespace="Main/Panel" data-controller="Pages" data-action="index">
-</body>
-```
-
-Then it resolves the matching controller(s), runs lifecycle hooks, and calls the action.
-
-Resolution rules (simplified):
-
-* If `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main.Panel`), Simplicit initializes the namespace controller and resolves the page controller under it (e.g. `Controllers.Main.Panel.Pages`).
-* Otherwise it skips the namespace controller and falls back to `Controllers.Pages`.
-
-Call order (per controller):
-
-* If a method exists as **static** or **instance**, Simplicit will call it.
-* On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
-
-```javascript
-namespaceController = new Controllers.Main.Panel;
-Controllers.Main.Panel.initialize();               // if exists
-namespaceController.initialize();                  // if exists
-
-controller = new Controllers.Main.Panel.Pages;
-Controllers.Main.Panel.Pages.initialize();         // if exists
-controller.initialize();                           // if exists
-Controllers.Main.Panel.Pages.index();              // if exists
-controller.index();                                // if exists
-```
-
-You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
-
-The `init` function returns `{ namespaceController, controller, action }`.
-
 ## Components
 
-Simplicit also ships with a small component runtime built around DOM attributes.
+Simplicit ships with a small component runtime built around DOM attributes.
 
 ### ✅ Quick start
 
@@ -305,6 +192,119 @@ Notes:
   siblings: [],
 }
 ```
+
+## Controllers
+
+Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
+
+_Example:_
+
+```javascript
+// js/index.js (entry point)
+
+import { init } from 'simplicit';
+
+import Admin from "./controllers/Admin.js"; // namespace controller
+import User from "./controllers/User.js";   // namespace controller
+
+import Articles from "./controllers/admin/Articles.js";
+import Comments from "./controllers/admin/Comments.js";
+
+Object.assign(Admin, {
+  Articles,
+  Comments
+});
+
+const Controllers = {
+  Admin,
+  User
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+  init(Controllers);
+});
+```
+
+### 💀 Anatomy of the controller
+
+Example controller:
+
+```javascript
+// js/controllers/admin/Articles.js
+
+import { helpers } from "simplicit";
+
+import Index from "views/admin/articles/Index.js";
+import Show from "views/admin/articles/Show.js";
+
+class Articles {
+  // Simplicit supports both static and instance actions
+  static index() {
+    Index.render();
+  }
+
+  show() {
+    Show.render({ id: helpers.params.id });
+  }
+}
+
+export default Articles;
+```
+
+Minimal view example (one possible approach):
+
+```javascript
+// views/admin/articles/Show.js
+
+export default {
+  render: ({ id }) => {
+    const el = document.getElementById("app");
+    el.textContent = `Article ${id}`;
+    // If you need data loading, you can fetch here and update the DOM after.
+  },
+};
+```
+
+### 👷🏻‍♂️ How does it work?
+
+On `DOMContentLoaded`, Simplicit reads these `<body>` attributes:
+
+* `data-namespace` (optional): a namespace path like `Main` or `Main/Panel`
+* `data-controller`: controller name (e.g. `Pages`)
+* `data-action`: action name (e.g. `index`)
+
+```html
+<body data-namespace="Main/Panel" data-controller="Pages" data-action="index">
+</body>
+```
+
+Then it resolves the matching controller(s), runs lifecycle hooks, and calls the action.
+
+Resolution rules (simplified):
+
+* If `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main.Panel`), Simplicit initializes the namespace controller and resolves the page controller under it (e.g. `Controllers.Main.Panel.Pages`).
+* Otherwise it skips the namespace controller and falls back to `Controllers.Pages`.
+
+Call order (per controller):
+
+* If a method exists as **static** or **instance**, Simplicit will call it.
+* On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
+
+```javascript
+namespaceController = new Controllers.Main.Panel;
+Controllers.Main.Panel.initialize();               // if exists
+namespaceController.initialize();                  // if exists
+
+controller = new Controllers.Main.Panel.Pages;
+Controllers.Main.Panel.Pages.initialize();         // if exists
+controller.initialize();                           // if exists
+Controllers.Main.Panel.Pages.index();              // if exists
+controller.index();                                // if exists
+```
+
+You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
+
+The `init` function returns `{ namespaceController, controller, action }`.
 
 # 🛠 Helpers
 
