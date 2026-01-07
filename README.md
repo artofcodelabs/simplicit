@@ -27,10 +27,6 @@ Simplicit ships with a small component runtime built around DOM attributes.
 ```javascript
 import { start, Component } from "simplicit";
 
-class App extends Component {
-  static name = "app";
-}
-
 class Hello extends Component {
   static name = "hello";
 
@@ -43,18 +39,16 @@ class Hello extends Component {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  start({ root: document, components: [App, Hello] });
+  start({ root: document, components: [Hello] });
 });
 ```
 
 ```html
-<body data-component="app">
-  <div data-component="hello">
-    <input data-ref="input" type="text" />
-    <button data-ref="button">Greet</button>
-    <span data-ref="output"></span>
-  </div>
-</body>
+<div data-component="hello">
+  <input data-ref="input" type="text" />
+  <button data-ref="button">Greet</button>
+  <span data-ref="output"></span>
+</div>
 ```
 
 ### DOM conventions
@@ -163,17 +157,15 @@ Notes:
 * Inserted component elements are then auto-initialized like any other DOM addition.
 
 ```html
-<body data-component="app" data-component-id="1"> <!-- instance -->
-  <div data-component="hello" data-component-id="2"> <!-- instance -->
+<div data-component="hello" data-component-id="1"> <!-- instance -->
     <input data-ref="input" type="text">
     <button data-ref="button">Greet</button>
     <span data-ref="output"></span>
-  </div>
+</div>
 
-  <div data-component="clock" data-component-id="3"> <!-- instance -->
+<div data-component="clock" data-component-id="2"> <!-- instance -->
     <p data-ref="time"></p>
-  </div>
-</body>
+</div>
 ```
 
 ```javascript
