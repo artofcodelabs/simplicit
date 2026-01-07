@@ -131,11 +131,11 @@ You don’t need controllers for every page; if a controller/method is missing, 
 
 The `init` function returns `{ namespaceController, controller, action }`.
 
-# Components
+## Components
 
 Simplicit also ships with a small component runtime built around DOM attributes.
 
-## ✅ Quick start
+### ✅ Quick start
 
 ```javascript
 import { start, Component } from "simplicit";
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </body>
 ```
 
-## DOM conventions
+### DOM conventions
 
 * **`data-component="<name>"`**: marks an element as a component root.
   * `<name>` must match the component class’ **`static name`**.
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
   * Also available as `instance.componentId`.
 * **`data-ref="<key>"`**: marks ref elements inside a component (see `ref()` / `refs()`).
 
-## `start({ root, components })`
+### `start({ root, components })`
 
 `start()` mounts components under `root` (defaults to `document.body`) and keeps them in sync with DOM changes.
 
@@ -191,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
   * When an instance is created, if it has `connect()`, it is called after `this.element` is set.
   * When a component element is removed from the DOM, its `instance.disconnect()` is called automatically.
 
-### Return value
+#### Return value
 
 `start()` returns an object:
 
@@ -202,18 +202,18 @@ document.addEventListener("DOMContentLoaded", () => {
   * Initializes matching elements that already exist.
   * Returns the newly created instances (or `null` if nothing was added).
 
-## Base class: `Component`
+### Base class: `Component`
 
 Simplicit exports a `Component` base class you can extend.
 
-### Core properties
+#### Core properties
 
 * **`element`**: the root DOM element of the component (`data-component="..."`).
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
 * **`parent`**: parent component instance (or `undefined` for root components).
 
-### Relationships
+#### Relationships
 
 All relationship helpers filter by component name(s):
 
@@ -222,14 +222,14 @@ All relationship helpers filter by component name(s):
 * **`ancestor(name)`**: nearest matching ancestor component instance (or `null`).
 * **`descendants(name)`**: all matching descendants (flat array).
 
-### Refs
+#### Refs
 
 Refs are scoped to the component’s root element.
 
 * **`ref(name)`**: returns `null`, a single element, or an array of elements (when multiple match).
 * **`refs()`**: returns an object mapping each `data-ref` key to `Element | Element[]` (missing keys are absent).
 
-### Cleanup & lifecycle utilities
+#### Cleanup & lifecycle utilities
 
 `disconnect()` runs cleanup callbacks once and detaches the instance from its parent/child links.
 
@@ -240,7 +240,7 @@ You can register cleanup manually or use helpers that auto-register cleanup:
 * **`timeout(fn, delay)`** (auto-clears on disconnect)
 * **`interval(fn, delay)`** (auto-clears on disconnect)
 
-## Server-driven templates via `<script type="application/json">`
+### Server-driven templates via `<script type="application/json">`
 
 If a component class defines `static template(data)`, Simplicit can render HTML from JSON embedded in the page.
 
