@@ -131,12 +131,6 @@ You don’t need controllers for every page; if a controller/method is missing, 
 
 The `init` function returns `{ namespaceController, controller, action }`.
 
-# 🛠 Helpers
-
-Simplicit exports `helpers` object that has the following properties:
-
-* **params** (getter) - facilitates fetching params from the URL
-
 # Components
 
 Simplicit also ships with a small component runtime built around DOM attributes.
@@ -311,6 +305,12 @@ Notes:
   siblings: [],
 }
 ```
+
+# 🛠 Helpers
+
+Simplicit exports `helpers` object that has the following properties:
+
+* **params** (getter) - facilitates fetching params from the URL
 
 # 👩🏽‍🔬 Tests
 
