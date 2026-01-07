@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 * **`data-component="<name>"`**: marks an element as a component root.
   * `<name>` must match the component class’ **`static name`**.
   * `<script>` tags are never treated as components, even if they have `data-component`.
-* **`data-component-id="<id>"`**: set automatically on every component root element.
+* **`data-component-id="<id>"`**: set automatically on every element with `data-component` (each component instance).
   * Also available as `instance.componentId`.
 * **`data-ref="<key>"`**: marks ref elements inside a component (see `ref()` / `refs()`).
 
@@ -67,9 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
 * **Validation**
   * Throws if there are **no** `data-component` elements within `root`.
   * Throws if the DOM contains `data-component="X"` but you didn’t pass a matching class in `components`.
-  * Throws if a provided component class does not define a writable `static name`.
+  * Throws if any provided component class does not define a writable `static name`.
 * **Lifecycle**
-  * When an instance is created, if it has `connect()`, it is called after `this.element` is set.
+  * When an instance is created, if it has `connect()`, it is called after the instance is bound to its root DOM element (available as `this.element`).
   * When a component element is removed from the DOM, its `instance.disconnect()` is called automatically.
 
 #### Return value
