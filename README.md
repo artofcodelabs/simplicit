@@ -107,7 +107,7 @@ All relationship helpers filter by component name(s):
 Refs are scoped to the component’s root element.
 
 * **`ref(name)`**: returns `null`, a single element, or an array of elements (when multiple match).
-* **`refs()`**: returns an object mapping each `data-ref` key to `Element | Element[]` (missing keys are absent).
+* **`refs()`**: returns an object mapping each `data-ref` key to `Element | Element[]`. Only elements inside the component that have `data-ref` are included.
 
 #### Cleanup & lifecycle utilities
 
