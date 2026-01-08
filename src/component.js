@@ -11,7 +11,7 @@ export default class Component {
   }
 
   get parent() {
-    return this.node.parent?.element.instance;
+    return this.node.parent ? this.node.parent.element.instance : null;
   }
 
   addParent(parent) {

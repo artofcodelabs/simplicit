@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 ### `start({ root, components })`
 
-`start()` mounts components under `root` (defaults to `document.body`) and keeps them in sync with DOM changes.
+`start()` scans `root` (defaults to `document.body`) for elements with `data-component`, creates and binds component instances for them, and keeps them in sync with DOM changes (new elements get initialized, removed ones get disconnected).
 
 * **Validation**
   * Throws if there are **no** `data-component` elements within `root`.
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
 * **`roots`**: array of root component instances (components whose parent is `null`) discovered at startup.
 * **`addComponents(newComponents)`**: registers additional component classes later.
   * Validates the DOM again.
-  * Initializes matching elements that already exist.
+  * Scans the existing DOM for elements with `data-component` matching the newly added classes and initializes those that weren’t initialized yet.
   * Returns the newly created instances (or `null` if nothing was added).
 
 ### Base class: `Component`
@@ -91,7 +91,7 @@ Simplicit exports a `Component` base class you can extend.
 * **`element`**: the root DOM element of the component (`data-component="..."`).
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
-* **`parent`**: parent component instance (or `undefined` for root components).
+* **`parent`**: parent component instance (or `null` for root components).
 
 #### Relationships
 
@@ -165,23 +165,6 @@ Notes:
 <div data-component="clock" data-component-id="2"> <!-- instance -->
     <p data-ref="time"></p>
 </div>
-```
-
-```javascript
-// component instance
-{
-  node
-  componentId: "1",
-}
-
-// node
-{
-  name: "app",
-  element,
-  parent: null,
-  children: [],
-  siblings: [],
-}
 ```
 
 ## Controllers

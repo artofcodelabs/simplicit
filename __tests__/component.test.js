@@ -183,7 +183,7 @@ describe("parent()", () => {
     document.body.innerHTML = "";
   });
 
-  it("returns undefined for a root component", () => {
+  it("returns null for a root component", () => {
     document.body.innerHTML = `
       <div data-component="root" id="root"></div>
     `;
@@ -198,7 +198,7 @@ describe("parent()", () => {
 
     start({ root: document, components: [Root] });
 
-    expect(captured).toBeUndefined();
+    expect(captured).toBeNull();
   });
 
   it("returns the enclosing parent component instance for nested components", () => {
