@@ -220,7 +220,7 @@ describe("start", () => {
       childB.children(children)[0].element.getAttribute("data-component"),
     ).toBe("grandchild");
     // parent references
-    expect(parent.parent).toBeUndefined();
+    expect(parent.parent).toBeNull();
     expect(parent.children(children)[0].parent).toBe(parent);
     expect(childB.parent).toBe(parent);
     expect(childB.children(children)[0].parent).toBe(childB);

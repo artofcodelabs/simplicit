@@ -18,7 +18,6 @@ const start = (options = {}) => {
 
   return {
     roots: roots,
-    components: componentClasses,
     addComponents(newComponents) {
       const filteredNewComponents = newComponents.filter(
         (ComponentClass) =>
