@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
 `start()` returns an object:
 
 * **`roots`**: array of root component instances (components whose parent is `null`) discovered at startup.
-* **`components`**: the registered component classes.
 * **`addComponents(newComponents)`**: registers additional component classes later.
   * Validates the DOM again.
   * Initializes matching elements that already exist.
