@@ -18,7 +18,7 @@ $ npm install --save simplicit
 
 # 🎮 Usage
 
-## Components
+## 🖲️ Components
 
 Simplicit ships with a small component runtime built around DOM attributes.
 
@@ -153,21 +153,10 @@ Notes:
 * The JSON payload must be an **array**; each item is passed to `ComponentClass.template(item)`.
 * The rendered HTML is sanitized with `dompurify` before being inserted.
 * `data-target` must match an existing element id, otherwise an error is thrown.
+* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position` (default: `beforeend`). Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
 * Inserted component elements are then auto-initialized like any other DOM addition.
 
-```html
-<div data-component="hello" data-component-id="1"> <!-- instance -->
-    <input data-ref="input" type="text">
-    <button data-ref="button">Greet</button>
-    <span data-ref="output"></span>
-</div>
-
-<div data-component="clock" data-component-id="2"> <!-- instance -->
-    <p data-ref="time"></p>
-</div>
-```
-
-## Controllers
+## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
 
@@ -280,7 +269,7 @@ You don’t need controllers for every page; if a controller/method is missing, 
 
 The `init` function returns `{ namespaceController, controller, action }`.
 
-# 🛠 Helpers
+## 🛠 Helpers
 
 Simplicit exports `helpers` object that has the following properties:
 
