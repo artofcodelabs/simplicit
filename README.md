@@ -269,6 +269,43 @@ You don’t need controllers for every page; if a controller/method is missing, 
 
 The `init` function returns `{ namespaceController, controller, action }`.
 
+### Ruby on Rails: generating `<body>` data attributes
+
+If you want Rails to generate the controller metadata for Simplicit automatically, you can derive it from `controller_path`, `controller_name`, and `action_name`.
+
+This version supports nested namespaces like `Main/Panel` (any depth):
+
+```ruby
+# app/helpers/application_helper.rb
+
+module ApplicationHelper
+  def simplicit_body_attrs(default_namespace: nil)
+    namespace = controller_path
+      .split("/")
+      .then { |parts| parts[0...-1] } # everything except the controller name
+      .map(&:camelize)
+      .join("/")
+
+    # If you want a default namespace (e.g. "Main") for non-namespaced controllers:
+    namespace = default_namespace if namespace.blank? && default_namespace
+
+    {
+      data: {
+        namespace: namespace.presence,           # -> data-namespace="Main/Panel"
+        controller: controller_name.camelize,    # -> data-controller="Articles"
+        action: action_name,                     # -> data-action="index"
+      }.compact,
+    }
+  end
+end
+```
+
+```erb
+<%= content_tag :body, simplicit_body_attrs(default_namespace: "Main") do %>
+  <%= yield %>
+<% end %>
+```
+
 ## 🛠 Helpers
 
 Simplicit exports `helpers` object that has the following properties:
