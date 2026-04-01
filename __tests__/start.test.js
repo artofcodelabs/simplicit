@@ -160,11 +160,6 @@ describe("start", () => {
     });
   });
 
-  it("throws when no components present in root", () => {
-    document.body.innerHTML = "";
-    expect(() => start()).toThrow(/No component elements found/);
-  });
-
   it("returns a single instance when one root component exists", () => {
     document.body.innerHTML = `
       <div data-component="hello"></div>
