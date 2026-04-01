@@ -65,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
 `start()` scans `root` (defaults to `document.body`) for elements with `data-component`, creates and binds component instances for them, and keeps them in sync with DOM changes (new elements get initialized, removed ones get disconnected).
 
 * **Validation**
-  * Throws if there are **no** `data-component` elements within `root`.
   * Throws if the DOM contains `data-component="X"` but you didn’t pass a matching class in `components`.
   * Throws if any provided component class does not define a writable `static name`.
 * **Lifecycle**

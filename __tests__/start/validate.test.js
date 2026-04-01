@@ -6,11 +6,6 @@ describe("validate", () => {
     document.body.innerHTML = "";
   });
 
-  it("throws when no component elements in root", () => {
-    const nodes = [];
-    expect(() => validate(nodes, [])).toThrow(/No component elements found/);
-  });
-
   it("throws when component class lacks a proper static name", () => {
     document.body.innerHTML = `
       <div data-component="good"></div>

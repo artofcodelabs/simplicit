@@ -1,7 +1,4 @@
 export const validate = (nodes, componentClasses) => {
-  if (nodes.length === 0) {
-    throw new Error("No component elements found in the root element");
-  }
   for (const C of componentClasses) {
     const ctorName =
       C.prototype?.constructor?.name || C.constructor?.name || "(anonymous)";
