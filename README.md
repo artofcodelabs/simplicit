@@ -91,6 +91,7 @@ Simplicit exports a `Component` base class you can extend.
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
 * **`parent`**: parent component instance (or `null` for root components).
+* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.render`), available before `connect()`. Defaults to `{}` for components mounted from plain markup.
 
 #### Relationships
 
@@ -121,7 +122,7 @@ You can register cleanup manually or use helpers that auto-register cleanup:
 
 ### Server-driven templates via `<script type="application/json">`
 
-If a component class defines `static template(data)`, Simplicit can render HTML from JSON embedded in the page.
+If a component class defines `static template(props)`, Simplicit can render HTML from JSON embedded in the page.
 
 ```javascript
 import { start, Component } from "simplicit";
@@ -149,7 +150,14 @@ start({ root: document, components: [Slide] });
 
 Notes:
 
-* The JSON payload must be an **array**; each item is passed to `ComponentClass.template(item)`.
+* The JSON payload must be an **array**; each item is passed as `props` to `ComponentClass.template(props)`.
+* Each item is also attached to its rendered root element and exposed on the instance as **`this.props`** (available in `connect()`)
+* To render the same way from your own code (e.g. when inserting a component dynamically), use **`Component.render(props)`** — it calls `static template(props)` and attaches `props`, so instances created this way also get `this.props`:
+
+  ```javascript
+  this.element.insertAdjacentHTML("beforeend", Slide.render({ text: "A" }));
+  ```
+
 * The rendered HTML is sanitized with `dompurify` before being inserted.
 * `data-target` must match an existing element id, otherwise an error is thrown.
 * Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position` (default: `beforeend`). Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.

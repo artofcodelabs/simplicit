@@ -489,3 +489,59 @@ describe("descendants(name)", () => {
     expect(captured.leaves).toEqual([l1, l2]);
   });
 });
+
+describe("Component.render", () => {
+  it("renders the template and attaches data as data-props on the root", () => {
+    class Slide extends Component {
+      static name = "slide";
+      static template = ({ text }) =>
+        `<div data-component="slide">${text}</div>`;
+    }
+
+    const html = Slide.render({ text: "A" });
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    const root = template.content.firstElementChild;
+
+    expect(root.textContent).toBe("A");
+    expect(JSON.parse(root.getAttribute("data-props"))).toEqual({ text: "A" });
+  });
+});
+
+describe("Component props", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("exposes template data as this.props on the connected instance", () => {
+    let captured = null;
+    class Slide extends Component {
+      static name = "slide";
+      static template = ({ text }) =>
+        `<div data-component="slide">${text}</div>`;
+      connect() {
+        captured = this.props;
+      }
+    }
+
+    document.body.innerHTML = Slide.render({ text: "Hello", n: 3 });
+    start({ root: document, components: [Slide] });
+
+    expect(captured).toEqual({ text: "Hello", n: 3 });
+  });
+
+  it("defaults props to an empty object for plain markup components", () => {
+    let captured = "untouched";
+    class Plain extends Component {
+      static name = "plain";
+      connect() {
+        captured = this.props;
+      }
+    }
+
+    document.body.innerHTML = `<div data-component="plain"></div>`;
+    start({ root: document, components: [Plain] });
+
+    expect(captured).toEqual({});
+  });
+});

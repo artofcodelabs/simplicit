@@ -15,13 +15,13 @@
     <button data-ref="next"> → </button>
 
     <script type="application/json" data-component="slide" data-target="slideshow" data-position="beforeend">
-        [
-          { "text": "🐵 #A" },
-          { "text": "🙈 #B" },
-          { "text": "🙉 #C" },
-          { "text": "🙊 #D" }
-        ]
-      </script>
+      [
+        { "text": "🐵 #A" },
+        { "text": "🙈 #B" },
+        { "text": "🙉 #C" },
+        { "text": "🙊 #D" }
+      ]
+    </script>
   </div>
 
   <h2>Slideshow Manager</h2>
@@ -33,61 +33,52 @@
   </div>
 
   <script type="importmap">
-      {
-        "imports": {
-          "Simplicit": "/simplicit.mjs"
-        }
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
       }
-    </script>
+    }
+  </script>
+
   <script type="module">
     import { start, Component } from "Simplicit";
 
     class Slide extends Component {
       static name = "slide";
 
-      static template = ({ text, show = false, manage = false }) => {
-        return `
-          <div
-            data-component="${Slide.name}"
-            ${show ? "" : "hidden"}
-          >
-            ${Slide.captionTemplate(text, manage)}
-            <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
-          </div>
-          `;
-      }
+      static template = ({ text, show = false, manage = false }) => `
+        <div
+          data-component="${Slide.name}"
+          ${show ? "" : "hidden"}
+        >
+          ${Slide.captionTemplate(text, manage)}
+          <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
+        </div>
+        `;
 
-      static captionTemplate = (text, manage) => {
-        return `
-          <span data-ref="caption" style="cursor: ${manage ? "pointer" : "default"};">
-            ${text}
-          </span>
-          `;
-      }
+      static captionTemplate = (text, manage) => `
+        <span data-ref="caption" style="cursor: ${manage ? "pointer" : "default"};">
+          ${text}
+        </span>
+        `;
 
-      static boldTextTemplate = (text) => {
-        return `<b data-ref="bold-text">${text}</b>`;
-      }
+      static boldTextTemplate = (text) => `<b data-ref="bold-text">${text}</b>`;
 
-      static editTemplate = (text) => {
-        return `
-          <form data-ref="edit-form" style="display:inline;">
-            <input data-ref="edit" type="text" value="${text}" />
-          </form>
-          `;
-      }
+      static editTemplate = (text) => `
+        <form data-ref="edit-form" style="display:inline;">
+          <input data-ref="edit" type="text" value="${text}" />
+        </form>
+        `;
 
       constructor() {
         super();
         this.current = false;
-        this.caption = null;
         this.disableCaptionClick = null;
         this.disableEditSubmit = null;
         this.disableEditKeydown = null;
       }
 
       connect() {
-        this.caption = this.ref("caption").textContent.trim();
         this.on(this.ref("delete"), "click", (e) => {
           e.preventDefault();
           this.element.remove();
@@ -160,7 +151,7 @@
       #addEditSubmit() {
         this.disableEditSubmit = this.on(this.ref("edit-form"), "submit", (e) => {
           e.preventDefault();
-          this.caption = this.ref("edit").value;
+          this.props.text = this.ref("edit").value;
           this.#editToCaption();
         });
       }
@@ -174,7 +165,7 @@
       }
 
       #renderCaption() {
-        const caption = this.constructor.captionTemplate(this.caption, this.#isManaging());
+        const caption = this.constructor.captionTemplate(this.props.text, this.#isManaging());
         this.element.insertAdjacentHTML("afterbegin", caption);
         this.#addCaptionClick();
       }
@@ -189,7 +180,7 @@
       }
 
       #renderEdit() {
-        const edit = this.constructor.editTemplate(this.caption);
+        const edit = this.constructor.editTemplate(this.props.text);
         this.element.insertAdjacentHTML("afterbegin", edit);
         this.#addEditSubmit();
         this.#addEditKeydown();
@@ -205,7 +196,7 @@
 
       #captionToBold() {
         this.#removeCaption();
-        const bold = this.constructor.boldTextTemplate(this.caption);
+        const bold = this.constructor.boldTextTemplate(this.props.text);
         this.element.insertAdjacentHTML("afterbegin", bold);
       }
 
@@ -268,7 +259,7 @@
       }
 
       addSlide(text) {
-        const slideHtml = Slide.template({
+        const slideHtml = Slide.render({
           text,
           show: this.showAll,
           manage: this.manageSlides,

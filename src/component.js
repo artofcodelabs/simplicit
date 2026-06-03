@@ -1,9 +1,15 @@
-import { destructArray } from "./start/helpers.js";
+import { destructArray, attachProps } from "./start/helpers.js";
 
 export default class Component {
+  #cleanupCallbacks = [];
+  #isDisconnected = false;
+
   constructor() {
-    this._cleanupCallbacks = [];
-    this._isDisconnected = false;
+    this.props = {};
+  }
+
+  static render(props) {
+    return attachProps(this.template(props), props);
   }
 
   get element() {
@@ -20,7 +26,7 @@ export default class Component {
   }
 
   registerCleanup(callback) {
-    if (typeof callback === "function") this._cleanupCallbacks.push(callback);
+    if (typeof callback === "function") this.#cleanupCallbacks.push(callback);
     return callback;
   }
 
@@ -44,9 +50,9 @@ export default class Component {
   }
 
   disconnect() {
-    if (this._isDisconnected) return;
-    this._isDisconnected = true;
-    const callbacks = this._cleanupCallbacks.splice(0);
+    if (this.#isDisconnected) return;
+    this.#isDisconnected = true;
+    const callbacks = this.#cleanupCallbacks.splice(0);
     for (const cleanup of callbacks) cleanup();
     this.#detachFromParent();
   }

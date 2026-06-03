@@ -1,9 +1,10 @@
-import { generateComponentId } from "./id.js";
+import { generateComponentId, readProps } from "./helpers.js";
 
 export const initComponent = (node, ComponentClass) => {
   const instance = new ComponentClass();
   instance.node = node;
   instance.componentId = generateComponentId();
+  instance.props = readProps(node.element);
   return instance;
 };
 

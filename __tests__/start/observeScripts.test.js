@@ -72,4 +72,32 @@ describe("observeScripts", () => {
 
     observer.disconnect();
   });
+
+  it("attaches the template data as data-props on each rendered root", async () => {
+    document.body.innerHTML = `<div id="slideshow"></div>`;
+
+    const observer = observeScripts(document.body, [Slide]);
+
+    const script = document.createElement("script");
+    script.type = "application/json";
+    script.dataset.component = "slide";
+    script.dataset.target = "slideshow";
+    script.textContent = JSON.stringify([{ text: "A" }, { text: "B" }]);
+    document.body.appendChild(script);
+
+    const target = document.getElementById("slideshow");
+    await waitFor(
+      () => target.querySelectorAll('[data-component="slide"]').length === 2,
+    );
+
+    const slides = target.querySelectorAll('[data-component="slide"]');
+    expect(JSON.parse(slides[0].getAttribute("data-props"))).toEqual({
+      text: "A",
+    });
+    expect(JSON.parse(slides[1].getAttribute("data-props"))).toEqual({
+      text: "B",
+    });
+
+    observer.disconnect();
+  });
 });
