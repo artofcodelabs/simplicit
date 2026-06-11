@@ -211,6 +211,16 @@ start({ root: document, components: [Slide] });
 </script>
 ```
 
+Or drop `data-target`/`data-position` to render in place, where the script sits:
+
+```html
+<div id="slideshow">
+  <script type="application/json" data-component="slide">
+    [{"text":"A"},{"text":"B"}]
+  </script>
+</div>
+```
+
 Notes:
 
 * The JSON payload must be an **array**; each item is passed as `props` to `ComponentClass.template(props)`.
@@ -222,8 +232,9 @@ Notes:
   ```
 
 * The rendered HTML is sanitized with `dompurify` before being inserted.
-* `data-target` must match an existing element id, otherwise an error is thrown.
-* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position` (default: `beforeend`). Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
+* The `<script>` is removed from the DOM once rendered.
+* `data-target`, if present, must match an existing element id, otherwise an error is thrown. If **omitted**, the script element itself is the anchor — rendered HTML is inserted at the script's own position (default `beforebegin`, i.e. right where the script sits).
+* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position`. Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted. Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
 * Inserted component elements are then auto-initialized like any other DOM addition.
 
 ## 🕹️ Controllers

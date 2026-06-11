@@ -3,18 +3,18 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Simplest > Slideshow</title>
+  <title>Simplicit > Slideshow</title>
 </head>
 
 <body>
-  <h1>Simplest > Slideshow</h1>
+  <h1>Simplicit > Slideshow</h1>
 
   <h2>Slideshow</h2>
   <div data-component="slideshow" id="slideshow">
     <button data-ref="previous"> ← </button>
     <button data-ref="next"> → </button>
 
-    <script type="application/json" data-component="slide" data-target="slideshow" data-position="beforeend">
+    <script type="application/json" data-component="slide">
       [
         { "text": "🐵 #A" },
         { "text": "🙈 #B" },
@@ -82,8 +82,6 @@
         return !!this.props.current;
       }
 
-      // Listeners are declared once by ref name; the framework re-attaches them
-      // to whatever matches after each render — even refs that appear later.
       connect() {
         this.parent.checkIn(this);
         this.on("delete", "click", (e) => {
@@ -276,7 +274,7 @@
   </script>
 
   <p>
-    <a href="/">Simplest</a>
+    <a href="/">Simplicit</a>
   </p>
 </body>
 
