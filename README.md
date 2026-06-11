@@ -91,7 +91,70 @@ Simplicit exports a `Component` base class you can extend.
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
 * **`parent`**: parent component instance (or `null` for root components).
-* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.render`), available before `connect()`. Defaults to `{}` for components mounted from plain markup.
+* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.render`), available before `connect()`. Defaults to `{}` for components mounted from plain markup. Treat `props` as the full state that drives the markup.
+
+#### Reactive updates
+
+* **`update(partial)`**: merges `partial` into `this.props`, re-renders `static template(this.props)`, and **morphs** the result into the live DOM — patching only changed text/attributes/nodes instead of replacing the subtree. Returns `this`.
+
+  Because morphing keeps node identity, anything tied to an unchanged node survives the update: focus, text selection, and scroll position.
+
+  This makes the template a pure function of `props`: write a single decision tree over all props that affect the markup, then call `update()` to move between states instead of mutating the DOM by hand.
+
+#### Keying list items with `data-key`
+
+Morphing compares the old and new children **by position**: child 1 against child 1, child 2 against child 2, and so on. Same tag at a position → the existing node is patched in place; different tag → it’s replaced. That’s exactly right for fixed layouts, but it’s the wrong default for a **list whose items reorder, get inserted, or get removed**.
+
+Say you render a list and then delete the first item. Positionally, every item shifts up one slot, so the morph patches each surviving node into the *next* item’s data — every row is mutated, and whatever was tied to those nodes (focus, a half-typed input, a CSS transition) is now attached to the wrong row.
+
+Add **`data-key="<stable-id>"`** to each item so morphing can recognise identity instead of trusting position:
+
+```javascript
+static template = ({ todos }) => `
+  <ul data-component="todos">
+    ${todos.map((t) => `<li data-key="${t.id}">${t.label}</li>`).join("")}
+  </ul>
+`;
+```
+
+With keys, two nodes are only treated as “the same” when their tag **and** `data-key` match; a position whose key changed is replaced rather than mutated, so a node’s identity follows its data, not its slot. Recommended whenever you render a collection from an array — use a stable id from your data (a database id, a uuid), never the array index, since the index is just the position you’re trying to stop relying on.
+
+> Note: keys here are a correctness guard for the positional diff (replace-vs-patch), not full move-detection — the morph doesn’t relocate a moved node, it rebuilds it where the key no longer matches. That keeps identity attached to the right data; it just doesn’t physically reuse a node that jumped position.
+
+#### Listeners
+
+Bind events to your component's elements **by ref name**, declared once in `connect()`:
+
+```javascript
+class Counter extends Component {
+  static name = "counter";
+
+  static template = ({ count }) =>
+    `<div data-component="counter"><button data-ref="inc">${count}</button></div>`;
+
+  connect() {
+    this.on("inc", "click", () => this.update({ count: this.props.count + 1 }));
+    this.update({ count: 0 }); // paint the initial template into the empty <div data-component="counter">
+  }
+}
+```
+
+A component mounted from plain markup keeps whatever HTML is already inside its element — `template` does **not** run automatically. To render it client-side, call `update(initialProps)` in `connect()` (as above); it morphs the template in, and `on("<ref>", ...)` then attaches to the freshly painted refs.
+
+**`on(target, type, listener, options?)`** — `target` can be a **ref name** (`"inc"`) or a **ref element** (`this.ref("inc")`); both behave identically, because an element carries its own `data-ref`. The framework keeps `listener` attached to whatever `[data-ref]` elements match after **every** render: it binds nodes that morphing recreated, binds refs that only appear in a later state, unbinds ones that disappear, and de-duplicates so kept nodes never stack handlers. Declare it once in `connect()` and never think about it again.
+
+The one difference is for targets that **have no `data-ref`** — `window`, `document`, or the component root (`this.element`). Those can't be addressed by ref, so the listener is simply pinned to that exact object (and, since those never get morphed away, that's all you need).
+
+Prefer the ref name for not-yet-rendered elements: `this.ref("inc")` returns `null` before its first render, so only `on("inc", ...)` can bind a ref that appears later.
+
+Both return an `off()` and are cleared automatically on `disconnect()`. For an imperative touch-up after a state change (focus an input, scroll into view), do it right after `update()` — the morph is synchronous, so the new ref is already in the DOM:
+
+```javascript
+edit() {
+  this.update({ editing: true });
+  this.ref("input").focus(); // input exists now
+}
+```
 
 #### Relationships
 

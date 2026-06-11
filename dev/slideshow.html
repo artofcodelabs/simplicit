@@ -46,185 +46,106 @@
     class Slide extends Component {
       static name = "slide";
 
-      static template = ({ text, show = false, manage = false }) => `
+      static template = ({
+        text,
+        show = false,
+        manage = false,
+        current = false,
+        editing = false,
+        editable = true,
+      }) => `
         <div
           data-component="${Slide.name}"
-          ${show ? "" : "hidden"}
+          ${current || show ? "" : "hidden"}
         >
-          ${Slide.captionTemplate(text, manage)}
-          <a href="#" data-ref="delete" style="text-decoration: none;" ${manage ? "" : "hidden"}> ❌</a>
+          ${Slide.bodyTemplate({ text, manage, current, editing, editable })}
+          <a href="#" data-ref="delete" style="text-decoration: none;" ${manage && !current ? "" : "hidden"}> ❌</a>
         </div>
         `;
 
-      static captionTemplate = (text, manage) => `
-        <span data-ref="caption" style="cursor: ${manage ? "pointer" : "default"};">
-          ${text}
-        </span>
-        `;
+      static bodyTemplate = ({ text, manage, current, editing, editable }) => {
+        if (current) return `<b data-ref="bold-text">${text}</b>`;
+        if (editing)
+          return `
+            <form data-ref="edit-form" style="display:inline;">
+              <input data-ref="edit" type="text" value="${text}" />
+            </form>
+            `;
+        return `
+          <span data-ref="caption" style="cursor: ${manage && editable ? "pointer" : "default"};">
+            ${text}
+          </span>
+          `;
+      };
 
-      static boldTextTemplate = (text) => `<b data-ref="bold-text">${text}</b>`;
-
-      static editTemplate = (text) => `
-        <form data-ref="edit-form" style="display:inline;">
-          <input data-ref="edit" type="text" value="${text}" />
-        </form>
-        `;
-
-      constructor() {
-        super();
-        this.current = false;
-        this.disableCaptionClick = null;
-        this.disableEditSubmit = null;
-        this.disableEditKeydown = null;
+      get current() {
+        return !!this.props.current;
       }
 
+      // Listeners are declared once by ref name; the framework re-attaches them
+      // to whatever matches after each render — even refs that appear later.
       connect() {
-        this.on(this.ref("delete"), "click", (e) => {
+        this.parent.checkIn(this);
+        this.on("delete", "click", (e) => {
           e.preventDefault();
           this.element.remove();
         });
-        this.#addCaptionClick();
-        this.parent.checkIn(this);
+        this.on("caption", "click", () => this.#edit());
+        this.on("edit-form", "submit", (e) => {
+          e.preventDefault();
+          this.#save();
+        });
+        this.on("edit", "keydown", (e) => {
+          if (e.key !== "Escape") return;
+          e.preventDefault();
+          this.#cancel();
+        });
       }
 
       show() {
-        this.element.hidden = false;
+        this.update({ show: true });
       }
 
       hide() {
         if (this.current) return;
-        this.element.hidden = true;
+        this.update({ show: false });
       }
 
       changeCurrent({ current, show, manage }) {
-        if (current && !this.current) {
-          this.#disableManagement();
-          this.#captionToBold();
-          this.current = true;
-          this.show();
-        } else if (!current && this.current) {
-          this.#boldToCaption();
-          this.current = false;
-          this.changeManagement(manage);
-          show ? this.show() : this.hide();
-        }
+        this.update({ current, show, manage, editing: false });
       }
 
       changeManagement(manage) {
         if (this.current) return;
-
-        if (manage && !this.#isManaging()) {
-          this.#enableManagement();
-        } else if (!manage && this.#isManaging()) {
-          this.#disableManagement();
-        }
+        this.update({ manage, editing: manage && this.props.editing });
       }
 
       editable(editable) {
-        if (this.current) return;
-        if (this.#isEditing()) return;
-
-        this.#modifyCaption({ cursor: editable ? "pointer" : "default" });
+        if (this.current || this.props.editing) return;
+        this.update({ editable });
       }
 
-      #isEditable() {
-        return this.ref("caption").style.cursor === "pointer";
+      #edit() {
+        if (this.current || !this.props.manage || this.props.editable === false) return;
+        this.siblings("slide").forEach((slide) => slide.editable(false));
+        this.update({ editing: true });
+        this.#focusEdit();
       }
 
-      #isEditing() {
-        return this.ref("edit") !== null;
-      }
-
-      #isManaging() {
-        return this.ref("delete").hidden === false;
-      }
-
-      #addCaptionClick() {
-        this.disableCaptionClick = this.on(this.ref('caption'), 'click', () => {
-          if (!this.#isManaging()) return;
-          if (!this.#isEditable()) return;
-          this.siblings("slide").forEach((slide) => slide.editable(false));
-          this.#captionToEdit();
-        });
-      }
-
-      #addEditSubmit() {
-        this.disableEditSubmit = this.on(this.ref("edit-form"), "submit", (e) => {
-          e.preventDefault();
-          this.props.text = this.ref("edit").value;
-          this.#editToCaption();
-        });
-      }
-
-      #addEditKeydown() {
-        this.disableEditKeydown = this.on(this.ref("edit"), "keydown", (e) => {
-          if (e.key !== "Escape") return;
-          e.preventDefault();
-          this.#editToCaption();
-        });
-      }
-
-      #renderCaption() {
-        const caption = this.constructor.captionTemplate(this.props.text, this.#isManaging());
-        this.element.insertAdjacentHTML("afterbegin", caption);
-        this.#addCaptionClick();
-      }
-
-      #modifyCaption({ cursor }) {
-        this.ref("caption").style.cursor = cursor;
-      }
-
-      #removeCaption() {
-        this.disableCaptionClick();
-        this.ref("caption").remove();
-      }
-
-      #renderEdit() {
-        const edit = this.constructor.editTemplate(this.props.text);
-        this.element.insertAdjacentHTML("afterbegin", edit);
-        this.#addEditSubmit();
-        this.#addEditKeydown();
-        this.ref("edit").focus();
-        this.ref("edit").setSelectionRange(this.ref("edit").value.length, this.ref("edit").value.length);
-      }
-
-      #removeEdit() {
-        this.disableEditSubmit();
-        this.disableEditKeydown();
-        this.ref("edit-form").remove();
-      }
-
-      #captionToBold() {
-        this.#removeCaption();
-        const bold = this.constructor.boldTextTemplate(this.props.text);
-        this.element.insertAdjacentHTML("afterbegin", bold);
-      }
-
-      #boldToCaption() {
-        this.ref("bold-text").remove();
-        this.#renderCaption();
-      }
-
-      #captionToEdit() {
-        this.#removeCaption();
-        this.#renderEdit();
-      }
-
-      #editToCaption() {
-        this.#removeEdit();
-        this.#renderCaption();
+      #save() {
+        this.update({ text: this.ref("edit").value, editing: false });
         this.siblings("slide").forEach((slide) => slide.editable(true));
       }
 
-      #enableManagement() {
-        this.ref("delete").hidden = false;
-        this.ref("caption").style.cursor = "pointer";
+      #cancel() {
+        this.update({ editing: false });
+        this.siblings("slide").forEach((slide) => slide.editable(true));
       }
 
-      #disableManagement() {
-        if (this.#isEditing()) this.#editToCaption();
-        this.ref("caption").style.cursor = "default";
-        this.ref("delete").hidden = true;
+      #focusEdit() {
+        const edit = this.ref("edit");
+        edit.focus();
+        edit.setSelectionRange(edit.value.length, edit.value.length);
       }
     }
 
@@ -246,8 +167,8 @@
       }
 
       connect() {
-        this.on(this.ref("previous"), "click", () => this.#changeCurrentSlideIndex(-1));
-        this.on(this.ref("next"), "click", () => this.#changeCurrentSlideIndex(1));
+        this.on("previous", "click", () => this.#changeCurrentSlideIndex(-1));
+        this.on("next", "click", () => this.#changeCurrentSlideIndex(1));
       }
 
       checkIn(slide) {
@@ -318,10 +239,10 @@
       }
 
       connect() {
-        this.on(this.ref("add-slide"), "click", () => this.#addSlide());
-        this.on(this.ref("show-slides"), "click", () => this.#showSlides());
-        this.on(this.ref("hide-slides"), "click", () => this.#hideSlides());
-        this.on(this.ref("manage-slides"), "click", () => this.#manageSlides());
+        this.on("add-slide", "click", () => this.#addSlide());
+        this.on("show-slides", "click", () => this.#showSlides());
+        this.on("hide-slides", "click", () => this.#hideSlides());
+        this.on("manage-slides", "click", () => this.#manageSlides());
       }
 
       #addSlide() {

@@ -44,13 +44,17 @@
     </p>
   </div>
 
+  <h2>Counter</h2>
+  <div data-component="counter"></div>
+
   <script type="importmap">
-      {
-        "imports": {
-          "Simplicit": "/simplicit.mjs"
-        }
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
       }
-    </script>
+    }
+  </script>
+
   <script type="module">
     import { start, Component } from "Simplicit";
 
@@ -125,7 +129,19 @@
       }
     }
 
-    const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
+    class Counter extends Component {
+      static name = "counter";
+
+      static template = ({ count }) =>
+        `<div data-component="counter"><button data-ref="inc">${count}</button></div>`;
+
+      connect() {
+        this.on("inc", "click", () => this.update({ count: this.props.count + 1 }));
+        this.update({ count: 0 });
+      }
+    }
+
+    const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory, Counter] });
   </script>
 
   <p>

@@ -1,5 +1,5 @@
 import DOMPurify from "dompurify";
-import { attachProps } from "./helpers.js";
+import { setProps } from "./helpers.js";
 
 const processedAttr = "data-script-processed";
 
@@ -36,7 +36,7 @@ const processScript = (script, componentClasses) => {
   const arr = JSON.parse(script.textContent);
   let html = "";
   arr.forEach((props) => {
-    html += attachProps(componentClass.template(props), props);
+    html += setProps(componentClass.template(props), props);
   });
   targetEl.insertAdjacentHTML(position, DOMPurify.sanitize(html));
   script.setAttribute(processedAttr, "true");

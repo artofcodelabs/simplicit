@@ -1,15 +1,17 @@
-import { destructArray, attachProps } from "./start/helpers.js";
+import { destructArray, setProps, root } from "./start/helpers.js";
+import { morph } from "./start/morph.js";
 
 export default class Component {
   #cleanupCallbacks = [];
+  #bindings = [];
   #isDisconnected = false;
+
+  static render(props) {
+    return setProps(this.template(props), props);
+  }
 
   constructor() {
     this.props = {};
-  }
-
-  static render(props) {
-    return attachProps(this.template(props), props);
   }
 
   get element() {
@@ -26,15 +28,29 @@ export default class Component {
   }
 
   registerCleanup(callback) {
-    if (typeof callback === "function") this.#cleanupCallbacks.push(callback);
+    this.#cleanupCallbacks.push(callback);
     return callback;
   }
 
   on(target, type, listener, options) {
-    target.addEventListener(type, listener, options);
-    const off = () => target.removeEventListener(type, listener, options);
-    this.registerCleanup(off);
-    return off;
+    const ref =
+      typeof target === "string"
+        ? target
+        : target instanceof Element
+          ? target.getAttribute("data-ref")
+          : null;
+    const resolve =
+      ref !== null ? () => this.#refElements(ref) : () => [target];
+    const binding = { resolve, type, listener, options, bound: new Set() };
+    this.#bindings.push(binding);
+    this.#applyBinding(binding);
+    return this.registerCleanup(() => {
+      for (const el of binding.bound) {
+        el.removeEventListener(type, listener, options);
+      }
+      const index = this.#bindings.indexOf(binding);
+      if (index !== -1) this.#bindings.splice(index, 1);
+    });
   }
 
   timeout(callback, delay) {
@@ -58,10 +74,7 @@ export default class Component {
   }
 
   ref(name) {
-    const list = Array.from(
-      this.element.querySelectorAll(`[data-ref="${name}"]`),
-    );
-    return destructArray(list);
+    return destructArray(this.#refElements(name));
   }
 
   refs() {
@@ -113,6 +126,33 @@ export default class Component {
 
     walk(this.node);
     return out;
+  }
+
+  update(partial = {}) {
+    Object.assign(this.props, partial);
+    morph(this.element, root(this.constructor.template(this.props)));
+    this.#applyBindings();
+    return this;
+  }
+
+  #applyBindings() {
+    for (const binding of this.#bindings) this.#applyBinding(binding);
+  }
+
+  #applyBinding(binding) {
+    const { resolve, type, listener, options, bound } = binding;
+    const current = new Set(resolve());
+    for (const el of bound) {
+      if (!current.has(el)) el.removeEventListener(type, listener, options);
+    }
+    for (const el of current) {
+      if (!bound.has(el)) el.addEventListener(type, listener, options);
+    }
+    binding.bound = current;
+  }
+
+  #refElements(name) {
+    return Array.from(this.element.querySelectorAll(`[data-ref="${name}"]`));
   }
 
   #related(type, name) {

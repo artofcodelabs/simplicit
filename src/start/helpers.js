@@ -14,15 +14,19 @@ export const destructArray = (array) => {
   }
 };
 
-export const attachProps = (html, props) => {
+export const root = (html) => {
   const template = document.createElement("template");
-  template.innerHTML = html;
-  const root = template.content.firstElementChild;
-  root.setAttribute(dataPropsAttribute, JSON.stringify(props));
-  return template.innerHTML;
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
 };
 
-export const readProps = (element) => {
+export const setProps = (html, props) => {
+  const element = root(html);
+  element.setAttribute(dataPropsAttribute, JSON.stringify(props));
+  return element.outerHTML;
+};
+
+export const popProps = (element) => {
   const raw = element.getAttribute(dataPropsAttribute);
   if (raw === null) return {};
   element.removeAttribute(dataPropsAttribute);

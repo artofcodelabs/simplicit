@@ -545,3 +545,191 @@ describe("Component props", () => {
     expect(captured).toEqual({});
   });
 });
+
+describe("Component.update", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("merges props, re-renders, and morphs the DOM in place", () => {
+    class Counter extends Component {
+      static name = "counter";
+      static template = ({ count = 0, label = "n" }) =>
+        `<div data-component="counter"><span data-ref="out">${label}:${count}</span></div>`;
+    }
+
+    document.body.innerHTML = Counter.render({ count: 0, label: "n" });
+    start({ root: document, components: [Counter] });
+
+    const el = document.querySelector('[data-component="counter"]');
+    const instance = el.instance;
+    const span = el.querySelector('[data-ref="out"]');
+
+    instance.update({ count: 1 });
+
+    expect(instance.props).toEqual({ count: 1, label: "n" });
+    expect(el.querySelector('[data-ref="out"]')).toBe(span); // identity kept
+    expect(span.textContent).toBe("n:1");
+  });
+
+  it("keeps delegated listeners working across updates", () => {
+    let clicks = 0;
+    class Box extends Component {
+      static name = "box";
+      static template = ({ on = false }) =>
+        `<div data-component="box"><button data-ref="b">${on ? "on" : "off"}</button></div>`;
+      connect() {
+        this.on(this.element, "click", () => {
+          clicks++;
+          this.update({ on: !this.props.on });
+        });
+      }
+    }
+
+    document.body.innerHTML = Box.render({ on: false });
+    start({ root: document, components: [Box] });
+
+    const el = document.querySelector('[data-component="box"]');
+    el.querySelector('[data-ref="b"]').click();
+    expect(el.querySelector('[data-ref="b"]').textContent).toBe("on");
+    el.querySelector('[data-ref="b"]').click();
+    expect(el.querySelector('[data-ref="b"]').textContent).toBe("off");
+    expect(clicks).toBe(2);
+  });
+});
+
+describe('Component.on("<ref>", ...)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("stays attached across re-renders without stacking (no leak)", () => {
+    let clicks = 0;
+    class Toggle extends Component {
+      static name = "toggle";
+      static template = ({ on = false }) =>
+        `<div data-component="toggle"><button data-ref="b">${on ? "on" : "off"}</button></div>`;
+      connect() {
+        // Declared once. The <button> keeps identity across morphs; without
+        // dedup this would stack a new handler every render.
+        this.on("b", "click", () => {
+          clicks++;
+          this.update({ on: !this.props.on });
+        });
+      }
+    }
+
+    document.body.innerHTML = Toggle.render({ on: false });
+    start({ root: document, components: [Toggle] });
+    const el = document.querySelector('[data-component="toggle"]');
+
+    el.querySelector('[data-ref="b"]').click(); // -> on, clicks=1
+    el.querySelector('[data-ref="b"]').click(); // -> off, clicks=2
+    el.querySelector('[data-ref="b"]').click(); // -> on, clicks=3
+
+    expect(clicks).toBe(3); // one handler per click, not 1+2+4...
+    expect(el.querySelector('[data-ref="b"]').textContent).toBe("on");
+  });
+
+  it("binds refs that only appear after a later update, and unbinds when gone", () => {
+    let saves = 0;
+    class Field extends Component {
+      static name = "field";
+      static template = ({ editing = false }) =>
+        editing
+          ? `<div data-component="field"><form data-ref="form"></form></div>`
+          : `<div data-component="field"><span data-ref="label">x</span></div>`;
+      connect() {
+        this.on("form", "submit", () => saves++);
+      }
+    }
+
+    document.body.innerHTML = Field.render({ editing: false });
+    start({ root: document, components: [Field] });
+    const el = document.querySelector('[data-component="field"]');
+    const instance = el.instance;
+
+    // No form yet — nothing to fire.
+    expect(el.querySelector('[data-ref="form"]')).toBeNull();
+
+    instance.update({ editing: true });
+    const form = el.querySelector('[data-ref="form"]');
+    form.dispatchEvent(new Event("submit"));
+    expect(saves).toBe(1);
+
+    // Form removed: the old node keeps no live binding into the component.
+    instance.update({ editing: false });
+    form.dispatchEvent(new Event("submit"));
+    expect(saves).toBe(1);
+  });
+
+  it("unbinds ref listeners on disconnect", () => {
+    let clicks = 0;
+    class Btn extends Component {
+      static name = "btn";
+      static template = () =>
+        `<div data-component="btn"><button data-ref="b">x</button></div>`;
+      connect() {
+        this.on("b", "click", () => clicks++);
+      }
+    }
+
+    document.body.innerHTML = Btn.render({});
+    start({ root: document, components: [Btn] });
+    const el = document.querySelector('[data-component="btn"]');
+    const button = el.querySelector('[data-ref="b"]');
+
+    el.instance.disconnect();
+    button.click();
+
+    expect(clicks).toBe(0);
+  });
+
+  it("treats on(ref-element) the same as on(refName) — survives morph", () => {
+    let clicks = 0;
+    class Toggle extends Component {
+      static name = "toggle2";
+      static template = ({ on = false }) =>
+        `<div data-component="toggle2"><button data-ref="b">${on ? "on" : "off"}</button></div>`;
+      connect() {
+        // passing the element, not the name — should still follow the ref
+        this.on(this.ref("b"), "click", () => {
+          clicks++;
+          this.update({ on: !this.props.on });
+        });
+      }
+    }
+
+    document.body.innerHTML = Toggle.render({ on: false });
+    start({ root: document, components: [Toggle] });
+    const el = document.querySelector('[data-component="toggle2"]');
+
+    el.querySelector('[data-ref="b"]').click();
+    el.querySelector('[data-ref="b"]').click();
+    el.querySelector('[data-ref="b"]').click();
+
+    expect(clicks).toBe(3); // re-bound across morphs, no stacking
+    expect(el.querySelector('[data-ref="b"]').textContent).toBe("on");
+  });
+
+  it("pins a fixed listener to targets without a data-ref (e.g. the root)", () => {
+    let clicks = 0;
+    class Box extends Component {
+      static name = "box2";
+      static template = ({ n = 0 }) =>
+        `<div data-component="box2"><span data-ref="out">${n}</span></div>`;
+      connect() {
+        this.on(this.element, "click", () => clicks++);
+      }
+    }
+
+    document.body.innerHTML = Box.render({ n: 0 });
+    start({ root: document, components: [Box] });
+    const el = document.querySelector('[data-component="box2"]');
+
+    el.instance.update({ n: 1 }); // morph keeps the root node
+    el.click();
+
+    expect(clicks).toBe(1); // still bound once after re-render
+  });
+});
