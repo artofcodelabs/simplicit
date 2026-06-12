@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { morph } from "../../src/start/morph";
 import { root } from "../../src/start/helpers";
 
@@ -80,5 +81,49 @@ describe("morph", () => {
     morph(from, root(`<ul><li>1</li><li>2</li></ul>`));
     expect(from.children).toHaveLength(2);
     expect(from.lastElementChild.textContent).toBe("2");
+  });
+
+  describe("data-key warnings", () => {
+    let warn;
+    beforeEach(() => {
+      warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+    afterEach(() => warn.mockRestore());
+
+    it("warns when an unkeyed list changes count", () => {
+      const from = mount(`<ul><li>1</li><li>2</li></ul>`);
+
+      morph(from, root(`<ul><li>1</li></ul>`));
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain("data-key");
+      expect(warn.mock.calls[0][0]).toContain("<li>");
+    });
+
+    it("stays silent when list items carry data-key", () => {
+      const from = mount(
+        `<ul><li data-key="a">1</li><li data-key="b">2</li></ul>`,
+      );
+
+      morph(from, root(`<ul><li data-key="a">1</li></ul>`));
+
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("stays silent when count is unchanged", () => {
+      const from = mount(`<ul><li>1</li><li>2</li></ul>`);
+
+      morph(from, root(`<ul><li>x</li><li>y</li></ul>`));
+
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("stays silent when no sibling tag repeats", () => {
+      const from = mount(`<div><h1>t</h1></div>`);
+
+      morph(from, root(`<div><h1>t</h1><p>a</p></div>`));
+
+      expect(warn).not.toHaveBeenCalled();
+    });
   });
 });
