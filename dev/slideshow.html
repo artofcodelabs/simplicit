@@ -118,26 +118,26 @@
         this.update({ manage, editing: manage && this.props.editing });
       }
 
-      editable(editable) {
+      changeEditable(editable) {
         if (this.current || this.props.editing) return;
         this.update({ editable });
       }
 
       #edit() {
         if (this.current || !this.props.manage || this.props.editable === false) return;
-        this.siblings("slide").forEach((slide) => slide.editable(false));
+        this.siblings("slide").forEach((slide) => slide.changeEditable(false));
         this.update({ editing: true });
         this.#focusEdit();
       }
 
       #save() {
         this.update({ text: this.ref("edit").value, editing: false });
-        this.siblings("slide").forEach((slide) => slide.editable(true));
+        this.siblings("slide").forEach((slide) => slide.changeEditable(true));
       }
 
       #cancel() {
         this.update({ editing: false });
-        this.siblings("slide").forEach((slide) => slide.editable(true));
+        this.siblings("slide").forEach((slide) => slide.changeEditable(true));
       }
 
       #focusEdit() {
