@@ -2,13 +2,13 @@ import { destructArray, setProps, root } from "./start/helpers.js";
 import { morph } from "./start/morph.js";
 
 export default class Component {
-  #cleanupCallbacks = [];
-  #bindings = [];
-  #isDisconnected = false;
-
   static render(props) {
     return setProps(this.template(props), props);
   }
+
+  #cleanupCallbacks = [];
+  #bindings = [];
+  #isDisconnected = false;
 
   constructor() {
     this.props = {};
