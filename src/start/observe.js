@@ -116,6 +116,9 @@ const linkInstances = (instances) => {
   for (const instance of instances) {
     if (typeof instance.connect === "function") instance.connect();
   }
+  for (const instance of instances) {
+    instance.connectModel();
+  }
 };
 
 export const observe = (searchRoot, componentClasses = []) => {

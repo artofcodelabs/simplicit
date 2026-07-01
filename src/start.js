@@ -7,6 +7,16 @@ import { observeScripts } from "./start/observeScripts.js";
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
   const componentClasses = [...(options.components ?? [])];
+  const modelClasses = [...(options.models ?? [])];
+
+  for (const ModelClass of modelClasses) {
+    for (const ComponentClass of ModelClass.components ?? []) {
+      ComponentClass.Model = ModelClass;
+      if (!componentClasses.includes(ComponentClass)) {
+        componentClasses.push(ComponentClass);
+      }
+    }
+  }
 
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);

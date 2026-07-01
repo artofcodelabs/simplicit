@@ -2,6 +2,8 @@ import { destructArray, setProps, root } from "./start/helpers.js";
 import { morph } from "./start/morph.js";
 
 export default class Component {
+  static Model = null;
+
   static render(props) {
     return setProps(this.template(props), props);
   }
@@ -133,6 +135,17 @@ export default class Component {
     morph(this.element, root(this.constructor.template(this.props)));
     this.#applyBindings();
     return this;
+  }
+
+  connectModel() {
+    const Model = this.constructor.Model;
+    if (!Model) return;
+
+    const record = Model.find(this.element.dataset.key);
+    if (!record) return;
+
+    record.bind(this);
+    this.registerCleanup(() => record.unbind(this));
   }
 
   #applyBindings() {

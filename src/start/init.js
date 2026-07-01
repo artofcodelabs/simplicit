@@ -27,5 +27,8 @@ export const initMatches = (nodes, componentClasses) => {
   for (const instance of instances) {
     if (typeof instance.connect === "function") instance.connect();
   }
+  for (const instance of instances) {
+    instance.connectModel();
+  }
   return instances;
 };
