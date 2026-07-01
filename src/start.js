@@ -3,6 +3,7 @@ import { validate } from "./start/validate.js";
 import { initMatches } from "./start/init.js";
 import { observe } from "./start/observe.js";
 import { observeScripts } from "./start/observeScripts.js";
+import { loadModels } from "./start/loadModels.js";
 
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
@@ -20,14 +21,14 @@ const start = (options = {}) => {
 
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
-
+  loadModels(searchRoot, modelClasses);
   const instances = initMatches(nodes, componentClasses);
   const observer = observe(searchRoot, componentClasses);
   const scriptObserver = observeScripts(searchRoot, componentClasses);
   const roots = instances.filter((i) => i.node.parent === null);
 
   return {
-    roots: roots,
+    roots,
     addComponents(newComponents) {
       const filteredNewComponents = newComponents.filter(
         (ComponentClass) =>
