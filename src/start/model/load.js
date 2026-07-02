@@ -1,7 +1,7 @@
 const modelScripts = (searchRoot) =>
   searchRoot.querySelectorAll("script[type='application/json'][data-model]");
 
-export const loadModels = (searchRoot, modelClasses) => {
+export const load = (searchRoot, modelClasses) => {
   for (const script of modelScripts(searchRoot)) {
     const name = script.dataset.model;
     const modelClass = modelClasses.find((m) => m.name === name);
