@@ -4,7 +4,7 @@ import { morph } from "./start/morph.js";
 export default class Component {
   static Model = null;
 
-  static render(props) {
+  static toHTML(props) {
     return setProps(this.template(props), props);
   }
 

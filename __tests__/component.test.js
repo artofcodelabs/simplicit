@@ -498,7 +498,7 @@ describe("Component.render", () => {
         `<div data-component="slide">${text}</div>`;
     }
 
-    const html = Slide.render({ text: "A" });
+    const html = Slide.toHTML({ text: "A" });
     const template = document.createElement("template");
     template.innerHTML = html;
     const root = template.content.firstElementChild;
@@ -524,7 +524,7 @@ describe("Component props", () => {
       }
     }
 
-    document.body.innerHTML = Slide.render({ text: "Hello", n: 3 });
+    document.body.innerHTML = Slide.toHTML({ text: "Hello", n: 3 });
     start({ root: document, components: [Slide] });
 
     expect(captured).toEqual({ text: "Hello", n: 3 });
@@ -558,7 +558,7 @@ describe("Component.update", () => {
         `<div data-component="counter"><span data-ref="out">${label}:${count}</span></div>`;
     }
 
-    document.body.innerHTML = Counter.render({ count: 0, label: "n" });
+    document.body.innerHTML = Counter.toHTML({ count: 0, label: "n" });
     start({ root: document, components: [Counter] });
 
     const el = document.querySelector('[data-component="counter"]');
@@ -586,7 +586,7 @@ describe("Component.update", () => {
       }
     }
 
-    document.body.innerHTML = Box.render({ on: false });
+    document.body.innerHTML = Box.toHTML({ on: false });
     start({ root: document, components: [Box] });
 
     const el = document.querySelector('[data-component="box"]');
@@ -619,7 +619,7 @@ describe('Component.on("<ref>", ...)', () => {
       }
     }
 
-    document.body.innerHTML = Toggle.render({ on: false });
+    document.body.innerHTML = Toggle.toHTML({ on: false });
     start({ root: document, components: [Toggle] });
     const el = document.querySelector('[data-component="toggle"]');
 
@@ -644,7 +644,7 @@ describe('Component.on("<ref>", ...)', () => {
       }
     }
 
-    document.body.innerHTML = Field.render({ editing: false });
+    document.body.innerHTML = Field.toHTML({ editing: false });
     start({ root: document, components: [Field] });
     const el = document.querySelector('[data-component="field"]');
     const instance = el.instance;
@@ -674,7 +674,7 @@ describe('Component.on("<ref>", ...)', () => {
       }
     }
 
-    document.body.innerHTML = Btn.render({});
+    document.body.innerHTML = Btn.toHTML({});
     start({ root: document, components: [Btn] });
     const el = document.querySelector('[data-component="btn"]');
     const button = el.querySelector('[data-ref="b"]');
@@ -700,7 +700,7 @@ describe('Component.on("<ref>", ...)', () => {
       }
     }
 
-    document.body.innerHTML = Toggle.render({ on: false });
+    document.body.innerHTML = Toggle.toHTML({ on: false });
     start({ root: document, components: [Toggle] });
     const el = document.querySelector('[data-component="toggle2"]');
 
@@ -723,7 +723,7 @@ describe('Component.on("<ref>", ...)', () => {
       }
     }
 
-    document.body.innerHTML = Box.render({ n: 0 });
+    document.body.innerHTML = Box.toHTML({ n: 0 });
     start({ root: document, components: [Box] });
     const el = document.querySelector('[data-component="box2"]');
 

@@ -225,10 +225,10 @@ Notes:
 
 * The JSON payload must be an **array**; each item is passed as `props` to `ComponentClass.template(props)`.
 * Each item is also attached to its rendered root element and exposed on the instance as **`this.props`** (available in `connect()`)
-* To render the same way from your own code (e.g. when inserting a component dynamically), use **`Component.render(props)`** — it calls `static template(props)` and attaches `props`, so instances created this way also get `this.props`:
+* To produce the same markup from your own code (e.g. when inserting a component dynamically), use **`Component.toHTML(props)`** — it calls `static template(props)` and attaches `props`, so instances created this way also get `this.props`:
 
   ```javascript
-  this.element.insertAdjacentHTML("beforeend", Slide.render({ text: "A" }));
+  this.element.insertAdjacentHTML("beforeend", Slide.toHTML({ text: "A" }));
   ```
 
 * The rendered HTML is sanitized with `dompurify` before being inserted.
