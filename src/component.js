@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { destructArray, setProps, root } from "./start/helpers.js";
 import { morph } from "./start/morph.js";
 
@@ -6,6 +7,14 @@ export default class Component {
 
   static toHTML(props) {
     return setProps(this.template(props), props);
+  }
+
+  static renderTemplates(container, propsList) {
+    const next = container.cloneNode(false);
+    next.innerHTML = DOMPurify.sanitize(
+      propsList.map((props) => this.template(props)).join(""),
+    );
+    morph(container, next);
   }
 
   #cleanupCallbacks = [];
