@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplicit > Articles</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; }
+    .views { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; }
+    [data-component="article-card"] { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin: .75rem 0; }
+    [data-component="article-card"] h4 { margin: 0 0 .25rem; }
+    aside { background: #f6f6f6; border-radius: 6px; padding: 1rem; }
+    input[data-ref="title"] { width: 60%; }
+  </style>
+</head>
+
+<body>
+  <h1>Simplicit > Articles</h1>
+  <p>
+    One <code>Article</code> Model, hydrated once from the JSON below. Each record
+    is rendered as several component instances bound to it. Rename an article in a
+    card and its chip updates too — both are bound to the same model instance.
+  </p>
+
+  <!-- The server returns the data ONCE, as a Model. -->
+  <script type="application/json" data-model="Article">
+    [
+      { "id": 1, "title": "Simplicit is tiny", "body": "A modest framework." },
+      { "id": 2, "title": "Models drive views", "body": "One source of truth." },
+      { "id": 3, "title": "Instances bind 1:1", "body": "A record, its components." }
+    ]
+  </script>
+
+  <p data-component="article-stats"></p>
+
+  <div class="views">
+    <!-- Representation 1: full editable cards. The script marks where cards go;
+         its parent (this div) is the container. Data comes from the Model. -->
+    <div>
+      <script type="application/json" data-component="article-card"></script>
+    </div>
+
+    <!-- Representation 2: compact chips, one per record (same records) -->
+    <aside>
+      <h3>Chips</h3>
+      <ul>
+        <script type="application/json" data-component="article-chip"></script>
+      </ul>
+    </aside>
+  </div>
+
+  <p data-component="article-adder">
+    <button data-ref="add">➕ Add article</button>
+  </p>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { start, Component, Model } from "Simplicit";
+
+    // Representation 1 — one card per record, with an inline rename form.
+    class ArticleCard extends Component {
+      static name = "article-card";
+
+      static template = ({ id, title, body }) => `
+        <div data-component="article-card" data-key="${id}">
+          <h4>${title}</h4>
+          <p>${body}</p>
+          <form data-ref="rename">
+            <input data-ref="title" value="${title}" />
+            <button>Rename</button>
+          </form>
+        </div>`;
+
+      connect() {
+        this.on("rename", "submit", (e) => {
+          e.preventDefault();
+          this.model.update({ title: this.ref("title").value });
+        });
+      }
+    }
+
+    // Representation 2 — one chip per record.
+    class ArticleChip extends Component {
+      static name = "article-chip";
+
+      static template = ({ id, title }) =>
+        `<li data-component="article-chip" data-key="${id}">${title}</li>`;
+    }
+
+    // The Model declares which per-record components represent it.
+    class Article extends Model {
+      static name = "Article";
+      static components = [ArticleCard, ArticleChip];
+    }
+
+    // Aggregate view — refreshed by whoever changes the collection.
+    class ArticleStats extends Component {
+      static name = "article-stats";
+
+      static template = ({ count }) =>
+        `<p data-component="article-stats"><b>${count}</b> articles</p>`;
+
+      connect() {
+        this.refresh();
+      }
+
+      refresh() {
+        this.update({ count: Article.all.length });
+      }
+    }
+
+    class ArticleAdder extends Component {
+      static name = "article-adder";
+
+      connect() {
+        this.on("add", "click", () => {
+          const nextId = Article.all.reduce((max, a) => Math.max(max, a.id), 0) + 1;
+          Article.create({ id: nextId, title: `New article ${nextId}`, body: "Freshly added." });
+          this.siblings("article-stats")[0].refresh();
+        });
+      }
+    }
+
+    const app = start({
+      root: document,
+      components: [ArticleStats, ArticleAdder],
+      models: [Article],
+    });
+  </script>
+
+  <p>
+    <a href="/">Simplicit</a> |&nbsp;
+    <a href="/slideshow">Slideshow</a>
+  </p>
+</body>
+
+</html>
