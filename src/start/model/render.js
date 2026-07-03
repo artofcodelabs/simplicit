@@ -13,7 +13,7 @@ export const render = (searchRoot, modelClasses) => {
       anchor.remove();
 
       const renderAll = () =>
-        ComponentClass.renderItems(container, ModelClass.all);
+        ComponentClass.renderTemplates(container, ModelClass.all);
       renderAll();
       ModelClass.onChange(renderAll);
     }

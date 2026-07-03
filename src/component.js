@@ -141,8 +141,7 @@ export default class Component {
 
   update(partial = {}) {
     Object.assign(this.props, partial);
-    morph(this.element, root(this.constructor.template(this.props)));
-    this.#applyBindings();
+    this.#render();
     return this;
   }
 
@@ -155,6 +154,12 @@ export default class Component {
 
     record.bind(this);
     this.registerCleanup(() => record.unbind(this));
+  }
+
+  #render() {
+    const props = this.model ? { ...this.props, ...this.model } : this.props;
+    morph(this.element, root(this.constructor.template(props)));
+    this.#applyBindings();
   }
 
   #applyBindings() {
