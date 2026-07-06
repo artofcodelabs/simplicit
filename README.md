@@ -237,6 +237,70 @@ Notes:
 * Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position`. Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted. Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
 * Inserted component elements are then auto-initialized like any other DOM addition.
 
+### One Model, many representations: `Model`
+
+The `<script type="application/json">` approach above ties one JSON payload to **one** component. But the same record is often shown several ways on a page — a full card, a compact chip, a row. Returning the JSON once per representation duplicates it.
+
+A **`Model`** is the single source of truth: the server renders the data **once**, Simplicit hydrates it into Model instances, and renders **one component instance per record** into each representation present on the page. Every component is bound 1:1 to its record, so `record.update(...)` re-renders exactly the components bound to that record — and nothing else.
+
+```javascript
+import { start, Component, Model } from "simplicit";
+
+// One card per record. `this.model` is the bound record instance.
+class ArticleCard extends Component {
+  static name = "article-card";
+  static template = ({ id, title }) => `
+    <div data-component="article-card" data-key="${id}">
+      <h4>${title}</h4>
+      <form data-ref="rename"><input data-ref="title" value="${title}" /></form>
+    </div>`;
+
+  connect() {
+    this.on("rename", "submit", (e) => {
+      e.preventDefault();
+      this.model.update({ title: this.ref("title").value });
+    });
+  }
+}
+
+// One chip per record — the SAME records, a different view.
+class ArticleChip extends Component {
+  static name = "article-chip";
+  static template = ({ id, title }) =>
+    `<li data-component="article-chip" data-key="${id}">${title}</li>`;
+}
+
+// A Model "has many" per-record representation components.
+class Article extends Model {
+  static name = "Article";
+  static components = [ArticleCard, ArticleChip];
+}
+
+start({ root: document, models: [Article] });
+```
+
+```html
+<!-- The server returns the data ONCE, as a Model. -->
+<script type="application/json" data-model="Article">
+  [{ "id": 1, "title": "A" }, { "id": 2, "title": "B" }]
+</script>
+
+<!-- Each representation: a script anchor marks where its per-record instances
+     go; the script's parent is the container. Data comes from the Model. -->
+<div>
+  <script type="application/json" data-component="article-card"></script>
+</div>
+<ul>
+  <script type="application/json" data-component="article-chip"></script>
+</ul>
+```
+
+Renaming record 1 in its card updates its chip too — both components are bound to the same `Article` instance.
+
+How it works:
+
+1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
+2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
 ## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
