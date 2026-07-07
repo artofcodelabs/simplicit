@@ -83,6 +83,25 @@ describe("start", () => {
       expect(chipTitles()).toEqual(["A", "B"]);
     });
 
+    it("throws at start() if a rendered representation's template has no data-key", () => {
+      class NoKey extends Component {
+        static name = "no-key";
+        static template = ({ title }) =>
+          `<li data-component="no-key">${title}</li>`;
+      }
+      class Thing extends Model {
+        static name = "thing";
+        static components = [NoKey];
+      }
+      document.body.innerHTML = `
+        <ul><script type="application/json" data-component="no-key"></script></ul>
+        <script type="application/json" data-model="thing">[{"id":1,"title":"A"}]</script>`;
+
+      expect(() => start({ root: document, models: [Thing] })).toThrow(
+        /data-key/,
+      );
+    });
+
     it("binds dynamically added records too", async () => {
       page(`[{"id":1,"title":"A"}]`);
       start({ root: document, models: [Article] });
