@@ -314,6 +314,9 @@ How it works:
   ```javascript
   Article.find(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
   ```
+
+* **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
+
 ## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
