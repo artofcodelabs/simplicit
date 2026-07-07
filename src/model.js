@@ -7,12 +7,8 @@ const notifyChange = (ModelClass) =>
 export default class Model {
   #components = new Set();
 
-  static build(attributes) {
-    return attributes instanceof this ? attributes : new this(attributes);
-  }
-
   static create(attributes = {}) {
-    const instance = this.build(attributes);
+    const instance = new this(attributes);
     collections.set(this, [...this.all, instance]);
     notifyChange(this);
     return instance;
@@ -21,7 +17,7 @@ export default class Model {
   static load(items) {
     collections.set(
       this,
-      items.map((item) => this.build(item)),
+      items.map((attributes) => new this(attributes)),
     );
     notifyChange(this);
     return this.all;

@@ -301,6 +301,19 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
+3. **Render per record.** Mark where a representation goes with `<script type="application/json" data-component="<component-name>">` — the same anchor convention used for [component scripts](#server-driven-templates-via-script-typeapplicationjson), except the body is empty (the records come from the Model). Its **parent** is the container; Simplicit fills it with one component instance per record and consumes the script. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A representation template missing `data-key` throws at `start()`. On `Model.create`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+
+#### `Model` API
+
+* **`Model.all`** (static getter): the current array of record instances.
+* **`Model.find(id)`**: the record whose `id` matches (string/number coerced), or `null`.
+* **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
+* **`Model.create(attributes)`**: append a record; containers gain a new component per representation.
+* **`record.update(partial)`**: mutate one record and re-render only the components bound to it.
+
+  ```javascript
+  Article.find(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
+  ```
 ## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.

@@ -20,15 +20,6 @@ describe("Model", () => {
     expect(Article.all[0].title).toBe("A");
   });
 
-  it("keeps existing instances on reload so edits survive", () => {
-    Article.load([{ id: 1, title: "A" }]);
-    const original = Article.all[0];
-
-    Article.load([original, { id: 2, title: "B" }]);
-
-    expect(Article.all[0]).toBe(original);
-  });
-
   it("finds a record by id, coercing string/number", () => {
     Article.load([{ id: 7, title: "Seven" }]);
     expect(Article.find(7).title).toBe("Seven");
