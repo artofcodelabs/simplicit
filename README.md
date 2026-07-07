@@ -317,6 +317,10 @@ How it works:
 
 * **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
 
+#### `start({ ..., models })`
+
+`start()` accepts a `models` array alongside `components`. Models and their representation components are resolved entirely at `start()` — there is no later registration API for Models.
+
 ## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
