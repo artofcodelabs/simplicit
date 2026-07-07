@@ -154,6 +154,7 @@ export default class Component {
 
     record.bind(this);
     this.registerCleanup(() => record.unbind(this));
+    this.update();
   }
 
   #render() {

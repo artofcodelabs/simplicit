@@ -317,9 +317,20 @@ How it works:
 
 * **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
 
+#### Streamed-in markup (Turbo)
+
+Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a representation anchor injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:
+
+* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders every representation currently on the page. Each SSR page can return its own subset of records; navigating back and forth just re-hydrates.
+* A late representation anchor renders in place, binding to whatever records are loaded.
+* Order doesn't matter: if anchors arrive before their data (or vice-versa), the Model's change notification fills them in once both are present.
+* When a container leaves the DOM (a navigation), its render subscription unsubscribes itself — no stale re-renders.
+
+A late `data-model` for a Model you didn't register is ignored (the throw-on-unknown check only applies to the initial `start()` scan, where it's a genuine misconfiguration).
+
 #### `start({ ..., models })`
 
-`start()` accepts a `models` array alongside `components`. Models and their representation components are resolved entirely at `start()` — there is no later registration API for Models.
+`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; there is no later registration API for Models (the DOM markup, however, can arrive whenever — see above).
 
 ## 🕹️ Controllers
 

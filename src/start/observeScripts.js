@@ -21,6 +21,7 @@ const processScript = (script, componentClasses) => {
   const componentName = script.dataset.component;
   const componentClass = componentClasses.find((c) => c.name === componentName);
   if (!componentClass) return;
+  if (componentClass.Model) return;
 
   const targetId = script.dataset.target;
   const inPlace = targetId == null;
