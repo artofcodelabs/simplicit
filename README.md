@@ -328,6 +328,13 @@ Model **classes** must be known at `start()` (passed in `models`), but the **mar
 
 A late `data-model` for a Model you didn't register is ignored (the throw-on-unknown check only applies to the initial `start()` scan, where it's a genuine misconfiguration).
 
+**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.find(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
+
+This is why the seed script is **removed** rather than kept: on a **restoration visit** (back/forward) Turbo shows a cached DOM snapshot, and if the stale JSON were still in it, re-hydrating would overwrite your live in-memory changes. With it gone, restoration keeps memory intact — nothing re-hydrates.
+
+Two cases keep the *display* in step with memory:
+
+* **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update(...)`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
 #### `start({ ..., models })`
 
 `start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; there is no later registration API for Models (the DOM markup, however, can arrive whenever — see above).
