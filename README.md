@@ -326,7 +326,7 @@ Model **classes** must be known at `start()` (passed in `models`), but the **mar
 * Order doesn't matter: if anchors arrive before their data (or vice-versa), the Model's change notification fills them in once both are present.
 * When a container leaves the DOM (a navigation), its render subscription unsubscribes itself — no stale re-renders.
 
-A late `data-model` for a Model you didn't register is ignored (the throw-on-unknown check only applies to the initial `start()` scan, where it's a genuine misconfiguration).
+A late `data-model` for a Model you didn't register is **warned** about (`console.warn`) and skipped. It's still a dev error — you likely forgot to pass the Model to `start({ models })` — but a late script is discovered inside a `MutationObserver`, where throwing is uncatchable and would abort the rest of that batch. So the fail-fast **throw** stays on the synchronous `start()` scan; late discoveries warn instead.
 
 **Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.find(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
 
@@ -335,6 +335,8 @@ This is why the seed script is **removed** rather than kept: on a **restoration 
 Two cases keep the *display* in step with memory:
 
 * **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update(...)`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
+* **While an instance is unmounted** (you'd navigated away), `record.update(...)` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
+
 #### `start({ ..., models })`
 
 `start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; there is no later registration API for Models (the DOM markup, however, can arrive whenever — see above).
