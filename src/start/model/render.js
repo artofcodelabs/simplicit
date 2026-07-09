@@ -14,6 +14,13 @@ const assertKeyed = (ComponentClass) => {
   keyed.add(ComponentClass);
 };
 
+const fill = (container, ComponentClass) => {
+  assertKeyed(ComponentClass);
+  ComponentClass.renderTemplates(container, ComponentClass.Model.all);
+};
+
+export const CONTAINER_ATTR = "data-container-component";
+
 export const representationFor = (name, modelClasses) => {
   for (const ModelClass of modelClasses) {
     const ComponentClass = (ModelClass.components ?? []).find(
@@ -24,30 +31,22 @@ export const representationFor = (name, modelClasses) => {
   return null;
 };
 
-export const renderAnchor = (anchor, ComponentClass) => {
-  const container = anchor.parentElement;
-  if (!container) return;
-  assertKeyed(ComponentClass);
+export const renderContainers = (searchRoot, ComponentClass) => {
+  searchRoot
+    .querySelectorAll(`[${CONTAINER_ATTR}="${ComponentClass.name}"]`)
+    .forEach((container) => fill(container, ComponentClass));
+};
 
-  anchor.remove();
-  const ModelClass = ComponentClass.Model;
-  let off;
-  const renderAll = () => {
-    if (!container.isConnected) return off();
-    ComponentClass.renderTemplates(container, ModelClass.all);
-  };
-  off = ModelClass.onChange(renderAll);
-  renderAll();
+export const renderContainer = (container, modelClasses) => {
+  const ComponentClass = representationFor(
+    container.getAttribute(CONTAINER_ATTR),
+    modelClasses,
+  );
+  if (ComponentClass) fill(container, ComponentClass);
 };
 
 export const render = (searchRoot, modelClasses) => {
   searchRoot
-    .querySelectorAll("script[type='application/json'][data-component]")
-    .forEach((anchor) => {
-      const ComponentClass = representationFor(
-        anchor.dataset.component,
-        modelClasses,
-      );
-      if (ComponentClass) renderAnchor(anchor, ComponentClass);
-    });
+    .querySelectorAll(`[${CONTAINER_ATTR}]`)
+    .forEach((container) => renderContainer(container, modelClasses));
 };

@@ -34,18 +34,14 @@
   <p data-component="article-stats"></p>
 
   <div class="views">
-    <!-- Representation 1: full editable cards. The script marks where cards go;
-         its parent (this div) is the container. Data comes from the Model. -->
-    <div>
-      <script type="application/json" data-component="article-card"></script>
-    </div>
+    <!-- Representation 1: full editable cards. The container declares which
+         component fills it; Simplicit renders one per record. -->
+    <div data-container-component="article-card"></div>
 
     <!-- Representation 2: compact chips, one per record (same records) -->
     <aside>
       <h3>Chips</h3>
-      <ul>
-        <script type="application/json" data-component="article-chip"></script>
-      </ul>
+      <ul data-container-component="article-chip"></ul>
     </aside>
   </div>
 

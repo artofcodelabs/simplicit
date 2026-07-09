@@ -285,14 +285,10 @@ start({ root: document, models: [Article] });
   [{ "id": 1, "title": "A" }, { "id": 2, "title": "B" }]
 </script>
 
-<!-- Each representation: a script anchor marks where its per-record instances
-     go; the script's parent is the container. Data comes from the Model. -->
-<div>
-  <script type="application/json" data-component="article-card"></script>
-</div>
-<ul>
-  <script type="application/json" data-component="article-chip"></script>
-</ul>
+<!-- Each representation: a container declares which component fills it.
+     Simplicit renders one instance per record; data comes from the Model. -->
+<div data-container-component="article-card"></div>
+<ul data-container-component="article-chip"></ul>
 ```
 
 Renaming record 1 in its card updates its chip too — both components are bound to the same `Article` instance.
@@ -301,7 +297,7 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
-3. **Render per record.** Mark where a representation goes with `<script type="application/json" data-component="<component-name>">` — the same anchor convention used for [component scripts](#server-driven-templates-via-script-typeapplicationjson), except the body is empty (the records come from the Model). Its **parent** is the container; Simplicit fills it with one component instance per record and consumes the script. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A representation template missing `data-key` throws at `start()`. On `Model.create`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A representation template missing `data-key` throws at `start()`. On `Model.create`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
 
 #### `Model` API
 
@@ -319,12 +315,12 @@ How it works:
 
 #### Streamed-in markup (Turbo)
 
-Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a representation anchor injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:
+Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a `data-container-component` container injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:
 
-* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders every representation currently on the page. Each SSR page can return its own subset of records; navigating back and forth just re-hydrates.
-* A late representation anchor renders in place, binding to whatever records are loaded.
-* Order doesn't matter: if anchors arrive before their data (or vice-versa), the Model's change notification fills them in once both are present.
-* When a container leaves the DOM (a navigation), its render subscription unsubscribes itself — no stale re-renders.
+* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders every container currently on the page.
+* A late container fills in place from whatever records are loaded.
+* Order doesn't matter: if containers arrive before their data (or vice-versa), the Model's change notification fills them once both are present.
+* Each representation stays subscribed to its Model for the whole session; on a collection change it re-finds its containers in the DOM and re-renders them. A container that's been removed from the page isn't found, so it's never rendered into (no wasted work on elements that are gone); one restored later is found again.
 
 A late `data-model` for a Model you didn't register is **warned** about (`console.warn`) and skipped. It's still a dev error — you likely forgot to pass the Model to `start({ models })` — but a late script is discovered inside a `MutationObserver`, where throwing is uncatchable and would abort the rest of that batch. So the fail-fast **throw** stays on the synchronous `start()` scan; late discoveries warn instead.
 

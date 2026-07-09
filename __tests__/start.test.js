@@ -31,8 +31,8 @@ describe("start", () => {
 
     const page = (json) => {
       document.body.innerHTML = `
-        <div><script type="application/json" data-component="article-card"></script></div>
-        <ul><script type="application/json" data-component="article-chip"></script></ul>
+        <div data-container-component="article-card"></div>
+        <ul data-container-component="article-chip"></ul>
         <script type="application/json" data-model="article">${json}</script>`;
     };
 
@@ -94,7 +94,7 @@ describe("start", () => {
         static components = [NoKey];
       }
       document.body.innerHTML = `
-        <ul><script type="application/json" data-component="no-key"></script></ul>
+        <ul data-container-component="no-key"></ul>
         <script type="application/json" data-model="thing">[{"id":1,"title":"A"}]</script>`;
 
       expect(() => start({ root: document, models: [Thing] })).toThrow(

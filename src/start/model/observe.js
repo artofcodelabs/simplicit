@@ -1,32 +1,45 @@
 import { load, loadModelScript } from "./load.js";
-import { render, renderAnchor, representationFor } from "./render.js";
-
-const representationNames = (modelClasses) =>
-  new Set(modelClasses.flatMap((m) => m.components ?? []).map((c) => c.name));
+import {
+  render,
+  renderContainer,
+  renderContainers,
+  CONTAINER_ATTR,
+} from "./render.js";
 
 const isModelScript = (node) =>
   node instanceof HTMLScriptElement &&
   node.type === "application/json" &&
   node.hasAttribute("data-model");
 
-const isAnchorScript = (node, names) =>
-  node instanceof HTMLScriptElement &&
-  node.type === "application/json" &&
-  node.hasAttribute("data-component") &&
-  names.has(node.dataset.component);
-
-const scriptsIn = (node, selector, predicate) => {
+const modelScriptsIn = (node) => {
   const out = [];
-  if (predicate(node)) out.push(node);
-  node.querySelectorAll?.(selector)?.forEach((s) => {
-    if (predicate(s)) out.push(s);
-  });
+  if (isModelScript(node)) out.push(node);
+  node
+    .querySelectorAll?.("script[type='application/json'][data-model]")
+    ?.forEach((s) => out.push(s));
+  return out;
+};
+
+const containersIn = (node) => {
+  const out = [];
+  if (
+    node.nodeType === Node.ELEMENT_NODE &&
+    node.hasAttribute(CONTAINER_ATTR)
+  ) {
+    out.push(node);
+  }
+  node.querySelectorAll?.(`[${CONTAINER_ATTR}]`)?.forEach((el) => out.push(el));
   return out;
 };
 
 export const observeModels = (searchRoot, modelClasses) => {
   const modelNames = new Set(modelClasses.map((m) => m.name));
-  const names = representationNames(modelClasses);
+
+  for (const ModelClass of modelClasses) {
+    for (const ComponentClass of ModelClass.components ?? []) {
+      ModelClass.onChange(() => renderContainers(searchRoot, ComponentClass));
+    }
+  }
 
   load(searchRoot, modelClasses);
   render(searchRoot, modelClasses);
@@ -34,11 +47,8 @@ export const observeModels = (searchRoot, modelClasses) => {
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
-        scriptsIn(
-          node,
-          "script[type='application/json'][data-model]",
-          (n) => isModelScript(n) && n.isConnected,
-        ).forEach((s) => {
+        modelScriptsIn(node).forEach((s) => {
+          if (!s.isConnected) return;
           if (modelNames.has(s.dataset.model)) {
             loadModelScript(s, modelClasses);
           } else {
@@ -49,13 +59,9 @@ export const observeModels = (searchRoot, modelClasses) => {
           }
         });
 
-        scriptsIn(
-          node,
-          "script[type='application/json'][data-component]",
-          (n) => isAnchorScript(n, names) && n.isConnected,
-        ).forEach((a) =>
-          renderAnchor(a, representationFor(a.dataset.component, modelClasses)),
-        );
+        containersIn(node).forEach((container) => {
+          if (container.isConnected) renderContainer(container, modelClasses);
+        });
       }
     }
   });

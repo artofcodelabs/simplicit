@@ -24,27 +24,25 @@ const appendHTML = (html) => {
   return node;
 };
 
-describe("observeModels (streamed-in scripts)", () => {
+describe("observeModels (streamed-in markup)", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     Article.load([]);
   });
 
-  it("renders a representation whose anchor appears after start()", async () => {
+  it("renders a container that appears after start()", async () => {
     document.body.innerHTML = `<script type="application/json" data-model="article">[{"id":1,"title":"A"}]</script>`;
     start({ root: document, models: [Article] });
 
-    // Turbo swaps in a fragment carrying the container + anchor later.
-    appendHTML(
-      `<div><script type="application/json" data-component="article-card"></script></div>`,
-    );
+    // Turbo swaps in a fragment carrying the container later.
+    appendHTML(`<div data-container-component="article-card"></div>`);
 
     await waitFor(() => cards().length === 1);
     expect(cards()).toEqual(["A"]);
   });
 
-  it("hydrates a data-model script that appears after start() (anchor first)", async () => {
-    document.body.innerHTML = `<div><script type="application/json" data-component="article-card"></script></div>`;
+  it("hydrates a data-model script that appears after start() (container first)", async () => {
+    document.body.innerHTML = `<div data-container-component="article-card"></div>`;
     start({ root: document, models: [Article] });
     expect(cards()).toEqual([]); // no data yet
 
@@ -60,7 +58,7 @@ describe("observeModels (streamed-in scripts)", () => {
 
   it("replaces the collection when a new data-model script arrives (Turbo navigation)", async () => {
     document.body.innerHTML = `
-      <div><script type="application/json" data-component="article-card"></script></div>
+      <div data-container-component="article-card"></div>
       <script type="application/json" data-model="article">[{"id":1,"title":"A"},{"id":2,"title":"B"}]</script>`;
     start({ root: document, models: [Article] });
     expect(cards()).toEqual(["A", "B"]);
@@ -79,8 +77,7 @@ describe("observeModels (streamed-in scripts)", () => {
     document.body.innerHTML = `<script type="application/json" data-model="article">[{"id":1,"title":"A"}]</script>`;
     start({ root: document, models: [Article] });
 
-    // A live update (e.g. websocket) mutates the in-memory record; the server
-    // JSON is now stale and has already been removed from the DOM.
+    // A live update (e.g. websocket) mutates the in-memory record.
     Article.find(1).update({ title: "Live" });
 
     // Turbo restores a cached snapshot: a card with the OLD markup reappears.
@@ -91,6 +88,40 @@ describe("observeModels (streamed-in scripts)", () => {
     // It re-binds and re-renders from memory — no stale JSON to re-hydrate from.
     await waitFor(() => cards().includes("Live"));
     expect(cards()).toEqual(["Live"]);
+  });
+
+  it("renders a create() into a container restored from a snapshot", async () => {
+    document.body.innerHTML = `<script type="application/json" data-model="article">[{"id":1,"title":"A"}]</script>`;
+    start({ root: document, models: [Article] });
+
+    // Turbo restores the container with its cached card.
+    appendHTML(
+      `<div data-container-component="article-card"><div data-component="article-card" data-key="1"><h4>A</h4></div></div>`,
+    );
+    await waitFor(() => cards().length === 1);
+
+    // Websocket create while sitting on the restored page — must still render.
+    Article.create({ id: 2, title: "B" });
+
+    await waitFor(() => cards().length === 2);
+    expect(cards()).toEqual(["A", "B"]);
+  });
+
+  it("reconciles a restored container to records added while it was away", async () => {
+    document.body.innerHTML = `<script type="application/json" data-model="article">[{"id":1,"title":"A"}]</script>`;
+    start({ root: document, models: [Article] });
+
+    // A record was created while this container was unmounted (another page).
+    Article.create({ id: 2, title: "B" });
+
+    // Now a stale snapshot (only card 1) is restored.
+    appendHTML(
+      `<div data-container-component="article-card"><div data-component="article-card" data-key="1"><h4>A</h4></div></div>`,
+    );
+
+    // On re-add it reconciles to the live collection.
+    await waitFor(() => cards().length === 2);
+    expect(cards()).toEqual(["A", "B"]);
   });
 
   it("warns (does not throw) for a late data-model script with no matching Model", async () => {
