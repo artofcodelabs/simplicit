@@ -118,6 +118,48 @@ describe("start", () => {
 
       expect(chipTitles()).toEqual(["A", "B2"]);
     });
+
+    it("allows adding Model classes after start() has been called", () => {
+      class AuthorChip extends Component {
+        static name = "author-chip";
+        static template = ({ id, name }) =>
+          `<li data-component="author-chip" data-key="${id}">${name}</li>`;
+      }
+      class Author extends Model {
+        static name = "author";
+        static components = [AuthorChip];
+      }
+
+      document.body.innerHTML = `
+        <ul data-container-component="author-chip"></ul>`;
+
+      const app = start({ root: document, components: [] });
+
+      // Model class not known at start(), so its seed script arrives after
+      // (a pre-existing data-model for an unregistered Model would throw).
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<script type="application/json" data-model="author">[{"id":1,"name":"Ada"}]</script>`,
+      );
+
+      const added = app.addModels([Author]);
+
+      expect(added).toBeInstanceOf(Array);
+      expect(added[0]).toBeInstanceOf(AuthorChip);
+      expect(AuthorChip.Model).toBe(Author);
+      expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada"]);
+
+      // Reactive after registration.
+      Author.find(1).update({ name: "Ada L." });
+      expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada L."]);
+    });
+
+    it("returns null and no-ops when re-adding an already-registered Model", () => {
+      page(`[{"id":1,"title":"A"}]`);
+      const app = start({ root: document, models: [Article] });
+
+      expect(app.addModels([Article])).toBeNull();
+    });
   });
 
   describe("component class initialization", () => {

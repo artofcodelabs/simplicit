@@ -5,27 +5,43 @@ import { observe } from "./start/observe.js";
 import { observeScripts } from "./start/observeScripts.js";
 import { observeModels } from "./start/model/observe.js";
 
+const wireModelComponents = (models, componentClasses) => {
+  const newComponents = [];
+  for (const ModelClass of models) {
+    for (const ComponentClass of ModelClass.components ?? []) {
+      ComponentClass.Model = ModelClass;
+      if (!componentClasses.includes(ComponentClass)) {
+        componentClasses.push(ComponentClass);
+        newComponents.push(ComponentClass);
+      }
+    }
+  }
+  return newComponents;
+};
+
 const start = (options = {}) => {
   const searchRoot = options.root ?? document.body;
   const componentClasses = [...(options.components ?? [])];
   const modelClasses = [...(options.models ?? [])];
 
-  for (const ModelClass of modelClasses) {
-    for (const ComponentClass of ModelClass.components ?? []) {
-      ComponentClass.Model = ModelClass;
-      if (!componentClasses.includes(ComponentClass)) {
-        componentClasses.push(ComponentClass);
-      }
-    }
-  }
+  wireModelComponents(modelClasses, componentClasses);
 
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
-  observeModels(searchRoot, modelClasses);
+  const modelObserver = observeModels(searchRoot, modelClasses);
   const instances = initMatches(nodes, componentClasses);
   const observer = observe(searchRoot, componentClasses);
   const scriptObserver = observeScripts(searchRoot, componentClasses);
   const roots = instances.filter((i) => i.node.parent === null);
+
+  const registerComponents = (newComponents) => {
+    const updatedNodes = buildElementTree(searchRoot);
+    validate(updatedNodes, componentClasses);
+
+    const newInstances = observer.addComponents(newComponents);
+    scriptObserver.addComponents(newComponents);
+    return newInstances;
+  };
 
   return {
     roots,
@@ -38,12 +54,23 @@ const start = (options = {}) => {
       if (filteredNewComponents.length === 0) return null;
 
       componentClasses.push(...filteredNewComponents);
-      const updatedNodes = buildElementTree(searchRoot);
-      validate(updatedNodes, componentClasses);
+      return registerComponents(filteredNewComponents);
+    },
+    addModels(newModels) {
+      const filteredNewModels = newModels.filter(
+        (ModelClass) =>
+          typeof ModelClass === "function" &&
+          !modelClasses.includes(ModelClass),
+      );
+      if (filteredNewModels.length === 0) return null;
 
-      const newInstances = observer.addComponents(filteredNewComponents);
-      scriptObserver.addComponents(filteredNewComponents);
-      return newInstances;
+      modelClasses.push(...filteredNewModels);
+      const newComponents = wireModelComponents(
+        filteredNewModels,
+        componentClasses,
+      );
+      modelObserver.addModels(filteredNewModels);
+      return registerComponents(newComponents);
     },
   };
 };

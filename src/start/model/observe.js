@@ -33,16 +33,20 @@ const containersIn = (node) => {
 };
 
 export const observeModels = (searchRoot, modelClasses) => {
-  const modelNames = new Set(modelClasses.map((m) => m.name));
+  const modelNames = new Set();
 
-  for (const ModelClass of modelClasses) {
-    for (const ComponentClass of ModelClass.components ?? []) {
-      ModelClass.onChange(() => renderContainers(searchRoot, ComponentClass));
+  const registerModels = (newModelClasses) => {
+    for (const ModelClass of newModelClasses) {
+      modelNames.add(ModelClass.name);
+      for (const ComponentClass of ModelClass.components ?? []) {
+        ModelClass.onChange(() => renderContainers(searchRoot, ComponentClass));
+      }
     }
-  }
+    load(searchRoot, modelClasses);
+    render(searchRoot, modelClasses);
+  };
 
-  load(searchRoot, modelClasses);
-  render(searchRoot, modelClasses);
+  registerModels(modelClasses);
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -69,6 +73,9 @@ export const observeModels = (searchRoot, modelClasses) => {
   observer.observe(searchRoot, { childList: true, subtree: true });
 
   return {
+    addModels(newModelClasses) {
+      registerModels(newModelClasses);
+    },
     disconnect() {
       observer.disconnect();
     },

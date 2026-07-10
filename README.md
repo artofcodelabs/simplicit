@@ -80,6 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
   * Validates the DOM again.
   * Scans the existing DOM for elements with `data-component` matching the newly added classes and initializes those that weren’t initialized yet.
   * Returns the newly created instances (or `null` if nothing was added).
+* **`addModels(newModels)`**: registers additional `Model` classes later (the model counterpart of `addComponents`).
+  * Links each Model’s representation components to it and registers them (you don’t pass them in `addComponents` yourself).
+  * Hydrates any `data-model` script already on the page for the newly added Models and renders their containers; the Models stay subscribed so later markup resolves too.
+  * Returns the newly created component instances (or `null` if nothing was added).
 
 ### Base class: `Component`
 
@@ -335,7 +339,7 @@ Two cases keep the *display* in step with memory:
 
 #### `start({ ..., models })`
 
-`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; there is no later registration API for Models (the DOM markup, however, can arrive whenever — see above).
+`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents`. The DOM markup, either way, can arrive whenever — see above.
 
 ## 🕹️ Controllers
 
