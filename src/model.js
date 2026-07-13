@@ -63,4 +63,13 @@ export default class Model {
     this.#components.forEach((component) => component.update());
     return this;
   }
+
+  delete() {
+    collections.set(
+      this.constructor,
+      this.constructor.all.filter((instance) => instance !== this),
+    );
+    notifyChange(this.constructor);
+    return this;
+  }
 }

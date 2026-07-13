@@ -35,6 +35,19 @@ describe("Model", () => {
     expect(Article.all[1]).toBe(created);
   });
 
+  it("removes a record with delete() and fires onChange", () => {
+    Article.load([{ id: 1 }, { id: 2 }]);
+    let calls = 0;
+    Article.onChange(() => calls++);
+
+    Article.find(1).delete();
+
+    expect(Article.all).toHaveLength(1);
+    expect(Article.all[0].id).toBe(2);
+    expect(Article.find(1)).toBeNull();
+    expect(calls).toBe(1);
+  });
+
   it("bind() wires the two-way relation: record.components <-> component.model", () => {
     Article.load([{ id: 1 }]);
     const record = Article.all[0];

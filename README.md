@@ -310,6 +310,7 @@ How it works:
 * **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
 * **`Model.create(attributes)`**: append a record; containers gain a new component per representation.
 * **`record.update(partial)`**: mutate one record and re-render only the components bound to it.
+* **`record.delete()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
 
   ```javascript
   Article.find(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
