@@ -5,6 +5,9 @@ const notifyChange = (ModelClass) =>
   changeHandlers.get(ModelClass)?.forEach((handler) => handler());
 
 export default class Model {
+  static hasMany = []; // [ChildModel, ...]
+  static belongsTo = []; // [OwnerModel, ...]
+
   #components = new Set();
 
   static create(attributes = {}) {

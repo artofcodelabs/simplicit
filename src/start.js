@@ -4,8 +4,10 @@ import { initMatches } from "./start/init.js";
 import { observe } from "./start/observe.js";
 import { observeScripts } from "./start/observeScripts.js";
 import { observeModels } from "./start/model/observe.js";
+import { wireAssociations } from "./start/model/associations.js";
 
 const wireModelComponents = (models, componentClasses) => {
+  wireAssociations(models);
   const newComponents = [];
   for (const ModelClass of models) {
     for (const ComponentClass of ModelClass.components ?? []) {

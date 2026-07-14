@@ -31,6 +31,15 @@
     ]
   </script>
 
+  <!-- A second, flat collection. Each Comment carries article_id (foreign key). -->
+  <script type="application/json" data-model="Comment">
+    [
+      { "id": 1, "article_id": 1, "body": "Love how small it is." },
+      { "id": 2, "article_id": 1, "body": "The morph is neat." },
+      { "id": 3, "article_id": 2, "body": "One source of truth ftw." }
+    ]
+  </script>
+
   <p data-component="article-stats"></p>
 
   <div class="views">
@@ -72,6 +81,10 @@
             <input data-ref="title" value="${title}" />
             <button>Rename</button>
           </form>
+          <!-- Nested container: fills with THIS article's comments only,
+               because it sits inside a component bound to an Article record. -->
+          <ul data-container-component="comment-item"></ul>
+          <button data-ref="add-comment">💬 Add comment</button>
         </div>`;
 
       connect() {
@@ -79,7 +92,18 @@
           e.preventDefault();
           this.model.update({ title: this.ref("title").value });
         });
+        this.on("add-comment", "click", () => {
+          const nextId = Comment.all.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          Comment.create({ id: nextId, article_id: this.model.id, body: "New comment." });
+        });
       }
+    }
+
+    // Representation for one Comment record.
+    class CommentItem extends Component {
+      static name = "comment-item";
+      static template = ({ id, body }) =>
+        `<li data-component="comment-item" data-key="${id}">${body}</li>`;
     }
 
     // Representation 2 — one chip per record.
@@ -94,6 +118,16 @@
     class Article extends Model {
       static name = "Article";
       static components = [ArticleCard, ArticleChip];
+    }
+
+    // Comment belongs to Article (holds article_id). Declaring one side is
+    // enough — Simplicit infers "Article hasMany Comment" from this.
+    // Resolved by foreign key: comment.article / article.comments.
+    // belongsTo is a list, so a record can belong to several owners.
+    class Comment extends Model {
+      static name = "Comment";
+      static components = [CommentItem];
+      static belongsTo = [Article];
     }
 
     // Aggregate view — refreshed by whoever changes the collection.
@@ -127,7 +161,7 @@
     const app = start({
       root: document,
       components: [ArticleStats, ArticleAdder],
-      models: [Article],
+      models: [Article, Comment],
     });
   </script>
 

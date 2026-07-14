@@ -318,6 +318,64 @@ How it works:
 
 * **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
 
+#### Associations
+
+Models relate to each other by **foreign key**, the same convention Rails uses. Declare the relationship on the Model classes:
+
+```javascript
+class Article extends Model {
+  static name = "Article";
+  static components = [ArticleCard];
+}
+
+class Comment extends Model {
+  static name = "Comment";
+  static components = [CommentItem];
+  static belongsTo = [Article]; // Comment holds article_id
+}
+```
+
+* **`static belongsTo = [Owner, ...]`** — a *belongs to* per owner. Each adds a getter named after the owner, lower-cased (`Article` → `comment.article`). A Model can belong to several owners — `static belongsTo = [Article, Author]` gives both `comment.article` (from `article_id`) and `comment.author` (from `author_id`).
+* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, pluralized and lower-cased (`Comment` → `article.comments`).
+
+**Declare `belongsTo` and the `hasMany` inverse is inferred.** `Comment.belongsTo = [Article]` above implies `Article` *has many* `Comment` — you don't write `Article.hasMany = [Comment]` yourself. Declare `static hasMany` explicitly only for a *has many* whose child has no `belongsTo` back-reference.
+
+The **foreign key lives on the "belongs to" side** and is named `<owner>_id` — so a `Comment` that belongs to an `Article` carries `article_id`. Both getters resolve against the live collections at access time:
+
+```javascript
+article.comments; // Comment.all.filter((c) => c.article_id === article.id)
+comment.article;  // Article.find(comment.article_id)
+```
+
+The two collections arrive as **two separate `data-model` scripts**; the foreign key links them:
+
+```html
+<script type="application/json" data-model="Article">
+  [{ "id": 1, "title": "A" }, { "id": 2, "title": "B" }]
+</script>
+<script type="application/json" data-model="Comment">
+  [{ "id": 1, "article_id": 1, "body": "Nice." },
+   { "id": 2, "article_id": 2, "body": "Agreed." }]
+</script>
+```
+
+##### Nested representations
+
+A `data-container-component` placed **inside** a model-bound component's template renders only *that record's* associated collection, not the whole thing. Simplicit walks up from the container to the nearest component bound to a Model that *has many* of the container's component — and fills it from `owner.<association>` instead of `Child.all`:
+
+```javascript
+class ArticleCard extends Component {
+  static name = "article-card";
+  static template = ({ id, title }) => `
+    <div data-component="article-card" data-key="${id}">
+      <h4>${title}</h4>
+      <ul data-container-component="comment-item"></ul>  <!-- this article's comments only -->
+    </div>`;
+}
+```
+
+This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.create({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. A top-level `data-container-component="comment-item"` (no model-bound ancestor) still renders the full collection.
+
 #### Streamed-in markup (Turbo)
 
 Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a `data-container-component` container injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:

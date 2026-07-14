@@ -1,4 +1,5 @@
 import { root } from "../helpers.js";
+import { pluralize } from "./associations.js";
 
 const keyed = new WeakSet();
 
@@ -14,9 +15,23 @@ const assertKeyed = (ComponentClass) => {
   keyed.add(ComponentClass);
 };
 
+const recordsFor = (el, Child) => {
+  while (el) {
+    const owner = el.instance?.model;
+    if (owner && (owner.constructor.hasMany ?? []).includes(Child)) {
+      return owner[pluralize(Child.name)];
+    }
+    el = el.parentElement;
+  }
+  return Child.all;
+};
+
 const fill = (container, ComponentClass) => {
   assertKeyed(ComponentClass);
-  ComponentClass.renderTemplates(container, ComponentClass.Model.all);
+  ComponentClass.renderTemplates(
+    container,
+    recordsFor(container.parentElement, ComponentClass.Model),
+  );
 };
 
 export const CONTAINER_ATTR = "data-container-component";
