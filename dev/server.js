@@ -37,6 +37,10 @@ app.get("/articles", (_, res) => {
   res.sendFile(path.join(__dirname, `${rootPath}/dev/articles.html`));
 });
 
+app.get("/nested", (_, res) => {
+  res.sendFile(path.join(__dirname, `${rootPath}/dev/nested.html`));
+});
+
 app.listen(4000, () => {
   console.log("Example app listening on port 4000!\n");
 });

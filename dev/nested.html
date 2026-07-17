@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplicit > Nested components</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; }
+    [data-component="article-card"] { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin: .75rem 0; }
+    [data-component="article-card"] h4 { margin: 0 0 .25rem; }
+    input[data-ref="title"] { width: 60%; }
+  </style>
+</head>
+
+<body>
+  <h1>Simplicit > Nested components</h1>
+  <p>
+    Same articles + comments as the <a href="/articles">Model example</a>, but with
+    <b>no Model</b>. Each <code>article-card</code> holds its own comments in
+    <code>this.props</code> and renders one nested <code>comment-item</code>
+    component per comment. Adding a comment just re-renders the card — the morph
+    inserts a new nested child, and Simplicit binds it as a real child instance.
+  </p>
+
+  <!-- Server returns the data ONCE. Comments are nested INSIDE each article
+       (no foreign keys, no separate collection) — plain component props. -->
+  <script type="application/json" data-component="article-card">
+    [
+      { "id": 1, "title": "Simplicit is tiny", "body": "A modest framework.",
+        "comments": [
+          { "id": 1, "body": "Love how small it is." },
+          { "id": 2, "body": "The morph is neat." }
+        ] },
+      { "id": 2, "title": "Components nest", "body": "Parents own their children.",
+        "comments": [
+          { "id": 3, "body": "No model needed." }
+        ] },
+      { "id": 3, "title": "State lives local", "body": "Each card, its own props.",
+        "comments": [] }
+    ]
+  </script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { start, Component } from "Simplicit";
+
+    // A card renders its comments inline as nested comment-item components.
+    class ArticleCard extends Component {
+      static name = "article-card";
+
+      static template = ({ id, title, body, comments }) => `
+        <div data-component="article-card" data-key="${id}">
+          <h4>${title}</h4>
+          <p>${body}</p>
+          <form data-ref="rename">
+            <input data-ref="title" value="${title}" />
+            <button>Rename</button>
+          </form>
+          <ul>
+            ${comments.map((c) => CommentItem.toHTML(c)).join("")}
+          </ul>
+          <button data-ref="add-comment">💬 Add comment</button>
+        </div>`;
+
+      connect() {
+        this.on("rename", "submit", (e) => {
+          e.preventDefault();
+          this.update({ title: this.ref("title").value });
+        });
+
+        this.on("add-comment", "click", () => {
+          const comments = this.props.comments;
+          const nextId = comments.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          this.update({ comments: [...comments, { id: nextId, body: "New comment." }] });
+        });
+      }
+    }
+
+    // One nested component per comment. data-key keeps rows stable across morphs.
+    class CommentItem extends Component {
+      static name = "comment-item";
+      static template = ({ id, body }) =>
+        `<li data-component="comment-item" data-key="${id}">${body}</li>`;
+    }
+
+    start({ root: document, components: [ArticleCard, CommentItem] });
+  </script>
+
+  <p>
+    <a href="/">Simplicit</a> |&nbsp;
+    <a href="/articles">Articles (Model)</a>
+  </p>
+</body>
+
+</html>
