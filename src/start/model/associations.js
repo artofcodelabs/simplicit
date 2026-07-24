@@ -20,7 +20,7 @@ export const wireAssociations = (modelClasses) => {
       Object.defineProperty(ModelClass.prototype, pluralize(Child.name), {
         configurable: true,
         get() {
-          return Child.all.filter((r) => String(r[fk]) === String(this.id));
+          return Child.loaded.filter((r) => String(r[fk]) === String(this.id));
         },
       });
     }
@@ -30,7 +30,7 @@ export const wireAssociations = (modelClasses) => {
       Object.defineProperty(ModelClass.prototype, associationName(Owner), {
         configurable: true,
         get() {
-          return Owner.find(this[fk]);
+          return Owner.byId(this[fk]);
         },
       });
     }

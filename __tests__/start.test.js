@@ -59,14 +59,14 @@ describe("start", () => {
       const card = document.querySelector(
         '[data-component="article-card"][data-key="1"]',
       );
-      expect(card.instance.model).toBe(Article.find(1));
+      expect(card.instance.model).toBe(Article.byId(1));
     });
 
     it("re-renders only the components bound to an updated record", () => {
       page(`[{"id":1,"title":"A"},{"id":2,"title":"B"}]`);
       start({ root: document, models: [Article] });
 
-      Article.find(1).update({ title: "renamed" });
+      Article.byId(1).update({ title: "renamed" });
 
       // Both representations of record 1 update; record 2 untouched.
       expect(cardTitles()).toEqual(["renamed", "B"]);
@@ -77,7 +77,7 @@ describe("start", () => {
       page(`[{"id":1,"title":"A"}]`);
       start({ root: document, models: [Article] });
 
-      Article.create({ id: 2, title: "B" });
+      Article.add({ id: 2, title: "B" });
 
       expect(cardTitles()).toEqual(["A", "B"]);
       expect(chipTitles()).toEqual(["A", "B"]);
@@ -105,7 +105,7 @@ describe("start", () => {
     it("binds dynamically added records too", async () => {
       page(`[{"id":1,"title":"A"}]`);
       start({ root: document, models: [Article] });
-      Article.create({ id: 2, title: "B" });
+      Article.add({ id: 2, title: "B" });
 
       // observe() binds the new chip on a microtask; wait for the binding.
       await waitFor(
@@ -114,7 +114,7 @@ describe("start", () => {
             '[data-component="article-chip"][data-key="2"]',
           )?.instance?.model != null,
       );
-      Article.find(2).update({ title: "B2" });
+      Article.byId(2).update({ title: "B2" });
 
       expect(chipTitles()).toEqual(["A", "B2"]);
     });
@@ -150,7 +150,7 @@ describe("start", () => {
       expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada"]);
 
       // Reactive after registration.
-      Author.find(1).update({ name: "Ada L." });
+      Author.byId(1).update({ name: "Ada L." });
       expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada L."]);
     });
 

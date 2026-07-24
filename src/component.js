@@ -149,7 +149,7 @@ export default class Component {
     const Model = this.constructor.Model;
     if (!Model) return;
 
-    const record = Model.find(this.element.dataset.key);
+    const record = Model.byId(this.element.dataset.key);
     if (!record) return;
 
     record.bind(this);

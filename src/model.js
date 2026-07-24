@@ -10,9 +10,9 @@ export default class Model {
 
   #components = new Set();
 
-  static create(attributes = {}) {
+  static add(attributes = {}) {
     const instance = new this(attributes);
-    collections.set(this, [...this.all, instance]);
+    collections.set(this, [...this.loaded, instance]);
     notifyChange(this);
     return instance;
   }
@@ -23,16 +23,16 @@ export default class Model {
       items.map((attributes) => new this(attributes)),
     );
     notifyChange(this);
-    return this.all;
+    return this.loaded;
   }
 
-  static get all() {
+  static get loaded() {
     return collections.get(this) ?? [];
   }
 
-  static find(id) {
+  static byId(id) {
     return (
-      this.all.find((instance) => String(instance.id) === String(id)) ?? null
+      this.loaded.find((instance) => String(instance.id) === String(id)) ?? null
     );
   }
 
@@ -67,10 +67,10 @@ export default class Model {
     return this;
   }
 
-  delete() {
+  del() {
     collections.set(
       this.constructor,
-      this.constructor.all.filter((instance) => instance !== this),
+      this.constructor.loaded.filter((instance) => instance !== this),
     );
     notifyChange(this.constructor);
     return this;

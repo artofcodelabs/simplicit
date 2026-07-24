@@ -45,18 +45,18 @@ describe("associations", () => {
   });
 
   it("has many: resolves children by foreign key (string/number coerced)", () => {
-    expect(Article.find(1).comments.map((c) => c.id)).toEqual([1, 2]);
-    expect(Article.find(2).comments.map((c) => c.id)).toEqual([3]);
+    expect(Article.byId(1).comments.map((c) => c.id)).toEqual([1, 2]);
+    expect(Article.byId(2).comments.map((c) => c.id)).toEqual([3]);
   });
 
   it("belongs to: resolves each owner record independently", () => {
-    expect(Comment.find(3).article).toBe(Article.find(2));
-    expect(Comment.find(1).author).toBe(Author.find(9));
-    expect(Comment.find(2).author).toBeNull(); // no author_id
+    expect(Comment.byId(3).article).toBe(Article.byId(2));
+    expect(Comment.byId(1).author).toBe(Author.byId(9));
+    expect(Comment.byId(2).author).toBeNull(); // no author_id
   });
 
   it("reflects live collection changes", () => {
-    Comment.create({ id: 4, article_id: 2 });
-    expect(Article.find(2).comments.map((c) => c.id)).toEqual([3, 4]);
+    Comment.add({ id: 4, article_id: 2 });
+    expect(Article.byId(2).comments.map((c) => c.id)).toEqual([3, 4]);
   });
 });

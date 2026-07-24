@@ -23,7 +23,7 @@ const recordsFor = (el, Child) => {
     }
     el = el.parentElement;
   }
-  return Child.all;
+  return Child.loaded;
 };
 
 const fill = (container, ComponentClass) => {

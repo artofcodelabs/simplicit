@@ -93,8 +93,8 @@
           this.model.update({ title: this.ref("title").value });
         });
         this.on("add-comment", "click", () => {
-          const nextId = Comment.all.reduce((max, c) => Math.max(max, c.id), 0) + 1;
-          Comment.create({ id: nextId, article_id: this.model.id, body: "New comment." });
+          const nextId = Comment.loaded.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          Comment.add({ id: nextId, article_id: this.model.id, body: "New comment." });
         });
       }
     }
@@ -142,7 +142,7 @@
       }
 
       refresh() {
-        this.update({ count: Article.all.length });
+        this.update({ count: Article.loaded.length });
       }
     }
 
@@ -151,8 +151,8 @@
 
       connect() {
         this.on("add", "click", () => {
-          const nextId = Article.all.reduce((max, a) => Math.max(max, a.id), 0) + 1;
-          Article.create({ id: nextId, title: `New article ${nextId}`, body: "Freshly added." });
+          const nextId = Article.loaded.reduce((max, a) => Math.max(max, a.id), 0) + 1;
+          Article.add({ id: nextId, title: `New article ${nextId}`, body: "Freshly added." });
           this.siblings("article-stats")[0].refresh();
         });
       }

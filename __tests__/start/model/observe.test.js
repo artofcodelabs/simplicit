@@ -78,7 +78,7 @@ describe("observeModels (streamed-in markup)", () => {
     start({ root: document, models: [Article] });
 
     // A live update (e.g. websocket) mutates the in-memory record.
-    Article.find(1).update({ title: "Live" });
+    Article.byId(1).update({ title: "Live" });
 
     // Turbo restores a cached snapshot: a card with the OLD markup reappears.
     appendHTML(
@@ -101,7 +101,7 @@ describe("observeModels (streamed-in markup)", () => {
     await waitFor(() => cards().length === 1);
 
     // Websocket create while sitting on the restored page — must still render.
-    Article.create({ id: 2, title: "B" });
+    Article.add({ id: 2, title: "B" });
 
     await waitFor(() => cards().length === 2);
     expect(cards()).toEqual(["A", "B"]);
@@ -112,7 +112,7 @@ describe("observeModels (streamed-in markup)", () => {
     start({ root: document, models: [Article] });
 
     // A record was created while this container was unmounted (another page).
-    Article.create({ id: 2, title: "B" });
+    Article.add({ id: 2, title: "B" });
 
     // Now a stale snapshot (only card 1) is restored.
     appendHTML(

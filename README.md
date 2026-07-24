@@ -301,19 +301,19 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
-3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A representation template missing `data-key` throws at `start()`. On `Model.create`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A representation template missing `data-key` throws at `start()`. On `Model.add`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
 
 #### `Model` API
 
-* **`Model.all`** (static getter): the current array of record instances.
-* **`Model.find(id)`**: the record whose `id` matches (string/number coerced), or `null`.
+* **`Model.loaded`** (static getter): the current array of record instances.
+* **`Model.byId(id)`**: the record whose `id` matches (string/number coerced), or `null`.
 * **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
-* **`Model.create(attributes)`**: append a record; containers gain a new component per representation.
+* **`Model.add(attributes)`**: append a record; containers gain a new component per representation.
 * **`record.update(partial)`**: mutate one record and re-render only the components bound to it.
-* **`record.delete()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
+* **`record.del()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
 
   ```javascript
-  Article.find(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
+  Article.byId(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
   ```
 
 * **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
@@ -343,8 +343,8 @@ class Comment extends Model {
 The **foreign key lives on the "belongs to" side** and is named `<owner>_id` — so a `Comment` that belongs to an `Article` carries `article_id`. Both getters resolve against the live collections at access time:
 
 ```javascript
-article.comments; // Comment.all.filter((c) => c.article_id === article.id)
-comment.article;  // Article.find(comment.article_id)
+article.comments; // Comment.loaded.filter((c) => c.article_id === article.id)
+comment.article;  // Article.byId(comment.article_id)
 ```
 
 The two collections arrive as **two separate `data-model` scripts**; the foreign key links them:
@@ -361,7 +361,7 @@ The two collections arrive as **two separate `data-model` scripts**; the foreign
 
 ##### Nested representations
 
-A `data-container-component` placed **inside** a model-bound component's template renders only *that record's* associated collection, not the whole thing. Simplicit walks up from the container to the nearest component bound to a Model that *has many* of the container's component — and fills it from `owner.<association>` instead of `Child.all`:
+A `data-container-component` placed **inside** a model-bound component's template renders only *that record's* associated collection, not the whole thing. Simplicit walks up from the container to the nearest component bound to a Model that *has many* of the container's component — and fills it from `owner.<association>` instead of `Child.loaded`:
 
 ```javascript
 class ArticleCard extends Component {
@@ -374,7 +374,7 @@ class ArticleCard extends Component {
 }
 ```
 
-This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.create({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. A top-level `data-container-component="comment-item"` (no model-bound ancestor) still renders the full collection.
+This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.add({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. A top-level `data-container-component="comment-item"` (no model-bound ancestor) still renders the full collection.
 
 #### Streamed-in markup (Turbo)
 
@@ -387,7 +387,7 @@ Model **classes** must be known at `start()` (passed in `models`), but the **mar
 
 A late `data-model` for a Model you didn't register is **warned** about (`console.warn`) and skipped. It's still a dev error — you likely forgot to pass the Model to `start({ models })` — but a late script is discovered inside a `MutationObserver`, where throwing is uncatchable and would abort the rest of that batch. So the fail-fast **throw** stays on the synchronous `start()` scan; late discoveries warn instead.
 
-**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.find(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
+**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.byId(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
 
 This is why the seed script is **removed** rather than kept: on a **restoration visit** (back/forward) Turbo shows a cached DOM snapshot, and if the stale JSON were still in it, re-hydrating would overwrite your live in-memory changes. With it gone, restoration keeps memory intact — nothing re-hydrates.
 

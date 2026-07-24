@@ -19,8 +19,8 @@ describe("load", () => {
 
     load(document.body, [Article]);
 
-    expect(Article.all).toHaveLength(2);
-    expect(Article.all[0].title).toBe("A");
+    expect(Article.loaded).toHaveLength(2);
+    expect(Article.loaded[0].title).toBe("A");
     expect(
       document.querySelectorAll('script[data-model="article"]'),
     ).toHaveLength(0);
@@ -36,8 +36,8 @@ describe("load", () => {
 
     load(document.body, [Article, Author]);
 
-    expect(Article.all).toHaveLength(1);
-    expect(Author.all).toHaveLength(1);
+    expect(Article.loaded).toHaveLength(1);
+    expect(Author.loaded).toHaveLength(1);
   });
 
   it("throws for a data-model script with no matching Model", () => {
