@@ -50,6 +50,40 @@ describe("Component.ref", () => {
     );
   });
 
+  it("excludes refs that live inside a nested child component", () => {
+    document.body.innerHTML = `
+      <div data-component="outer" id="root">
+        <button data-ref="act">outer</button>
+        <div data-component="inner">
+          <button data-ref="act" id="inner-btn">inner</button>
+        </div>
+      </div>
+    `;
+
+    let outerAct, innerAct;
+    class Inner extends Component {
+      static name = "inner";
+      connect() {
+        innerAct = this.ref("act");
+      }
+    }
+    class Outer extends Component {
+      static name = "outer";
+      connect() {
+        outerAct = this.ref("act");
+      }
+    }
+
+    start({ root: document, components: [Outer, Inner] });
+
+    // outer sees only its own button, not the nested component's
+    expect(outerAct).toBe(
+      document.querySelector('[data-component="outer"] > [data-ref="act"]'),
+    );
+    expect(outerAct).not.toBe(document.getElementById("inner-btn"));
+    expect(innerAct).toBe(document.getElementById("inner-btn"));
+  });
+
   it("returns null when ref is missing", () => {
     document.body.innerHTML = `
       <div data-component="dummy" id="root"></div>

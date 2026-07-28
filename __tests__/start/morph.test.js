@@ -83,6 +83,32 @@ describe("morph", () => {
     expect(from.lastElementChild.textContent).toBe("2");
   });
 
+  describe("passive containers", () => {
+    it("leaves a nested container's framework-managed children untouched", () => {
+      const from = mount(
+        `<div><ul data-container-component="item"><li>filled</li></ul></div>`,
+      );
+      const li = from.querySelector("li");
+
+      // parent re-renders; its template shows the container empty
+      morph(from, root(`<div><ul data-container-component="item"></ul></div>`));
+
+      expect(from.querySelector("li")).toBe(li);
+      expect(from.querySelector("li").textContent).toBe("filled");
+    });
+
+    it("still fills a container when it is the morph root", () => {
+      const from = mount(`<ul data-container-component="item"></ul>`);
+      const next = from.cloneNode(false);
+      next.innerHTML = `<li>a</li><li>b</li>`;
+
+      morph(from, next);
+
+      expect(from.children).toHaveLength(2);
+      expect(from.lastElementChild.textContent).toBe("b");
+    });
+  });
+
   describe("data-key warnings", () => {
     let warn;
     beforeEach(() => {

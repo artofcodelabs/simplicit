@@ -2,6 +2,13 @@ import DOMPurify from "dompurify";
 import { destructArray, setProps, root } from "./start/helpers.js";
 import { morph } from "./start/morph.js";
 
+// Matches within one component only — excludes elements that live inside a
+// nested child component (whose nearest [data-component] ancestor isn't root).
+const scopedQuery = (root, selector) =>
+  Array.from(root.querySelectorAll(selector)).filter(
+    (el) => el.closest("[data-component]") === root,
+  );
+
 export default class Component {
   static Model = null;
 
@@ -90,7 +97,7 @@ export default class Component {
 
   refs() {
     const temp = {};
-    const elements = this.element.querySelectorAll("[data-ref]");
+    const elements = scopedQuery(this.element, "[data-ref]");
     elements.forEach((el) => {
       const key = el.getAttribute("data-ref");
       if (!temp[key]) temp[key] = [];
@@ -180,7 +187,7 @@ export default class Component {
   }
 
   #refElements(name) {
-    return Array.from(this.element.querySelectorAll(`[data-ref="${name}"]`));
+    return scopedQuery(this.element, `[data-ref="${name}"]`);
   }
 
   #related(type, name) {

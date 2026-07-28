@@ -15,22 +15,37 @@ const assertKeyed = (ComponentClass) => {
   keyed.add(ComponentClass);
 };
 
-const recordsFor = (el, Child) => {
+const modelForComponent = (name, modelClasses) =>
+  modelClasses.find((M) => (M.components ?? []).some((c) => c.name === name)) ??
+  null;
+
+// Resolve which records fill a container by walking up to the nearest enclosing
+// component whose Model *has many* of the container's component. The owner is
+// found via its data-key + Model — never via a live instance — so it's correct
+// even for a just-inserted element the binder hasn't reached yet (otherwise the
+// walk would skip it and wrongly attribute its container to a grandparent).
+const recordsFor = (el, Child, modelClasses) => {
   while (el) {
-    const owner = el.instance?.model;
-    if (owner && (owner.constructor.hasMany ?? []).includes(Child)) {
-      return owner[pluralize(Child.name)];
+    if (el.matches?.("[data-component]") && el.dataset.key != null) {
+      const Owner = modelForComponent(
+        el.getAttribute("data-component"),
+        modelClasses,
+      );
+      if (Owner && (Owner.hasMany ?? []).includes(Child)) {
+        const owner = Owner.byId(el.dataset.key);
+        return owner ? owner[pluralize(Child.name)] : [];
+      }
     }
     el = el.parentElement;
   }
   return Child.loaded;
 };
 
-const fill = (container, ComponentClass) => {
+const fill = (container, ComponentClass, modelClasses) => {
   assertKeyed(ComponentClass);
   ComponentClass.renderTemplates(
     container,
-    recordsFor(container.parentElement, ComponentClass.Model),
+    recordsFor(container.parentElement, ComponentClass.Model, modelClasses),
   );
 };
 
@@ -46,10 +61,10 @@ export const representationFor = (name, modelClasses) => {
   return null;
 };
 
-export const renderContainers = (searchRoot, ComponentClass) => {
+export const renderContainers = (searchRoot, ComponentClass, modelClasses) => {
   searchRoot
     .querySelectorAll(`[${CONTAINER_ATTR}="${ComponentClass.name}"]`)
-    .forEach((container) => fill(container, ComponentClass));
+    .forEach((container) => fill(container, ComponentClass, modelClasses));
 };
 
 export const renderContainer = (container, modelClasses) => {
@@ -57,7 +72,7 @@ export const renderContainer = (container, modelClasses) => {
     container.getAttribute(CONTAINER_ATTR),
     modelClasses,
   );
-  if (ComponentClass) fill(container, ComponentClass);
+  if (ComponentClass) fill(container, ComponentClass, modelClasses);
 };
 
 export const render = (searchRoot, modelClasses) => {

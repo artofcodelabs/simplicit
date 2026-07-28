@@ -2,6 +2,9 @@ const PRESERVED_ATTRIBUTES = new Set(["data-component-id", "data-props"]);
 
 const isElement = (node) => node.nodeType === Node.ELEMENT_NODE;
 
+const isContainer = (node) =>
+  isElement(node) && node.hasAttribute("data-container-component");
+
 const elements = (nodes) => nodes.filter(isElement);
 
 const key = (node) => (isElement(node) ? node.getAttribute("data-key") : null);
@@ -65,7 +68,7 @@ const morphChildren = (from, to) => {
     if (!fromChild) {
       from.appendChild(toChild);
     } else if (sameNode(fromChild, toChild)) {
-      morphNode(fromChild, toChild);
+      morphNode(fromChild, toChild, false);
     } else {
       from.replaceChild(toChild, fromChild);
     }
@@ -76,13 +79,14 @@ const morphChildren = (from, to) => {
   }
 };
 
-const morphNode = (from, to) => {
+const morphNode = (from, to, isRoot) => {
   if (isElement(from)) {
     morphAttributes(from, to);
+    if (!isRoot && isContainer(from)) return;
     morphChildren(from, to);
   } else if (from.nodeValue !== to.nodeValue) {
     from.nodeValue = to.nodeValue;
   }
 };
 
-export const morph = (from, to) => morphNode(from, to);
+export const morph = (from, to) => morphNode(from, to, true);

@@ -39,7 +39,9 @@ export const observeModels = (searchRoot, modelClasses) => {
     for (const ModelClass of newModelClasses) {
       modelNames.add(ModelClass.name);
       for (const ComponentClass of ModelClass.components ?? []) {
-        ModelClass.onChange(() => renderContainers(searchRoot, ComponentClass));
+        ModelClass.onChange(() =>
+          renderContainers(searchRoot, ComponentClass, modelClasses),
+        );
       }
     }
     load(searchRoot, modelClasses);

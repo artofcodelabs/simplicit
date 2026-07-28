@@ -11,6 +11,8 @@
     [data-component="article-card"] h4 { margin: 0 0 .25rem; }
     aside { background: #f6f6f6; border-radius: 6px; padding: 1rem; }
     input[data-ref="title"] { width: 60%; }
+    [data-component="comment-item"] ul { margin: .25rem 0 .25rem 1rem; border-left: 2px solid #eee; padding-left: .75rem; }
+    [data-component="comment-item"] button { font-size: .75rem; margin-left: .5rem; }
   </style>
 </head>
 
@@ -31,12 +33,17 @@
     ]
   </script>
 
-  <!-- A second, flat collection. Each Comment carries article_id (foreign key). -->
+  <!-- A second, flat collection. A Comment is either a root (carries
+       article_id) or a reply (carries comment_id → its parent Comment).
+       Comment belongsTo Comment, so replies nest to any depth. -->
   <script type="application/json" data-model="Comment">
     [
       { "id": 1, "article_id": 1, "body": "Love how small it is." },
       { "id": 2, "article_id": 1, "body": "The morph is neat." },
-      { "id": 3, "article_id": 2, "body": "One source of truth ftw." }
+      { "id": 3, "article_id": 2, "body": "One source of truth ftw." },
+      { "id": 4, "comment_id": 1, "body": "Agreed — a few kb." },
+      { "id": 5, "comment_id": 1, "body": "And basically zero deps." },
+      { "id": 6, "comment_id": 4, "body": "Well, dompurify. 😄" }
     ]
   </script>
 
@@ -84,7 +91,10 @@
           <!-- Nested container: fills with THIS article's comments only,
                because it sits inside a component bound to an Article record. -->
           <ul data-container-component="comment-item"></ul>
-          <button data-ref="add-comment">💬 Add comment</button>
+          <form data-ref="add-comment">
+            <input data-ref="comment-input" placeholder="Add a comment…" />
+            <button>💬 comment</button>
+          </form>
         </div>`;
 
       connect() {
@@ -92,18 +102,44 @@
           e.preventDefault();
           this.model.update({ title: this.ref("title").value });
         });
-        this.on("add-comment", "click", () => {
+        this.on("add-comment", "submit", (e) => {
+          e.preventDefault();
+          const input = this.ref("comment-input");
+          const body = input.value.trim();
+          if (!body) return;
           const nextId = Comment.loaded.reduce((max, c) => Math.max(max, c.id), 0) + 1;
-          Comment.add({ id: nextId, article_id: this.model.id, body: "New comment." });
+          Comment.add({ id: nextId, article_id: this.model.id, body });
+          input.value = "";
         });
       }
     }
 
-    // Representation for one Comment record.
+    // Representation for one Comment record. Its template holds a nested
+    // comment container — the SAME component — so replies render recursively.
     class CommentItem extends Component {
       static name = "comment-item";
-      static template = ({ id, body }) =>
-        `<li data-component="comment-item" data-key="${id}">${body}</li>`;
+
+      static template = ({ id, body }) => `
+        <li data-component="comment-item" data-key="${id}">
+          <span>${body}</span>
+          <ul data-container-component="comment-item"></ul>
+          <form data-ref="reply">
+            <input data-ref="reply-input" placeholder="Reply…" />
+            <button>↩︎ reply</button>
+          </form>
+        </li>`;
+
+      connect() {
+        this.on("reply", "submit", (e) => {
+          e.preventDefault();
+          const input = this.ref("reply-input");
+          const body = input.value.trim();
+          if (!body) return;
+          const nextId = Comment.loaded.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          Comment.add({ id: nextId, comment_id: this.model.id, body });
+          input.value = "";
+        });
+      }
     }
 
     // Representation 2 — one chip per record.
@@ -127,7 +163,9 @@
     class Comment extends Model {
       static name = "Comment";
       static components = [CommentItem];
-      static belongsTo = [Article];
+      // Belongs to an Article (root comment) AND to a Comment (a reply).
+      // The self-reference gives comment.comments (replies) + comment.comment (parent).
+      static belongsTo = [Article, Comment];
     }
 
     // Aggregate view — refreshed by whoever changes the collection.
