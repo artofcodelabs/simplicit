@@ -2,6 +2,6 @@ import init from "./init.js";
 import helpers from "./helpers.js";
 import start from "./start.js";
 import Component from "./component.js";
-import Model from "./model.js";
+import Model, { Reactive } from "./model.js";
 
-export { init, helpers, start, Component, Model };
+export { init, helpers, start, Component, Model, Reactive };

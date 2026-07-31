@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplicit + Loco-JS-Model — CRUD</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 820px; margin: 2rem auto; }
+    [data-component="article-card"] { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin: .6rem 0; }
+    [data-component="article-card"] h4 { margin: 0 0 .25rem; }
+    .row { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+    .muted { color: #777; font-size: .85rem; }
+    .errors { color: #c00; font-size: .85rem; margin: .25rem 0 0; }
+    #status { font-family: ui-monospace, monospace; font-size: .8rem; background: #f6f6f6; border-radius: 4px; padding: .4rem .6rem; }
+    input { padding: .2rem .4rem; }
+    button { cursor: pointer; }
+    form.new { display: flex; gap: .4rem; margin: .5rem 0 1rem; }
+  </style>
+</head>
+
+<body>
+  <h1>Simplicit + Loco-JS-Model — full CRUD</h1>
+  <p>
+    <b>loco-js-model</b> talks to the server (XHR); <b>simplicit</b> holds the in-memory
+    collection and re-renders. One composed class: <code>class Article extends Reactive(Models.Base)</code>.
+  </p>
+  <table class="muted">
+    <tr><td><b>Read</b></td><td><code>Article.get("all")</code> (GET) → <code>Article.load(records)</code></td></tr>
+    <tr><td><b>Create</b></td><td><code>new Article(attrs).save()</code> (POST) → on success <code>Article.add({ id, ...attrs })</code></td></tr>
+    <tr><td><b>Update</b></td><td><code>record.clone().save()</code> (PUT) → on success <code>record.update(attrs)</code> (memory + re-render)</td></tr>
+    <tr><td><b>Delete</b></td><td><code>record.delete()</code> (DELETE) → on success <code>record.del()</code> (drop from memory)</td></tr>
+  </table>
+
+  <p id="status">idle</p>
+
+  <div data-component="article-new">
+    <form class="new" data-ref="form">
+      <input data-ref="title" placeholder="Title" />
+      <input data-ref="body" placeholder="Body" style="flex:1" />
+      <button>➕ Create</button>
+      <button type="button" data-ref="refetch">↻ Refetch</button>
+    </form>
+    <p class="errors" data-ref="errors"></p>
+  </div>
+
+  <div data-container-component="article-card"></div>
+
+  <script src="/loco-model.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs",
+        "loco-reactive": "/loco-reactive.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { start, Component } from "Simplicit";
+    import { locoReactive } from "loco-reactive";
+
+    const { Models } = window.LocoModel;
+    const status = (msg) => (document.getElementById("status").textContent = msg);
+
+    class ArticleCard extends Component {
+      static name = "article-card";
+      static template = ({ id, title, body }) => `
+        <div data-component="article-card" data-key="${id}">
+          <h4>${title} <span class="muted">#${id}</span></h4>
+          <p>${body ?? ""}</p>
+          <div class="row">
+            <form class="row" data-ref="rename">
+              <input data-ref="title" value="${title}" />
+              <button>✎ Save (PUT)</button>
+            </form>
+            <button data-ref="delete">🗑 Delete</button>
+          </div>
+        </div>`;
+
+      connect() {
+        this.on("rename", "submit", async (e) => {
+          e.preventDefault();
+          const title = this.ref("title").value;
+          const draft = this.model.clone();
+          draft.title = title;
+          if (draft.isInvalid()) {
+            status(`invalid: title ${draft.errors.title.join(", ")}`);
+            return;
+          }
+          status(`PUT /api/articles/${this.model.id} …`);
+          const resp = await draft.save();
+          if (!resp.success) return status(`update failed`);
+          this.model.update({ title }); // TODO: save only
+          status(`updated #${this.model.id}`);
+        });
+
+        this.on("delete", "click", async () => {
+          const id = this.model.id;
+          status(`DELETE /api/articles/${id} …`);
+          const resp = await this.model.delete();
+          if (!resp?.success) return status(`delete failed`);
+          this.model.del();                       // TODO: under delete
+          status(`deleted #${id}`);
+        });
+      }
+    }
+
+    class Article extends locoReactive(Models.Base) {
+      static identity = "Article"; // TODO: identity = name
+      static name = "Article";
+      static components = [ArticleCard];
+      static resources = { url: "/api/articles" };
+      static attributes = {
+        title: { type: "String", validations: { presence: true, length: { minimum: 3 } } },
+        body: { type: "String" },
+      };
+    }
+
+    class ArticleNew extends Component {
+      static name = "article-new";
+
+      connect() {
+        this.on("form", "submit", async (e) => {
+          e.preventDefault();
+          const title = this.ref("title").value;
+          const body = this.ref("body").value;
+
+          const draft = new Article({ title, body });
+          if (draft.isInvalid()) {
+            this.ref("errors").textContent = `Title ${draft.errors.title.join(", ")}`;
+            return;
+          }
+          this.ref("errors").textContent = "";
+
+          status("POST /api/articles …");
+          const resp = await draft.save();
+          if (!resp.success) {
+            this.ref("errors").textContent = "create failed";
+            return;
+          }
+          Article.add({ id: resp.id, title, body }); // TODO: save does it
+          status(`created #${resp.id}`);
+          this.ref("title").value = "";
+          this.ref("body").value = "";
+        });
+
+        this.on("refetch", "click", refetch);
+      }
+    }
+
+    async function refetch() {
+      const records = await Article.get("all");
+      Article.load(records.map(({ id, title, body }) => ({ id, title, body }))); // TODO: Article.get only
+      status(`loaded ${Article.loaded.length} from API`);
+    }
+
+    start({ root: document, components: [ArticleNew], models: [Article] });
+    refetch();
+  </script>
+
+  <p class="muted"><a href="/">Simplicit</a> | <a href="/articles">Articles (standalone)</a></p>
+</body>
+
+</html>
