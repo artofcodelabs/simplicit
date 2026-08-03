@@ -107,7 +107,6 @@
     }
 
     class Article extends locoReactive(Models.Base) {
-      static identity = "Article"; // TODO: identity = name
       static name = "Article";
       static components = [ArticleCard];
       static resources = { url: "/api/articles" };
