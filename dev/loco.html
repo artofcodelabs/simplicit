@@ -26,7 +26,7 @@
   </p>
   <table class="muted">
     <tr><td><b>Read</b></td><td><code>Article.get("all")</code> (GET) → <code>Article.load(records)</code></td></tr>
-    <tr><td><b>Create</b></td><td><code>new Article(attrs).save()</code> (POST) → on success <code>Article.add({ id, ...attrs })</code></td></tr>
+    <tr><td><b>Create</b></td><td><code>new Article(attrs).save()</code> (POST) — persists <b>and</b> joins the reactive collection</td></tr>
     <tr><td><b>Update</b></td><td><code>record.clone().save()</code> (PUT) → on success <code>record.update(attrs)</code> (memory + re-render)</td></tr>
     <tr><td><b>Delete</b></td><td><code>record.delete()</code> (DELETE) → on success <code>record.del()</code> (drop from memory)</td></tr>
   </table>
@@ -125,21 +125,20 @@
           const title = this.ref("title").value;
           const body = this.ref("body").value;
 
-          const draft = new Article({ title, body });
-          if (draft.isInvalid()) {
-            this.ref("errors").textContent = `Title ${draft.errors.title.join(", ")}`;
+          const article = new Article({ title, body });
+          if (article.isInvalid()) {
+            this.ref("errors").textContent = `Title ${article.errors.title.join(", ")}`;
             return;
           }
           this.ref("errors").textContent = "";
 
           status("POST /api/articles …");
-          const resp = await draft.save();
+          const resp = await article.save(); // POST + add to memory + render
           if (!resp.success) {
             this.ref("errors").textContent = "create failed";
             return;
           }
-          Article.add({ id: resp.id, title, body }); // TODO: save does it
-          status(`created #${resp.id}`);
+          status(`created #${article.id}`);
           this.ref("title").value = "";
           this.ref("body").value = "";
         });

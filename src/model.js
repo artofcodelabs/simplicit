@@ -11,8 +11,13 @@ export const Reactive = (Base = Object) =>
 
     #components = new Set();
 
-    static add(attributes = {}) {
-      const instance = new this(attributes);
+    static add(attributesOrInstance = {}) {
+      const instance =
+        attributesOrInstance instanceof this
+          ? attributesOrInstance
+          : new this(attributesOrInstance);
+      if (this.loaded.includes(instance)) return instance;
+
       collections.set(this, [...this.loaded, instance]);
       notifyChange(this);
       return instance;
