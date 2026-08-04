@@ -22,7 +22,7 @@
   <h1>Simplicit + Loco-JS-Model — full CRUD</h1>
   <p>
     <b>loco-js-model</b> talks to the server (XHR); <b>simplicit</b> holds the in-memory
-    collection and re-renders. One composed class: <code>class Article extends locoReactive(Models.Base)</code>.
+    collection and re-renders. One composed class: <code>class Article extends Reactive</code>.
   </p>
   <table class="muted">
     <tr><td><b>Read</b></td><td><code>Article.all()</code> (GET) — fetches <b>and</b> loads into memory</td></tr>
@@ -58,9 +58,8 @@
 
   <script type="module">
     import { start, Component } from "Simplicit";
-    import { locoReactive } from "loco-reactive";
+    import { LocoReactive as Reactive } from "loco-reactive";
 
-    const { Models } = window.LocoModel;
     const status = (msg) => (document.getElementById("status").textContent = msg);
 
     class ArticleCard extends Component {
@@ -101,7 +100,7 @@
       }
     }
 
-    class Article extends locoReactive(Models.Base) {
+    class Article extends Reactive {
       static name = "Article";
       static components = [ArticleCard];
       static resources = { url: "/api/articles" };
