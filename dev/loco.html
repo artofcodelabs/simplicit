@@ -22,13 +22,13 @@
   <h1>Simplicit + Loco-JS-Model — full CRUD</h1>
   <p>
     <b>loco-js-model</b> talks to the server (XHR); <b>simplicit</b> holds the in-memory
-    collection and re-renders. One composed class: <code>class Article extends Reactive(Models.Base)</code>.
+    collection and re-renders. One composed class: <code>class Article extends locoReactive(Models.Base)</code>.
   </p>
   <table class="muted">
-    <tr><td><b>Read</b></td><td><code>Article.get("all")</code> (GET) → <code>Article.load(records)</code></td></tr>
-    <tr><td><b>Create</b></td><td><code>new Article(attrs).save()</code> (POST) — persists <b>and</b> joins the reactive collection</td></tr>
-    <tr><td><b>Update</b></td><td><code>record.clone().save()</code> (PUT) → on success <code>record.update(attrs)</code> (memory + re-render)</td></tr>
-    <tr><td><b>Delete</b></td><td><code>record.delete()</code> (DELETE) → on success <code>record.del()</code> (drop from memory)</td></tr>
+    <tr><td><b>Read</b></td><td><code>Article.all()</code> (GET) — fetches <b>and</b> loads into memory</td></tr>
+    <tr><td><b>Create</b></td><td><code>new Article(attrs).save()</code> (POST) — persists <b>and</b> joins the collection</td></tr>
+    <tr><td><b>Update</b></td><td><code>record.save({ attrs })</code> (PUT) — persists <b>and</b> updates memory</td></tr>
+    <tr><td><b>Delete</b></td><td><code>record.delete()</code> (DELETE) — removes on server <b>and</b> from memory</td></tr>
   </table>
 
   <p id="status">idle</p>
@@ -79,29 +79,24 @@
         </div>`;
 
       connect() {
+        // UPDATE: one call — PUT then reflect in memory on success.
         this.on("rename", "submit", async (e) => {
           e.preventDefault();
-          const title = this.ref("title").value;
-          const draft = this.model.clone();
-          draft.title = title;
-          if (draft.isInvalid()) {
-            status(`invalid: title ${draft.errors.title.join(", ")}`);
-            return;
-          }
           status(`PUT /api/articles/${this.model.id} …`);
-          const resp = await draft.save();
-          if (!resp.success) return status(`update failed`);
-          this.model.update({ title }); // TODO: save only
-          status(`updated #${this.model.id}`);
+          const resp = await this.model.save({ title: this.ref("title").value });
+          status(
+            resp.success
+              ? `updated #${this.model.id}`
+              : `invalid: title ${resp.errors.title.join(", ")}`,
+          );
         });
 
+        // DELETE: one call — DELETE then drop from memory on success.
         this.on("delete", "click", async () => {
           const id = this.model.id;
           status(`DELETE /api/articles/${id} …`);
           const resp = await this.model.delete();
-          if (!resp?.success) return status(`delete failed`);
-          this.model.del();                       // TODO: under delete
-          status(`deleted #${id}`);
+          status(resp.success ? `deleted #${id}` : `delete failed`);
         });
       }
     }
@@ -148,8 +143,8 @@
     }
 
     async function refetch() {
-      const records = await Article.get("all");
-      Article.load(records.map(({ id, title, body }) => ({ id, title, body }))); // TODO: Article.get only
+      status("GET /api/articles …");
+      await Article.all(); // fetch + load into memory + render
       status(`loaded ${Article.loaded.length} from API`);
     }
 
