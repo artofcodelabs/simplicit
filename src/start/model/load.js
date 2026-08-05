@@ -1,12 +1,13 @@
-const modelScripts = (searchRoot) =>
-  searchRoot.querySelectorAll("script[type='application/json'][data-model]");
+import { MODEL } from "../../attributes.js";
+
+export const MODEL_SCRIPT_SELECTOR = `script[type='application/json'][${MODEL}]`;
 
 export const loadModelScript = (script, modelClasses) => {
-  const name = script.dataset.model;
+  const name = script.getAttribute(MODEL);
   const modelClass = modelClasses.find((m) => m.name === name);
   if (!modelClass) {
     throw new Error(
-      `Found data-model="${name}" but no matching Model passed to start({ models })`,
+      `Found ${MODEL}="${name}" but no matching Model passed to start({ models })`,
     );
   }
 
@@ -15,7 +16,7 @@ export const loadModelScript = (script, modelClasses) => {
 };
 
 export const load = (searchRoot, modelClasses) => {
-  for (const script of modelScripts(searchRoot)) {
+  for (const script of searchRoot.querySelectorAll(MODEL_SCRIPT_SELECTOR)) {
     loadModelScript(script, modelClasses);
   }
 };

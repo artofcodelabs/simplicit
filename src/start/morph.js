@@ -1,13 +1,14 @@
-const PRESERVED_ATTRIBUTES = new Set(["data-component-id", "data-props"]);
+import { COMPONENT_ID, PROPS, KEY, CONTAINER } from "../attributes.js";
+
+const PRESERVED_ATTRIBUTES = new Set([COMPONENT_ID, PROPS]);
 
 const isElement = (node) => node.nodeType === Node.ELEMENT_NODE;
 
-const isContainer = (node) =>
-  isElement(node) && node.hasAttribute("data-container-component");
+const isContainer = (node) => isElement(node) && node.hasAttribute(CONTAINER);
 
 const elements = (nodes) => nodes.filter(isElement);
 
-const key = (node) => (isElement(node) ? node.getAttribute("data-key") : null);
+const key = (node) => (isElement(node) ? node.getAttribute(KEY) : null);
 
 const sameNode = (a, b) => {
   if (a.nodeType !== b.nodeType) return false;
@@ -46,10 +47,10 @@ const warnMissingKeys = (from, fromChildren, toChildren) => {
 
   for (const [tag, { from: f, to: t }] of byTag) {
     if (f.length < 2 && t.length < 2) continue;
-    if ([...f, ...t].some((el) => el.hasAttribute("data-key"))) continue;
+    if ([...f, ...t].some((el) => el.hasAttribute(KEY))) continue;
     console.warn(
       `[simplicit] morph: <${tag.toLowerCase()}> siblings changed count ` +
-        `without data-key. Add a stable data-key to each list item so ` +
+        `without ${KEY}. Add a stable ${KEY} to each list item so ` +
         `identity follows data, not position. ` +
         `See README "Keying list items with data-key".`,
       from,

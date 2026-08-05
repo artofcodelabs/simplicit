@@ -1,13 +1,24 @@
-import { dataComponentAttribute } from "./config.js";
-import { createNode } from "./node.js";
+import { COMPONENT } from "../attributes.js";
+
+export const createNode = (element) => ({
+  name: element.getAttribute(COMPONENT),
+  element,
+  parent: null,
+  children: [],
+  siblings: [],
+});
+
+export const linkSiblings = (nodes) => {
+  for (const node of nodes) node.siblings = nodes.filter((n) => n !== node);
+};
 
 const scanComponentElements = (searchRoot) => {
   const componentElements = Array.from(
-    searchRoot.querySelectorAll(`[${dataComponentAttribute}]`),
+    searchRoot.querySelectorAll(`[${COMPONENT}]`),
   ).filter((el) => el.tagName !== "SCRIPT");
   if (
     searchRoot instanceof Element &&
-    searchRoot.hasAttribute(dataComponentAttribute) &&
+    searchRoot.hasAttribute(COMPONENT) &&
     !componentElements.includes(searchRoot)
   ) {
     componentElements.unshift(searchRoot);
@@ -24,9 +35,7 @@ export const buildElementTree = (searchRoot) => {
 
   for (const element of componentElements) {
     const node = elementToNode.get(element);
-    const parentElement = element.parentElement?.closest(
-      `[${dataComponentAttribute}]`,
-    );
+    const parentElement = element.parentElement?.closest(`[${COMPONENT}]`);
     if (parentElement && elementToNode.has(parentElement)) {
       const parentNode = elementToNode.get(parentElement);
       node.parent = parentNode;
@@ -40,12 +49,7 @@ export const buildElementTree = (searchRoot) => {
     if (!groupByParent.has(key)) groupByParent.set(key, []);
     groupByParent.get(key).push(node);
   }
-
-  for (const group of groupByParent.values()) {
-    for (const node of group) {
-      node.siblings = group.filter((n) => n !== node);
-    }
-  }
+  for (const group of groupByParent.values()) linkSiblings(group);
 
   return nodes;
 };

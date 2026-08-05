@@ -1,3 +1,4 @@
+import { COMPONENT, CONTAINER, KEY } from "../../attributes.js";
 import { root } from "../helpers.js";
 import { pluralize } from "./associations.js";
 
@@ -5,19 +6,15 @@ const keyed = new WeakSet();
 
 const assertKeyed = (ComponentClass) => {
   if (keyed.has(ComponentClass)) return;
-  if (!root(ComponentClass.template({}))?.hasAttribute("data-key")) {
+  if (!root(ComponentClass.template({}))?.hasAttribute(KEY)) {
     throw new Error(
       `Component "${ComponentClass.name}" is a Model representation but its ` +
-        `template has no data-key — add data-key="\${id}" to the root element ` +
+        `template has no ${KEY} — add ${KEY}="\${id}" to the root element ` +
         `so each record binds to its component.`,
     );
   }
   keyed.add(ComponentClass);
 };
-
-const modelForComponent = (name, modelClasses) =>
-  modelClasses.find((M) => (M.components ?? []).some((c) => c.name === name)) ??
-  null;
 
 // Resolve which records fill a container by walking up to the nearest enclosing
 // component whose Model *has many* of the container's component. The owner is
@@ -26,13 +23,13 @@ const modelForComponent = (name, modelClasses) =>
 // walk would skip it and wrongly attribute its container to a grandparent).
 const recordsFor = (el, Child, modelClasses) => {
   while (el) {
-    if (el.matches?.("[data-component]") && el.dataset.key != null) {
-      const Owner = modelForComponent(
-        el.getAttribute("data-component"),
+    if (el.matches?.(`[${COMPONENT}]`) && el.getAttribute(KEY) !== null) {
+      const Owner = representationFor(
+        el.getAttribute(COMPONENT),
         modelClasses,
-      );
+      )?.Model;
       if (Owner && (Owner.hasMany ?? []).includes(Child)) {
-        const owner = Owner.byId(el.dataset.key);
+        const owner = Owner.byId(el.getAttribute(KEY));
         return owner ? owner[pluralize(Child.name)] : [];
       }
     }
@@ -49,27 +46,20 @@ const fill = (container, ComponentClass, modelClasses) => {
   );
 };
 
-export const CONTAINER_ATTR = "data-container-component";
-
-export const representationFor = (name, modelClasses) => {
-  for (const ModelClass of modelClasses) {
-    const ComponentClass = (ModelClass.components ?? []).find(
-      (c) => c.name === name,
-    );
-    if (ComponentClass) return ComponentClass;
-  }
-  return null;
-};
+export const representationFor = (name, modelClasses) =>
+  modelClasses
+    .flatMap((ModelClass) => ModelClass.components ?? [])
+    .find((c) => c.name === name) ?? null;
 
 export const renderContainers = (searchRoot, ComponentClass, modelClasses) => {
   searchRoot
-    .querySelectorAll(`[${CONTAINER_ATTR}="${ComponentClass.name}"]`)
+    .querySelectorAll(`[${CONTAINER}="${ComponentClass.name}"]`)
     .forEach((container) => fill(container, ComponentClass, modelClasses));
 };
 
 export const renderContainer = (container, modelClasses) => {
   const ComponentClass = representationFor(
-    container.getAttribute(CONTAINER_ATTR),
+    container.getAttribute(CONTAINER),
     modelClasses,
   );
   if (ComponentClass) fill(container, ComponentClass, modelClasses);
@@ -77,6 +67,6 @@ export const renderContainer = (container, modelClasses) => {
 
 export const render = (searchRoot, modelClasses) => {
   searchRoot
-    .querySelectorAll(`[${CONTAINER_ATTR}]`)
+    .querySelectorAll(`[${CONTAINER}]`)
     .forEach((container) => renderContainer(container, modelClasses));
 };

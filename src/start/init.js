@@ -1,3 +1,4 @@
+import { COMPONENT_ID } from "../attributes.js";
 import { generateComponentId, popProps } from "./helpers.js";
 
 export const initComponent = (node, ComponentClass) => {
@@ -9,7 +10,7 @@ export const initComponent = (node, ComponentClass) => {
 };
 
 export const extendElement = (element, instance) => {
-  element.setAttribute("data-component-id", instance.componentId);
+  element.setAttribute(COMPONENT_ID, instance.componentId);
   element.instance = instance;
 };
 

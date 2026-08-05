@@ -5,3 +5,6 @@ node_modules
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Build output — rebuilt by the prepare script on install and publish
+/dist/

@@ -8,8 +8,11 @@
   "exports": {
     ".": "./dist/simplicit.mjs"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && npm run build",
     "format": "prettier --write .",
     "lint": "eslint . --ext .js --fix",
     "lint-staged": "lint-staged",

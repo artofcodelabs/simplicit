@@ -50,34 +50,8 @@ app.delete("/api/articles/:id", (req, res) => {
   res.json({ success: true });
 });
 
-app.get("/", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/index.html`));
-});
-
-app.get("/stimulus", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/stimulus.html`));
-});
-
-app.get("/slideshow", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/slideshow.html`));
-});
-
-app.get("/articles", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/articles.html`));
-});
-
-app.get("/nested", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/nested.html`));
-});
-
-app.get("/loco", (_, res) => {
-  res.sendFile(path.join(__dirname, `${rootPath}/dev/loco.html`));
-});
-
 app.get("/loco-reactive.js", (_, res) => {
-  res
-    .type("js")
-    .sendFile(path.join(__dirname, `${rootPath}/dev/loco-reactive.js`));
+  res.type("js").sendFile(path.join(__dirname, "loco-reactive.js"));
 });
 
 // TODO: Requires ../loco-js-model next to this repo
@@ -95,6 +69,10 @@ app.get("/loco-model.js", (_, res) => {
           `throw new Error("loco-js-model build not found at ${file} — clone it next to this repo and run 'npm run build' there.");`,
         );
   });
+});
+
+app.get("/{:page}", (req, res) => {
+  res.sendFile(path.join(__dirname, `${req.params.page || "index"}.html`));
 });
 
 app.listen(4000, () => {

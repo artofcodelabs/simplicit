@@ -1,28 +1,15 @@
 import DOMPurify from "dompurify";
-import { setProps } from "./helpers.js";
+import { COMPONENT, POSITION, TARGET } from "../attributes.js";
+import { setProps, selfAndDescendants } from "./helpers.js";
 
-const isJsonTemplateScript = (node) =>
-  node instanceof HTMLScriptElement &&
-  node.type === "application/json" &&
-  node.hasAttribute("data-component");
-
-const collectScripts = (node) => {
-  const scripts = [];
-  if (isJsonTemplateScript(node)) scripts.push(node);
-  if (node?.querySelectorAll) {
-    node
-      .querySelectorAll("script[type='application/json'][data-component]")
-      .forEach((s) => scripts.push(s));
-  }
-  return scripts;
-};
+const SCRIPT_SELECTOR = `script[type='application/json'][${COMPONENT}]`;
 
 const processScript = (script, componentClasses) => {
-  const componentName = script.dataset.component;
+  const componentName = script.getAttribute(COMPONENT);
   const componentClass = componentClasses.find((c) => c.name === componentName);
   if (!componentClass) return;
 
-  const targetId = script.dataset.target;
+  const targetId = script.getAttribute(TARGET);
   const inPlace = targetId == null;
   const targetEl = inPlace ? script : document.getElementById(targetId);
   if (!targetEl) {
@@ -30,7 +17,7 @@ const processScript = (script, componentClasses) => {
   }
 
   const position =
-    script.dataset.position ?? (inPlace ? "beforebegin" : "beforeend");
+    script.getAttribute(POSITION) ?? (inPlace ? "beforebegin" : "beforeend");
   const arr = JSON.parse(script.textContent);
   let html = "";
   arr.forEach((props) => {
@@ -41,7 +28,7 @@ const processScript = (script, componentClasses) => {
 };
 
 const processScripts = (node, componentClasses) => {
-  collectScripts(node).forEach((script) =>
+  selfAndDescendants(node, SCRIPT_SELECTOR).forEach((script) =>
     processScript(script, componentClasses),
   );
 };

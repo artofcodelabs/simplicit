@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { COMPONENT, KEY, REF } from "./attributes.js";
 import { destructArray, setProps, root } from "./start/helpers.js";
 import { morph } from "./start/morph.js";
 
@@ -6,7 +7,7 @@ import { morph } from "./start/morph.js";
 // nested child component (whose nearest [data-component] ancestor isn't root).
 const scopedQuery = (root, selector) =>
   Array.from(root.querySelectorAll(selector)).filter(
-    (el) => el.closest("[data-component]") === root,
+    (el) => el.closest(`[${COMPONENT}]`) === root,
   );
 
 export default class Component {
@@ -26,7 +27,6 @@ export default class Component {
 
   #cleanupCallbacks = [];
   #bindings = [];
-  #isDisconnected = false;
 
   constructor() {
     this.props = {};
@@ -55,7 +55,7 @@ export default class Component {
       typeof target === "string"
         ? target
         : target instanceof Element
-          ? target.getAttribute("data-ref")
+          ? target.getAttribute(REF)
           : null;
     const resolve =
       ref !== null ? () => this.#refElements(ref) : () => [target];
@@ -83,9 +83,8 @@ export default class Component {
     return id;
   }
 
+  // Idempotent: splice empties the queue, #detachFromParent no-ops when detached.
   disconnect() {
-    if (this.#isDisconnected) return;
-    this.#isDisconnected = true;
     const callbacks = this.#cleanupCallbacks.splice(0);
     for (const cleanup of callbacks) cleanup();
     this.#detachFromParent();
@@ -96,18 +95,15 @@ export default class Component {
   }
 
   refs() {
-    const temp = {};
-    const elements = scopedQuery(this.element, "[data-ref]");
-    elements.forEach((el) => {
-      const key = el.getAttribute("data-ref");
-      if (!temp[key]) temp[key] = [];
-      temp[key].push(el);
-    });
-    const result = {};
-    Object.keys(temp).forEach((key) => {
-      result[key] = destructArray(temp[key]);
-    });
-    return result;
+    const grouped = {};
+    for (const el of scopedQuery(this.element, `[${REF}]`)) {
+      const key = el.getAttribute(REF);
+      (grouped[key] ??= []).push(el);
+    }
+    for (const key of Object.keys(grouped)) {
+      grouped[key] = destructArray(grouped[key]);
+    }
+    return grouped;
   }
 
   children(name) {
@@ -156,7 +152,7 @@ export default class Component {
     const Model = this.constructor.Model;
     if (!Model) return;
 
-    const record = Model.byId(this.element.dataset.key);
+    const record = Model.byId(this.element.getAttribute(KEY));
     if (!record) return;
 
     record.bind(this);
@@ -187,7 +183,7 @@ export default class Component {
   }
 
   #refElements(name) {
-    return scopedQuery(this.element, `[data-ref="${name}"]`);
+    return scopedQuery(this.element, `[${REF}="${name}"]`);
   }
 
   #related(type, name) {

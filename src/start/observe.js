@@ -1,21 +1,19 @@
-import { dataComponentAttribute } from "./config.js";
+import { COMPONENT } from "../attributes.js";
 import { initComponent, extendElement } from "./init.js";
-import { createNode } from "./node.js";
+import { createNode, linkSiblings } from "./scan.js";
 
 const isScriptElement = (el) => el.tagName === "SCRIPT";
 
 const validNode = (node) =>
-  !isScriptElement(node) && node.hasAttribute(dataComponentAttribute);
+  !isScriptElement(node) && node.hasAttribute(COMPONENT);
 
 const instancesForElements = (elements, classByName) => {
   const instances = [];
   for (const el of elements) {
-    const name = el.getAttribute(dataComponentAttribute);
-    const ComponentClass = classByName.get(name);
+    const ComponentClass = classByName.get(el.getAttribute(COMPONENT));
     if (!ComponentClass) continue;
 
-    const node = createNode(el);
-    const instance = initComponent(node, ComponentClass);
+    const instance = initComponent(createNode(el), ComponentClass);
     extendElement(el, instance);
     instances.push(instance);
   }
@@ -25,39 +23,25 @@ const instancesForElements = (elements, classByName) => {
 const filterElements = (elements, classByName) => {
   return Array.from(elements).filter((el) => {
     if (isScriptElement(el)) return false;
-    const name = el.getAttribute(dataComponentAttribute);
+    const name = el.getAttribute(COMPONENT);
     return classByName.has(name) && !el.instance;
   });
 };
 
-const addedElements = (mutations) => {
-  const added = new Set();
+// key is "addedNodes" or "removedNodes".
+const mutatedElements = (mutations, key) => {
+  const found = new Set();
   for (const m of mutations) {
-    for (const node of m.addedNodes) {
+    for (const node of m[key]) {
       if (!(node instanceof Element)) continue;
 
-      if (validNode(node)) added.add(node);
-      node.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
-        if (!isScriptElement(el)) added.add(el);
+      if (validNode(node)) found.add(node);
+      node.querySelectorAll(`[${COMPONENT}]`).forEach((el) => {
+        if (!isScriptElement(el)) found.add(el);
       });
     }
   }
-  return added;
-};
-
-const removedElements = (mutations) => {
-  const removed = new Set();
-  for (const m of mutations) {
-    for (const node of m.removedNodes) {
-      if (!(node instanceof Element)) continue;
-
-      if (validNode(node)) removed.add(node);
-      node.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
-        if (!isScriptElement(el)) removed.add(el);
-      });
-    }
-  }
-  return removed;
+  return found;
 };
 
 const existingElements = (searchRoot) => {
@@ -66,7 +50,7 @@ const existingElements = (searchRoot) => {
     if (validNode(searchRoot)) elements.add(searchRoot);
   }
   if (typeof searchRoot.querySelectorAll === "function") {
-    searchRoot.querySelectorAll(`[${dataComponentAttribute}]`).forEach((el) => {
+    searchRoot.querySelectorAll(`[${COMPONENT}]`).forEach((el) => {
       if (!isScriptElement(el)) elements.add(el);
     });
   }
@@ -76,20 +60,15 @@ const existingElements = (searchRoot) => {
 const linkInstances = (instances) => {
   for (const instance of instances) {
     // Link to parent instances (if any) and update children relationships.
-    const parentEl = instance.element.parentElement?.closest(
-      `[${dataComponentAttribute}]`,
-    );
-    if (parentEl) {
-      const parentInstance = parentEl.instance;
-      if (parentInstance) {
-        instance.addParent(parentInstance);
-      }
+    const parentEl = instance.element.parentElement?.closest(`[${COMPONENT}]`);
+    if (parentEl?.instance) {
+      instance.addParent(parentEl.instance);
     }
     for (const childInstance of instances) {
       if (childInstance.element === instance.element) continue;
 
       const nearest = childInstance.element.parentElement?.closest(
-        `[${dataComponentAttribute}]`,
+        `[${COMPONENT}]`,
       );
       if (nearest === instance.element) {
         instance.node.children.push(childInstance.node);
@@ -102,16 +81,9 @@ const linkInstances = (instances) => {
   // parents that gained new children in this batch.
   const parentsToUpdate = new Set();
   for (const instance of instances) {
-    if (instance.node.parent) {
-      parentsToUpdate.add(instance.node.parent);
-    }
+    if (instance.node.parent) parentsToUpdate.add(instance.node.parent);
   }
-  for (const parentNode of parentsToUpdate) {
-    const children = parentNode.children;
-    for (const childNode of children) {
-      childNode.siblings = children.filter((n) => n !== childNode);
-    }
-  }
+  for (const parentNode of parentsToUpdate) linkSiblings(parentNode.children);
 
   for (const instance of instances) {
     if (typeof instance.connect === "function") instance.connect();
@@ -128,8 +100,7 @@ export const observe = (searchRoot, componentClasses = []) => {
     for (const ComponentClass of newComponentClasses) {
       classByName.set(ComponentClass.name, ComponentClass);
     }
-    const existing = existingElements(searchRoot);
-    const filtered = filterElements(existing, classByName);
+    const filtered = filterElements(existingElements(searchRoot), classByName);
     if (filtered.length === 0) return [];
 
     const instances = instancesForElements(filtered, classByName);
@@ -138,15 +109,14 @@ export const observe = (searchRoot, componentClasses = []) => {
   };
 
   const observer = new MutationObserver((mutations) => {
-    const removed = removedElements(mutations);
-    if (removed.size > 0) {
-      for (const el of removed) el.instance?.disconnect();
+    for (const el of mutatedElements(mutations, "removedNodes")) {
+      el.instance?.disconnect();
     }
 
-    const added = addedElements(mutations);
-    if (added.size === 0) return;
-
-    const filtered = filterElements(added, classByName);
+    const filtered = filterElements(
+      mutatedElements(mutations, "addedNodes"),
+      classByName,
+    );
     if (filtered.length === 0) return;
 
     const instances = instancesForElements(filtered, classByName);

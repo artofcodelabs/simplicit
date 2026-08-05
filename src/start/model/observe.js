@@ -1,36 +1,7 @@
-import { load, loadModelScript } from "./load.js";
-import {
-  render,
-  renderContainer,
-  renderContainers,
-  CONTAINER_ATTR,
-} from "./render.js";
-
-const isModelScript = (node) =>
-  node instanceof HTMLScriptElement &&
-  node.type === "application/json" &&
-  node.hasAttribute("data-model");
-
-const modelScriptsIn = (node) => {
-  const out = [];
-  if (isModelScript(node)) out.push(node);
-  node
-    .querySelectorAll?.("script[type='application/json'][data-model]")
-    ?.forEach((s) => out.push(s));
-  return out;
-};
-
-const containersIn = (node) => {
-  const out = [];
-  if (
-    node.nodeType === Node.ELEMENT_NODE &&
-    node.hasAttribute(CONTAINER_ATTR)
-  ) {
-    out.push(node);
-  }
-  node.querySelectorAll?.(`[${CONTAINER_ATTR}]`)?.forEach((el) => out.push(el));
-  return out;
-};
+import { CONTAINER, MODEL } from "../../attributes.js";
+import { selfAndDescendants } from "../helpers.js";
+import { load, loadModelScript, MODEL_SCRIPT_SELECTOR } from "./load.js";
+import { render, renderContainer, renderContainers } from "./render.js";
 
 export const observeModels = (searchRoot, modelClasses) => {
   const modelNames = new Set();
@@ -53,19 +24,19 @@ export const observeModels = (searchRoot, modelClasses) => {
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
-        modelScriptsIn(node).forEach((s) => {
+        selfAndDescendants(node, MODEL_SCRIPT_SELECTOR).forEach((s) => {
           if (!s.isConnected) return;
-          if (modelNames.has(s.dataset.model)) {
+          if (modelNames.has(s.getAttribute(MODEL))) {
             loadModelScript(s, modelClasses);
           } else {
             console.warn(
-              `[simplicit] <script data-model="${s.dataset.model}"> has no ` +
+              `[simplicit] <script ${MODEL}="${s.getAttribute(MODEL)}"> has no ` +
                 `matching Model passed to start({ models }) — ignored.`,
             );
           }
         });
 
-        containersIn(node).forEach((container) => {
+        selfAndDescendants(node, `[${CONTAINER}]`).forEach((container) => {
           if (container.isConnected) renderContainer(container, modelClasses);
         });
       }
@@ -77,9 +48,6 @@ export const observeModels = (searchRoot, modelClasses) => {
   return {
     addModels(newModelClasses) {
       registerModels(newModelClasses);
-    },
-    disconnect() {
-      observer.disconnect();
     },
   };
 };
