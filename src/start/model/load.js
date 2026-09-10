@@ -1,4 +1,4 @@
-import { MODEL } from "../../attributes.js";
+import { AS_OF, MODEL } from "../../attributes.js";
 
 export const MODEL_SCRIPT_SELECTOR = `script[type='application/json'][${MODEL}]`;
 
@@ -12,11 +12,12 @@ export const loadModelScript = (script, modelClasses) => {
   }
 
   modelClass.load(JSON.parse(script.textContent));
+  const asOf = script.getAttribute(AS_OF);
   script.remove();
+  return asOf;
 };
 
-export const load = (searchRoot, modelClasses) => {
-  for (const script of searchRoot.querySelectorAll(MODEL_SCRIPT_SELECTOR)) {
-    loadModelScript(script, modelClasses);
-  }
-};
+export const load = (searchRoot, modelClasses) =>
+  [...searchRoot.querySelectorAll(MODEL_SCRIPT_SELECTOR)]
+    .map((script) => loadModelScript(script, modelClasses))
+    .filter((asOf) => asOf != null);

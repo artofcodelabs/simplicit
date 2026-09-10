@@ -16,6 +16,7 @@ export const PROPS = "data-props";
 export const KEY = "data-key";
 export const REF = "data-ref";
 export const MODEL = "data-model";
+export const AS_OF = "data-as-of";
 export const TARGET = "data-target";
 export const POSITION = "data-position";
 

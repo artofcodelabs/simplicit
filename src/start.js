@@ -30,7 +30,11 @@ const start = (options = {}) => {
 
   const nodes = buildElementTree(searchRoot);
   validate(nodes, componentClasses);
-  const modelObserver = observeModels(searchRoot, modelClasses);
+  const modelObserver = observeModels(
+    searchRoot,
+    modelClasses,
+    options.onHydrate,
+  );
   const instances = initMatches(nodes, componentClasses);
   const observer = observe(searchRoot, componentClasses);
   const scriptObserver = observeScripts(searchRoot, componentClasses);
