@@ -1,7 +1,7 @@
+import { COMPONENT } from "../attributes.js";
+
 export const validate = (nodes, componentClasses) => {
   for (const C of componentClasses) {
-    const ctorName =
-      C.prototype?.constructor?.name || C.constructor?.name || "(anonymous)";
     const desc = Object.getOwnPropertyDescriptor(C, "name");
     if (
       typeof C.name !== "string" ||
@@ -10,7 +10,7 @@ export const validate = (nodes, componentClasses) => {
       desc.writable !== true
     ) {
       throw new Error(
-        `Invalid component class: missing static name (${ctorName})`,
+        `Invalid component class: missing static name (${C.name || "(anonymous)"})`,
       );
     }
   }
@@ -19,7 +19,7 @@ export const validate = (nodes, componentClasses) => {
   for (const name of domNames) {
     if (!providedNames.has(name)) {
       throw new Error(
-        `Found data-component="${name}" but no matching class passed to start({ components })`,
+        `Found ${COMPONENT}="${name}" but no matching class passed to start({ components })`,
       );
     }
   }

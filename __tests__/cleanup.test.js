@@ -93,4 +93,34 @@ describe("cleanup helpers", () => {
     jest.advanceTimersByTime(2000);
     expect(count).toBe(1);
   });
+
+  it("is idempotent: a second disconnect re-runs nothing", () => {
+    document.body.innerHTML = `
+      <div data-component="parent">
+        <div data-component="demo"></div>
+      </div>
+    `;
+
+    let cleanups = 0;
+    class Parent extends Component {
+      static name = "parent";
+    }
+    class Demo extends Component {
+      static name = "demo";
+      connect() {
+        this.registerCleanup(() => (cleanups += 1));
+      }
+    }
+
+    start({ root: document, components: [Parent, Demo] });
+    const parent = document.querySelector('[data-component="parent"]').instance;
+    const el = document.querySelector('[data-component="demo"]');
+    expect(parent.children("demo")).toHaveLength(1);
+
+    el.instance.disconnect();
+    el.instance.disconnect();
+
+    expect(cleanups).toBe(1);
+    expect(parent.children("demo")).toHaveLength(0);
+  });
 });

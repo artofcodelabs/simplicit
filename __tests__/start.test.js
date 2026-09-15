@@ -1,9 +1,165 @@
 import { start } from "index";
 import { Component } from "index";
+import { Model } from "index";
+import { waitFor } from "./support";
 
 describe("start", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+  });
+
+  describe("models", () => {
+    class ArticleCard extends Component {
+      static name = "article-card";
+      static template = ({ id, title }) =>
+        `<div data-component="article-card" data-key="${id}"><h4>${title}</h4></div>`;
+    }
+    class ArticleChip extends Component {
+      static name = "article-chip";
+      static template = ({ id, title }) =>
+        `<li data-component="article-chip" data-key="${id}">${title}</li>`;
+    }
+    class Article extends Model {
+      static name = "article";
+      static components = [ArticleCard, ArticleChip];
+    }
+
+    const titlesIn = (selector) =>
+      Array.from(document.querySelectorAll(selector)).map((el) =>
+        el.textContent.trim(),
+      );
+
+    const page = (json) => {
+      document.body.innerHTML = `
+        <div data-container-component="article-card"></div>
+        <ul data-container-component="article-chip"></ul>
+        <script type="application/json" data-model="article">${json}</script>`;
+    };
+
+    const cardTitles = () => titlesIn('[data-component="article-card"] h4');
+    const chipTitles = () => titlesIn('[data-component="article-chip"]');
+
+    it("renders one component instance per record into each container", () => {
+      page(`[{"id":1,"title":"A"},{"id":2,"title":"B"}]`);
+      start({ root: document, models: [Article] });
+      expect(cardTitles()).toEqual(["A", "B"]);
+      expect(chipTitles()).toEqual(["A", "B"]);
+    });
+
+    it("links each component class back to its Model", () => {
+      page(`[{"id":1,"title":"A"}]`);
+      start({ root: document, models: [Article] });
+      expect(ArticleCard.Model).toBe(Article);
+    });
+
+    it("binds each instance to its record (data-key) and exposes it as this.model", () => {
+      page(`[{"id":1,"title":"A"}]`);
+      start({ root: document, models: [Article] });
+
+      const card = document.querySelector(
+        '[data-component="article-card"][data-key="1"]',
+      );
+      expect(card.instance.model).toBe(Article.byId(1));
+    });
+
+    it("re-renders only the components bound to an updated record", () => {
+      page(`[{"id":1,"title":"A"},{"id":2,"title":"B"}]`);
+      start({ root: document, models: [Article] });
+
+      Article.byId(1).update({ title: "renamed" });
+
+      // Both representations of record 1 update; record 2 untouched.
+      expect(cardTitles()).toEqual(["renamed", "B"]);
+      expect(chipTitles()).toEqual(["renamed", "B"]);
+    });
+
+    it("renders new records (create) into every container", () => {
+      page(`[{"id":1,"title":"A"}]`);
+      start({ root: document, models: [Article] });
+
+      Article.add({ id: 2, title: "B" });
+
+      expect(cardTitles()).toEqual(["A", "B"]);
+      expect(chipTitles()).toEqual(["A", "B"]);
+    });
+
+    it("throws at start() if a rendered representation's template has no data-key", () => {
+      class NoKey extends Component {
+        static name = "no-key";
+        static template = ({ title }) =>
+          `<li data-component="no-key">${title}</li>`;
+      }
+      class Thing extends Model {
+        static name = "thing";
+        static components = [NoKey];
+      }
+      document.body.innerHTML = `
+        <ul data-container-component="no-key"></ul>
+        <script type="application/json" data-model="thing">[{"id":1,"title":"A"}]</script>`;
+
+      expect(() => start({ root: document, models: [Thing] })).toThrow(
+        /data-key/,
+      );
+    });
+
+    it("binds dynamically added records too", async () => {
+      page(`[{"id":1,"title":"A"}]`);
+      start({ root: document, models: [Article] });
+      Article.add({ id: 2, title: "B" });
+
+      // observe() binds the new chip on a microtask; wait for the binding.
+      await waitFor(
+        () =>
+          document.querySelector(
+            '[data-component="article-chip"][data-key="2"]',
+          )?.instance?.model != null,
+      );
+      Article.byId(2).update({ title: "B2" });
+
+      expect(chipTitles()).toEqual(["A", "B2"]);
+    });
+
+    it("allows adding Model classes after start() has been called", () => {
+      class AuthorChip extends Component {
+        static name = "author-chip";
+        static template = ({ id, name }) =>
+          `<li data-component="author-chip" data-key="${id}">${name}</li>`;
+      }
+      class Author extends Model {
+        static name = "author";
+        static components = [AuthorChip];
+      }
+
+      document.body.innerHTML = `
+        <ul data-container-component="author-chip"></ul>`;
+
+      const app = start({ root: document, components: [] });
+
+      // Model class not known at start(), so its seed script arrives after
+      // (a pre-existing data-model for an unregistered Model would throw).
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<script type="application/json" data-model="author">[{"id":1,"name":"Ada"}]</script>`,
+      );
+
+      const added = app.addModels([Author]);
+
+      expect(added).toBeInstanceOf(Array);
+      expect(added[0]).toBeInstanceOf(AuthorChip);
+      expect(AuthorChip.Model).toBe(Author);
+      expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada"]);
+
+      // Reactive after registration.
+      Author.byId(1).update({ name: "Ada L." });
+      expect(titlesIn('[data-component="author-chip"]')).toEqual(["Ada L."]);
+    });
+
+    it("returns null and no-ops when re-adding an already-registered Model", () => {
+      page(`[{"id":1,"title":"A"}]`);
+      const app = start({ root: document, models: [Article] });
+
+      expect(app.addModels([Article])).toBeNull();
+    });
   });
 
   describe("component class initialization", () => {

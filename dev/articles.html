@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Simplicit > Articles</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; }
+    .views { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; }
+    [data-component="article-card"] { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin: .75rem 0; }
+    [data-component="article-card"] h4 { margin: 0 0 .25rem; }
+    aside { background: #f6f6f6; border-radius: 6px; padding: 1rem; }
+    input[data-ref="title"] { width: 60%; }
+    [data-component="comment-item"] ul { margin: .25rem 0 .25rem 1rem; border-left: 2px solid #eee; padding-left: .75rem; }
+    [data-component="comment-item"] button { font-size: .75rem; margin-left: .5rem; }
+  </style>
+</head>
+
+<body>
+  <h1>Simplicit > Articles</h1>
+  <p>
+    One <code>Article</code> Model, hydrated once from the JSON below. Each record
+    is rendered as several component instances bound to it. Rename an article in a
+    card and its chip updates too — both are bound to the same model instance.
+  </p>
+
+  <!-- The server returns the data ONCE, as a Model. -->
+  <script type="application/json" data-model="Article">
+    [
+      { "id": 1, "title": "Simplicit is tiny", "body": "A modest framework." },
+      { "id": 2, "title": "Models drive views", "body": "One source of truth." },
+      { "id": 3, "title": "Instances bind 1:1", "body": "A record, its components." }
+    ]
+  </script>
+
+  <!-- A second, flat collection. A Comment is either a root (carries
+       article_id) or a reply (carries comment_id → its parent Comment).
+       Comment belongsTo Comment, so replies nest to any depth. -->
+  <script type="application/json" data-model="Comment">
+    [
+      { "id": 1, "article_id": 1, "body": "Love how small it is." },
+      { "id": 2, "article_id": 1, "body": "The morph is neat." },
+      { "id": 3, "article_id": 2, "body": "One source of truth ftw." },
+      { "id": 4, "comment_id": 1, "body": "Agreed — a few kb." },
+      { "id": 5, "comment_id": 1, "body": "And basically zero deps." },
+      { "id": 6, "comment_id": 4, "body": "Well, dompurify. 😄" }
+    ]
+  </script>
+
+  <p data-component="article-stats"></p>
+
+  <div class="views">
+    <!-- Representation 1: full editable cards. The container declares which
+         component fills it; Simplicit renders one per record. -->
+    <div data-container-component="article-card"></div>
+
+    <!-- Representation 2: compact chips, one per record (same records) -->
+    <aside>
+      <h3>Chips</h3>
+      <ul data-container-component="article-chip"></ul>
+    </aside>
+  </div>
+
+  <p data-component="article-adder">
+    <button data-ref="add">➕ Add article</button>
+  </p>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { start, Component, Model } from "Simplicit";
+
+    // Representation 1 — one card per record, with an inline rename form.
+    class ArticleCard extends Component {
+      static name = "article-card";
+
+      static template = ({ id, title, body }) => `
+        <div data-component="article-card" data-key="${id}">
+          <h4>${title}</h4>
+          <p>${body}</p>
+          <form data-ref="rename">
+            <input data-ref="title" value="${title}" />
+            <button>Rename</button>
+          </form>
+          <!-- Nested container: fills with THIS article's comments only,
+               because it sits inside a component bound to an Article record. -->
+          <ul data-container-component="comment-item"></ul>
+          <form data-ref="add-comment">
+            <input data-ref="comment-input" placeholder="Add a comment…" />
+            <button>💬 comment</button>
+          </form>
+        </div>`;
+
+      connect() {
+        this.on("rename", "submit", (e) => {
+          e.preventDefault();
+          this.model.update({ title: this.ref("title").value });
+        });
+        this.on("add-comment", "submit", (e) => {
+          e.preventDefault();
+          const input = this.ref("comment-input");
+          const body = input.value.trim();
+          if (!body) return;
+          const nextId = Comment.loaded.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          Comment.add({ id: nextId, article_id: this.model.id, body });
+          input.value = "";
+        });
+      }
+    }
+
+    // Representation for one Comment record. Its template holds a nested
+    // comment container — the SAME component — so replies render recursively.
+    class CommentItem extends Component {
+      static name = "comment-item";
+
+      static template = ({ id, body }) => `
+        <li data-component="comment-item" data-key="${id}">
+          <span>${body}</span>
+          <ul data-container-component="comment-item"></ul>
+          <form data-ref="reply">
+            <input data-ref="reply-input" placeholder="Reply…" />
+            <button>↩︎ reply</button>
+          </form>
+        </li>`;
+
+      connect() {
+        this.on("reply", "submit", (e) => {
+          e.preventDefault();
+          const input = this.ref("reply-input");
+          const body = input.value.trim();
+          if (!body) return;
+          const nextId = Comment.loaded.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+          Comment.add({ id: nextId, comment_id: this.model.id, body });
+          input.value = "";
+        });
+      }
+    }
+
+    // Representation 2 — one chip per record.
+    class ArticleChip extends Component {
+      static name = "article-chip";
+
+      static template = ({ id, title }) =>
+        `<li data-component="article-chip" data-key="${id}">${title}</li>`;
+    }
+
+    // The Model declares which per-record components represent it.
+    class Article extends Model {
+      static name = "Article";
+      static components = [ArticleCard, ArticleChip];
+    }
+
+    // Comment belongs to Article (holds article_id). Declaring one side is
+    // enough — Simplicit infers "Article hasMany Comment" from this.
+    // Resolved by foreign key: comment.article / article.comments.
+    // belongsTo is a list, so a record can belong to several owners.
+    class Comment extends Model {
+      static name = "Comment";
+      static components = [CommentItem];
+      // Belongs to an Article (root comment) AND to a Comment (a reply).
+      // The self-reference gives comment.comments (replies) + comment.comment (parent).
+      static belongsTo = [Article, Comment];
+    }
+
+    // Aggregate view — refreshed by whoever changes the collection.
+    class ArticleStats extends Component {
+      static name = "article-stats";
+
+      static template = ({ count }) =>
+        `<p data-component="article-stats"><b>${count}</b> articles</p>`;
+
+      connect() {
+        this.refresh();
+      }
+
+      refresh() {
+        this.update({ count: Article.loaded.length });
+      }
+    }
+
+    class ArticleAdder extends Component {
+      static name = "article-adder";
+
+      connect() {
+        this.on("add", "click", () => {
+          const nextId = Article.loaded.reduce((max, a) => Math.max(max, a.id), 0) + 1;
+          Article.add({ id: nextId, title: `New article ${nextId}`, body: "Freshly added." });
+          this.siblings("article-stats")[0].refresh();
+        });
+      }
+    }
+
+    const app = start({
+      root: document,
+      components: [ArticleStats, ArticleAdder],
+      models: [Article, Comment],
+    });
+  </script>
+
+  <p>
+    <a href="/">Simplicit</a>
+  </p>
+</body>
+
+</html>

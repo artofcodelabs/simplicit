@@ -1,3 +1,5 @@
+import { NAMESPACE, CONTROLLER, ACTION } from "./attributes.js";
+
 let namespaceController = null;
 let controller = null;
 
@@ -12,26 +14,18 @@ const callFunc = (resource, name) => {
 
 const parseNamespacePath = (string) => string.split("/").filter(Boolean);
 
-const resolvePath = (controllers, pathSegments) => {
-  let cur = controllers;
-  for (const seg of pathSegments) {
-    cur = cur[seg];
-  }
-  return cur;
-};
-
 const getController = (Controllers, pathSegments) => {
-  const resource = resolvePath(Controllers, pathSegments);
+  const resource = pathSegments.reduce((cur, seg) => cur?.[seg], Controllers);
   if (typeof resource === "function") return new resource();
   if (typeof resource === "object" && resource !== null) return resource;
   return null;
 };
 
 const init = (Controllers) => {
-  const body = document.getElementsByTagName("body")[0];
-  const namespacePath = parseNamespacePath(body.getAttribute("data-namespace"));
-  const controllerName = body.getAttribute("data-controller");
-  const actionName = body.getAttribute("data-action");
+  const body = document.body;
+  const namespacePath = parseNamespacePath(body.getAttribute(NAMESPACE));
+  const controllerName = body.getAttribute(CONTROLLER);
+  const actionName = body.getAttribute(ACTION);
 
   if (controller !== null) {
     callFunc(controller, "deinitialize");

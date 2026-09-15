@@ -80,6 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
   * Validates the DOM again.
   * Scans the existing DOM for elements with `data-component` matching the newly added classes and initializes those that weren’t initialized yet.
   * Returns the newly created instances (or `null` if nothing was added).
+* **`addModels(newModels)`**: registers additional `Model` classes later (the model counterpart of `addComponents`).
+  * Links each Model’s representation components to it and registers them (you don’t pass them in `addComponents` yourself).
+  * Hydrates any `data-model` script already on the page for the newly added Models and renders their containers; the Models stay subscribed so later markup resolves too.
+  * Returns the newly created component instances (or `null` if nothing was added).
 
 ### Base class: `Component`
 
@@ -91,6 +95,70 @@ Simplicit exports a `Component` base class you can extend.
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
 * **`parent`**: parent component instance (or `null` for root components).
+* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.render`), available before `connect()`. Defaults to `{}` for components mounted from plain markup. Treat `props` as the full state that drives the markup.
+
+#### Reactive updates
+
+* **`update(partial)`**: merges `partial` into `this.props`, re-renders `static template(this.props)`, and **morphs** the result into the live DOM — patching only changed text/attributes/nodes instead of replacing the subtree. Returns `this`.
+
+  Because morphing keeps node identity, anything tied to an unchanged node survives the update: focus, text selection, and scroll position.
+
+  This makes the template a pure function of `props`: write a single decision tree over all props that affect the markup, then call `update()` to move between states instead of mutating the DOM by hand.
+
+#### Keying list items with `data-key`
+
+Morphing compares the old and new children **by position**: child 1 against child 1, child 2 against child 2, and so on. Same tag at a position → the existing node is patched in place; different tag → it’s replaced. That’s exactly right for fixed layouts, but it’s the wrong default for a **list whose items reorder, get inserted, or get removed**.
+
+Say you render a list and then delete the first item. Positionally, every item shifts up one slot, so the morph patches each surviving node into the *next* item’s data — every row is mutated, and whatever was tied to those nodes (focus, a half-typed input, a CSS transition) is now attached to the wrong row.
+
+Add **`data-key="<stable-id>"`** to each item so morphing can recognise identity instead of trusting position:
+
+```javascript
+static template = ({ todos }) => `
+  <ul data-component="todos">
+    ${todos.map((t) => `<li data-key="${t.id}">${t.label}</li>`).join("")}
+  </ul>
+`;
+```
+
+With keys, two nodes are only treated as “the same” when their tag **and** `data-key` match; a position whose key changed is replaced rather than mutated, so a node’s identity follows its data, not its slot. Recommended whenever you render a collection from an array — use a stable id from your data (a database id, a uuid), never the array index, since the index is just the position you’re trying to stop relying on.
+
+> Note: keys here are a correctness guard for the positional diff (replace-vs-patch), not full move-detection — the morph doesn’t relocate a moved node, it rebuilds it where the key no longer matches. That keeps identity attached to the right data; it just doesn’t physically reuse a node that jumped position.
+
+#### Listeners
+
+Bind events to your component's elements **by ref name**, declared once in `connect()`:
+
+```javascript
+class Counter extends Component {
+  static name = "counter";
+
+  static template = ({ count }) =>
+    `<div data-component="counter"><button data-ref="inc">${count}</button></div>`;
+
+  connect() {
+    this.on("inc", "click", () => this.update({ count: this.props.count + 1 }));
+    this.update({ count: 0 }); // paint the initial template into the empty <div data-component="counter">
+  }
+}
+```
+
+A component mounted from plain markup keeps whatever HTML is already inside its element — `template` does **not** run automatically. To render it client-side, call `update(initialProps)` in `connect()` (as above); it morphs the template in, and `on("<ref>", ...)` then attaches to the freshly painted refs.
+
+**`on(target, type, listener, options?)`** — `target` can be a **ref name** (`"inc"`) or a **ref element** (`this.ref("inc")`); both behave identically, because an element carries its own `data-ref`. The framework keeps `listener` attached to whatever `[data-ref]` elements match after **every** render: it binds nodes that morphing recreated, binds refs that only appear in a later state, unbinds ones that disappear, and de-duplicates so kept nodes never stack handlers. Declare it once in `connect()` and never think about it again.
+
+The one difference is for targets that **have no `data-ref`** — `window`, `document`, or the component root (`this.element`). Those can't be addressed by ref, so the listener is simply pinned to that exact object (and, since those never get morphed away, that's all you need).
+
+Prefer the ref name for not-yet-rendered elements: `this.ref("inc")` returns `null` before its first render, so only `on("inc", ...)` can bind a ref that appears later.
+
+Both return an `off()` and are cleared automatically on `disconnect()`. For an imperative touch-up after a state change (focus an input, scroll into view), do it right after `update()` — the morph is synchronous, so the new ref is already in the DOM:
+
+```javascript
+edit() {
+  this.update({ editing: true });
+  this.ref("input").focus(); // input exists now
+}
+```
 
 #### Relationships
 
@@ -121,7 +189,7 @@ You can register cleanup manually or use helpers that auto-register cleanup:
 
 ### Server-driven templates via `<script type="application/json">`
 
-If a component class defines `static template(data)`, Simplicit can render HTML from JSON embedded in the page.
+If a component class defines `static template(props)`, Simplicit can render HTML from JSON embedded in the page.
 
 ```javascript
 import { start, Component } from "simplicit";
@@ -147,13 +215,217 @@ start({ root: document, components: [Slide] });
 </script>
 ```
 
+Or drop `data-target`/`data-position` to render in place, where the script sits:
+
+```html
+<div id="slideshow">
+  <script type="application/json" data-component="slide">
+    [{"text":"A"},{"text":"B"}]
+  </script>
+</div>
+```
+
 Notes:
 
-* The JSON payload must be an **array**; each item is passed to `ComponentClass.template(item)`.
+* The JSON payload must be an **array**; each item is passed as `props` to `ComponentClass.template(props)`.
+* Each item is also attached to its rendered root element and exposed on the instance as **`this.props`** (available in `connect()`)
+* To produce the same markup from your own code (e.g. when inserting a component dynamically), use **`Component.toHTML(props)`** — it calls `static template(props)` and attaches `props`, so instances created this way also get `this.props`:
+
+  ```javascript
+  this.element.insertAdjacentHTML("beforeend", Slide.toHTML({ text: "A" }));
+  ```
+
 * The rendered HTML is sanitized with `dompurify` before being inserted.
-* `data-target` must match an existing element id, otherwise an error is thrown.
-* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position` (default: `beforeend`). Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
+* The `<script>` is removed from the DOM once rendered.
+* `data-target`, if present, must match an existing element id, otherwise an error is thrown. If **omitted**, the script element itself is the anchor — rendered HTML is inserted at the script's own position (default `beforebegin`, i.e. right where the script sits).
+* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position`. Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted. Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
 * Inserted component elements are then auto-initialized like any other DOM addition.
+
+### One Model, many representations: `Model`
+
+The `<script type="application/json">` approach above ties one JSON payload to **one** component. But the same record is often shown several ways on a page — a full card, a compact chip, a row. Returning the JSON once per representation duplicates it.
+
+A **`Model`** is the single source of truth: the server renders the data **once**, Simplicit hydrates it into Model instances, and renders **one component instance per record** into each representation present on the page. Every component is bound 1:1 to its record, so `record.update(...)` re-renders exactly the components bound to that record — and nothing else.
+
+```javascript
+import { start, Component, Model } from "simplicit";
+
+// One card per record. `this.model` is the bound record instance.
+class ArticleCard extends Component {
+  static name = "article-card";
+  static template = ({ id, title }) => `
+    <div data-component="article-card" data-key="${id}">
+      <h4>${title}</h4>
+      <form data-ref="rename"><input data-ref="title" value="${title}" /></form>
+    </div>`;
+
+  connect() {
+    this.on("rename", "submit", (e) => {
+      e.preventDefault();
+      this.model.update({ title: this.ref("title").value });
+    });
+  }
+}
+
+// One chip per record — the SAME records, a different view.
+class ArticleChip extends Component {
+  static name = "article-chip";
+  static template = ({ id, title }) =>
+    `<li data-component="article-chip" data-key="${id}">${title}</li>`;
+}
+
+// A Model "has many" per-record representation components.
+class Article extends Model {
+  static name = "Article";
+  static components = [ArticleCard, ArticleChip];
+}
+
+start({ root: document, models: [Article] });
+```
+
+```html
+<!-- The server returns the data ONCE, as a Model. -->
+<script type="application/json" data-model="Article">
+  [{ "id": 1, "title": "A" }, { "id": 2, "title": "B" }]
+</script>
+
+<!-- Each representation: a container declares which component fills it.
+     Simplicit renders one instance per record; data comes from the Model. -->
+<div data-container-component="article-card"></div>
+<ul data-container-component="article-chip"></ul>
+```
+
+Renaming record 1 in its card updates its chip too — both components are bound to the same `Article` instance.
+
+How it works:
+
+1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
+2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
+3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A container-filled representation whose template has no `data-key` throws at `start()`. On `Model.add`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+
+#### Collection readouts: a representation without `data-key`
+
+A representation carries `data-key` and stands for **one** record. Declare one **without** a key and it becomes a readout over the **whole collection** — a count, a total, an empty state. Same `static components` list, no container needed: it mounts from plain markup like any component, and its template receives the records as **`records`**.
+
+```javascript
+class ArticleTally extends Component {
+  static name = "article-tally";
+  static template = ({ records }) =>
+    `<span data-component="article-tally">${records.length} articles</span>`;
+}
+
+class Article extends Model {
+  static name = "Article";
+  static components = [ArticleCard, ArticleChip, ArticleTally]; // no data-key on the tally
+}
+```
+
+```html
+<span data-component="article-tally"></span>
+```
+
+* It is **not** bound to a record, so `this.model` stays `null`; it subscribes to the Model instead and re-renders on **any** change to it — `Model.load`, `Model.add`, `record.del()`, and `record.update(...)`. So a readout that aggregates record *fields* (a sum, "3 unread") stays in step, not just a count of rows.
+* `records` is `Model.loaded` — the live array of record instances, **always an array**: `[]` before hydration, and present even on a render you trigger yourself from `connect()`. No default needed in the destructuring.
+* It's a plain component root, not a container: put it wherever you want in the markup, and `data-container-component` doesn't apply.
+* The subscription is registered as cleanup, so `disconnect()` (element removed from the DOM) unsubscribes it.
+* `this.props` still works — `update({ filter: "all" })` merges into `props` and the template receives both `props` and `records`.
+
+#### `Model` API
+
+* **`Model.loaded`** (static getter): the current array of record instances.
+* **`Model.byId(id)`**: the record whose `id` matches (string/number coerced), or `null`.
+* **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
+* **`Model.add(attributes)`**: append a record; containers gain a new component per representation.
+* **`record.update(partial)`**: mutate one record and re-render the components bound to it, plus any collection readouts. Containers are **not** refilled — the shape didn't change, and the bound components already repainted themselves.
+* **`record.del()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
+
+  ```javascript
+  Article.byId(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
+  ```
+
+* **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
+
+#### Associations
+
+Models relate to each other by **foreign key**, the same convention Rails uses. Declare the relationship on the Model classes:
+
+```javascript
+class Article extends Model {
+  static name = "Article";
+  static components = [ArticleCard];
+}
+
+class Comment extends Model {
+  static name = "Comment";
+  static components = [CommentItem];
+  static belongsTo = [Article]; // Comment holds article_id
+}
+```
+
+* **`static belongsTo = [Owner, ...]`** — a *belongs to* per owner. Each adds a getter named after the owner, lower-cased (`Article` → `comment.article`). A Model can belong to several owners — `static belongsTo = [Article, Author]` gives both `comment.article` (from `article_id`) and `comment.author` (from `author_id`).
+* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, pluralized and lower-cased (`Comment` → `article.comments`).
+
+**Declare `belongsTo` and the `hasMany` inverse is inferred.** `Comment.belongsTo = [Article]` above implies `Article` *has many* `Comment` — you don't write `Article.hasMany = [Comment]` yourself. Declare `static hasMany` explicitly only for a *has many* whose child has no `belongsTo` back-reference.
+
+The **foreign key lives on the "belongs to" side** and is named `<owner>_id` — so a `Comment` that belongs to an `Article` carries `article_id`. Both getters resolve against the live collections at access time:
+
+```javascript
+article.comments; // Comment.loaded.filter((c) => c.article_id === article.id)
+comment.article;  // Article.byId(comment.article_id)
+```
+
+The two collections arrive as **two separate `data-model` scripts**; the foreign key links them:
+
+```html
+<script type="application/json" data-model="Article">
+  [{ "id": 1, "title": "A" }, { "id": 2, "title": "B" }]
+</script>
+<script type="application/json" data-model="Comment">
+  [{ "id": 1, "article_id": 1, "body": "Nice." },
+   { "id": 2, "article_id": 2, "body": "Agreed." }]
+</script>
+```
+
+##### Nested representations
+
+A `data-container-component` placed **inside** a model-bound component's template renders only *that record's* associated collection, not the whole thing. Simplicit walks up from the container to the nearest component bound to a Model that *has many* of the container's component — and fills it from `owner.<association>` instead of `Child.loaded`:
+
+```javascript
+class ArticleCard extends Component {
+  static name = "article-card";
+  static template = ({ id, title }) => `
+    <div data-component="article-card" data-key="${id}">
+      <h4>${title}</h4>
+      <ul data-container-component="comment-item"></ul>  <!-- this article's comments only -->
+    </div>`;
+}
+```
+
+This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.add({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. A top-level `data-container-component="comment-item"` (no model-bound ancestor) still renders the full collection.
+
+#### Streamed-in markup (Turbo)
+
+Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a `data-container-component` container injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:
+
+* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders every container currently on the page.
+* A late container fills in place from whatever records are loaded.
+* Order doesn't matter: if containers arrive before their data (or vice-versa), the Model's change notification fills them once both are present.
+* Each representation stays subscribed to its Model for the whole session; on a collection change it re-finds its containers in the DOM and re-renders them. A container that's been removed from the page isn't found, so it's never rendered into (no wasted work on elements that are gone); one restored later is found again.
+
+A late `data-model` for a Model you didn't register is **warned** about (`console.warn`) and skipped. It's still a dev error — you likely forgot to pass the Model to `start({ models })` — but a late script is discovered inside a `MutationObserver`, where throwing is uncatchable and would abort the rest of that batch. So the fail-fast **throw** stays on the synchronous `start()` scan; late discoveries warn instead.
+
+**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.byId(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
+
+This is why the seed script is **removed** rather than kept: on a **restoration visit** (back/forward) Turbo shows a cached DOM snapshot, and if the stale JSON were still in it, re-hydrating would overwrite your live in-memory changes. With it gone, restoration keeps memory intact — nothing re-hydrates.
+
+Two cases keep the *display* in step with memory:
+
+* **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update(...)`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
+* **While an instance is unmounted** (you'd navigated away), `record.update(...)` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
+
+#### `start({ ..., models })`
+
+`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents`. The DOM markup, either way, can arrive whenever — see above.
 
 ## 🕹️ Controllers
 
