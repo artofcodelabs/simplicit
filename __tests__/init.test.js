@@ -115,8 +115,10 @@ it("falls back to top-level controller when namespace path is missing", () => {
   document.body.setAttribute("data-controller", "Pages");
   document.body.setAttribute("data-action", "list");
 
-  init(Controllers);
+  const { namespaceController } = init(Controllers);
   expect(local).toEqual(3);
+  expect(namespaceController).toBeNull();
+  expect(Controllers).toEqual({ Pages });
 });
 
 it("falls back to top-level controller when data-namespace is missing", () => {
@@ -137,7 +139,10 @@ it("falls back to top-level controller when data-namespace is missing", () => {
 
   document.body.setAttribute("data-controller", "Pages");
   document.body.setAttribute("data-action", "list");
+  document.body.removeAttribute("data-namespace");
 
-  init(Controllers);
+  const { namespaceController } = init(Controllers);
   expect(local).toEqual(3);
+  expect(namespaceController).toBeNull();
+  expect(Controllers).toEqual({ Pages });
 });

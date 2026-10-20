@@ -12,9 +12,11 @@ const callFunc = (resource, name) => {
   }
 };
 
-const parseNamespacePath = (string) => string.split("/").filter(Boolean);
+const parseNamespacePath = (string) =>
+  (string ?? "").split("/").filter(Boolean);
 
 const getController = (Controllers, pathSegments) => {
+  if (pathSegments.length === 0) return null;
   const resource = pathSegments.reduce((cur, seg) => cur?.[seg], Controllers);
   if (typeof resource === "function") return new resource();
   if (typeof resource === "object" && resource !== null) return resource;
