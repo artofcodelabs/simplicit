@@ -516,8 +516,10 @@ Then it resolves the matching controller(s), runs lifecycle hooks, and calls the
 
 Resolution rules (simplified):
 
-* If `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main.Panel`), Simplicit initializes the namespace controller and resolves the page controller under it (e.g. `Controllers.Main.Panel.Pages`).
-* Otherwise it skips the namespace controller and falls back to `Controllers.Pages`.
+* If every level of `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main`, `Controllers.Main.Panel`), Simplicit initializes each level outer → inner and resolves the page controller under the innermost one (e.g. `Controllers.Main.Panel.Pages`).
+* Otherwise it skips the namespace levels and falls back to `Controllers.Pages`.
+* `namespaceController` is the outermost level (`Main`). Every level gets `.namespaceController` (outermost) and `.controller` (page controller) references.
+* On re-init, `deinitialize()` runs inner → outer.
 
 Call order (per controller):
 
@@ -525,9 +527,13 @@ Call order (per controller):
 * On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
 
 ```javascript
-namespaceController = new Controllers.Main.Panel;
-Controllers.Main.Panel.initialize();               // if exists
+namespaceController = new Controllers.Main;
+Controllers.Main.initialize();                     // if exists
 namespaceController.initialize();                  // if exists
+
+panel = new Controllers.Main.Panel;
+Controllers.Main.Panel.initialize();               // if exists
+panel.initialize();                                // if exists
 
 controller = new Controllers.Main.Panel.Pages;
 Controllers.Main.Panel.Pages.initialize();         // if exists
@@ -538,7 +544,7 @@ controller.index();                                // if exists
 
 You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
 
-The `init` function returns `{ namespaceController, controller, action }`.
+The `init` function returns `{ namespaceController, controller, controllers, action }`, where `controllers` lists every active level outer → inner (e.g. `[Main, Panel, Pages]`).
 
 ### Ruby on Rails: generating `<body>` data attributes
 
