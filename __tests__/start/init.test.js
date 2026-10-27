@@ -47,6 +47,47 @@ describe("initComponent", () => {
     expect(instance.node.name).toBe("dummy");
     expect(instance.node.element).toBe(element);
   });
+
+  it("defaults props to an empty object when no data-props is present", () => {
+    document.body.innerHTML = `<div data-component="dummy" id="root"></div>`;
+    const element = document.getElementById("root");
+    const node = {
+      name: "dummy",
+      element,
+      parent: null,
+      children: [],
+      siblings: [],
+    };
+
+    class Dummy extends Component {
+      static name = "dummy";
+    }
+
+    const instance = initComponent(node, Dummy);
+
+    expect(instance.props).toEqual({});
+  });
+
+  it("parses data-props into instance.props and strips the attribute", () => {
+    document.body.innerHTML = `<div data-component="dummy" id="root" data-props='{"text":"hi","n":2}'></div>`;
+    const element = document.getElementById("root");
+    const node = {
+      name: "dummy",
+      element,
+      parent: null,
+      children: [],
+      siblings: [],
+    };
+
+    class Dummy extends Component {
+      static name = "dummy";
+    }
+
+    const instance = initComponent(node, Dummy);
+
+    expect(instance.props).toEqual({ text: "hi", n: 2 });
+    expect(element.hasAttribute("data-props")).toBe(false);
+  });
 });
 
 describe("initializeMatches", () => {

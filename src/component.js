@@ -1,10 +1,41 @@
-import { destructArray } from "./start/helpers.js";
+import { COMPONENT, KEY, REF } from "./attributes.js";
+import { destructArray, setProps } from "./start/helpers.js";
+import { sanitizedFragment } from "./start/sanitize.js";
+import { morph } from "./start/morph.js";
+
+// Matches within one component only — excludes elements that live inside a
+// nested child component (whose nearest [data-component] ancestor isn't root).
+const scopedQuery = (root, selector) =>
+  Array.from(root.querySelectorAll(selector)).filter(
+    (el) => el.closest(`[${COMPONENT}]`) === root,
+  );
 
 export default class Component {
-  constructor() {
-    this._cleanupCallbacks = [];
-    this._isDisconnected = false;
+  static Model = null;
+
+  static toHTML(props) {
+    return setProps(this.template(props), props);
   }
+
+  static renderTemplates(container, propsList) {
+    const next = container.cloneNode(false);
+    next.replaceChildren(
+      sanitizedFragment(
+        propsList.map((props) => this.template(props)).join(""),
+      ),
+    );
+    morph(container, next);
+  }
+
+  // Assigned by the runtime right after construction (see start/init.js), not
+  // here — a component never builds its own node or id.
+  node = null; // { name, element, parent, children, siblings } (start/scan.js)
+  componentId = null; // mirrored to data-component-id
+  props = {}; // render data; the full state driving the markup
+  model = null; // bound Model record, when the component represents one
+
+  #cleanupCallbacks = [];
+  #bindings = [];
 
   get element() {
     return this.node.element;
@@ -20,15 +51,29 @@ export default class Component {
   }
 
   registerCleanup(callback) {
-    if (typeof callback === "function") this._cleanupCallbacks.push(callback);
+    this.#cleanupCallbacks.push(callback);
     return callback;
   }
 
   on(target, type, listener, options) {
-    target.addEventListener(type, listener, options);
-    const off = () => target.removeEventListener(type, listener, options);
-    this.registerCleanup(off);
-    return off;
+    const ref =
+      typeof target === "string"
+        ? target
+        : target instanceof Element
+          ? target.getAttribute(REF)
+          : null;
+    const resolve =
+      ref !== null ? () => this.#refElements(ref) : () => [target];
+    const binding = { resolve, type, listener, options, bound: new Set() };
+    this.#bindings.push(binding);
+    this.#applyBinding(binding);
+    return this.registerCleanup(() => {
+      for (const el of binding.bound) {
+        el.removeEventListener(type, listener, options);
+      }
+      const index = this.#bindings.indexOf(binding);
+      if (index !== -1) this.#bindings.splice(index, 1);
+    });
   }
 
   timeout(callback, delay) {
@@ -43,34 +88,27 @@ export default class Component {
     return id;
   }
 
+  // Idempotent: splice empties the queue, #detachFromParent no-ops when detached.
   disconnect() {
-    if (this._isDisconnected) return;
-    this._isDisconnected = true;
-    const callbacks = this._cleanupCallbacks.splice(0);
+    const callbacks = this.#cleanupCallbacks.splice(0);
     for (const cleanup of callbacks) cleanup();
     this.#detachFromParent();
   }
 
   ref(name) {
-    const list = Array.from(
-      this.element.querySelectorAll(`[data-ref="${name}"]`),
-    );
-    return destructArray(list);
+    return destructArray(this.#refElements(name));
   }
 
   refs() {
-    const temp = {};
-    const elements = this.element.querySelectorAll("[data-ref]");
-    elements.forEach((el) => {
-      const key = el.getAttribute("data-ref");
-      if (!temp[key]) temp[key] = [];
-      temp[key].push(el);
-    });
-    const result = {};
-    Object.keys(temp).forEach((key) => {
-      result[key] = destructArray(temp[key]);
-    });
-    return result;
+    const grouped = {};
+    for (const el of scopedQuery(this.element, `[${REF}]`)) {
+      const key = el.getAttribute(REF);
+      (grouped[key] ??= []).push(el);
+    }
+    for (const key of Object.keys(grouped)) {
+      grouped[key] = destructArray(grouped[key]);
+    }
+    return grouped;
   }
 
   children(name) {
@@ -107,6 +145,76 @@ export default class Component {
 
     walk(this.node);
     return out;
+  }
+
+  update(partial = {}) {
+    Object.assign(this.props, partial);
+    this.#render();
+    return this;
+  }
+
+  connectModel() {
+    const Model = this.constructor.Model;
+    if (!Model) return;
+
+    // A representation carries data-key and stands for one record. Without a
+    // key the component is a readout over the whole collection — the count of
+    // something, an empty state — so it follows the collection instead, and
+    // its template receives `records`.
+    const key = this.element.getAttribute(KEY);
+    if (key === null) {
+      this.registerCleanup(Model.onChange(() => this.update()));
+      this.update();
+      return;
+    }
+
+    const record = Model.byId(key);
+    if (!record) return;
+
+    record.bind(this);
+    this.registerCleanup(() => record.unbind(this));
+    this.update();
+  }
+
+  // Derived, not stored: a render can happen from connect(), before
+  // connectModel() has decided anything — and `records` must be an array by
+  // then, so a readout template never has to defend against undefined.
+  get #followsCollection() {
+    const Model = this.constructor.Model;
+    return Model !== null && this.element.getAttribute(KEY) === null;
+  }
+
+  #render() {
+    const props = this.model
+      ? { ...this.props, ...this.model }
+      : this.#followsCollection
+        ? { ...this.props, records: this.constructor.Model.loaded }
+        : this.props;
+    morph(
+      this.element,
+      sanitizedFragment(this.constructor.template(props)).firstElementChild,
+    );
+    this.#applyBindings();
+  }
+
+  #applyBindings() {
+    for (const binding of this.#bindings) this.#applyBinding(binding);
+  }
+
+  #applyBinding(binding) {
+    const { resolve, type, listener, options, bound } = binding;
+    const current = new Set(resolve());
+    for (const el of bound) {
+      if (!current.has(el)) el.removeEventListener(type, listener, options);
+    }
+    for (const el of current) {
+      if (!bound.has(el)) el.addEventListener(type, listener, options);
+    }
+    binding.bound = current;
+  }
+
+  #refElements(name) {
+    return scopedQuery(this.element, `[${REF}="${name}"]`);
   }
 
   #related(type, name) {

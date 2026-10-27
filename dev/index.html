@@ -3,13 +3,11 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Simplest</title>
+  <title>Simplicit</title>
 </head>
 
 <body data-component="app">
-  <h1>Simplest</h1>
-
-  <p>Clocks: <span data-ref="clocks">0</span></p>
+  <h1>Simplicit</h1>
 
   <h2>Hello</h2>
   <div data-component="hello">
@@ -31,6 +29,7 @@
   </form>
 
   <h2>Clock</h2>
+  <p>Clocks: <span data-ref="clocks">0</span></p>
   <div data-component="clock">
     <p data-ref="time"></p>
   </div>
@@ -44,13 +43,17 @@
     </p>
   </div>
 
+  <h2>Counter</h2>
+  <div data-component="counter"></div>
+
   <script type="importmap">
-      {
-        "imports": {
-          "Simplicit": "/simplicit.mjs"
-        }
+    {
+      "imports": {
+        "Simplicit": "/simplicit.mjs"
       }
-    </script>
+    }
+  </script>
+
   <script type="module">
     import { start, Component } from "Simplicit";
 
@@ -125,12 +128,27 @@
       }
     }
 
-    const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory] });
+    class Counter extends Component {
+      static name = "counter";
+
+      static template = ({ count }) =>
+        `<div data-component="counter"><button data-ref="inc">${count}</button></div>`;
+
+      connect() {
+        this.on("inc", "click", () => this.update({ count: this.props.count + 1 }));
+        this.update({ count: 0 });
+      }
+    }
+
+    const app = start({ root: document, components: [App, Hello, Search, Clock, ClockFactory, Counter] });
   </script>
 
   <p>
     <a href="/stimulus">Stimulus</a> |&nbsp;
-    <a href="/slideshow">Slideshow</a>
+    <a href="/slideshow">Slideshow</a> |&nbsp;
+    <a href="/articles">Articles</a> |&nbsp;
+    <a href="/nested">Nested</a> |&nbsp;
+    <a href="/loco">Loco</a>
   </p>
 </body>
 

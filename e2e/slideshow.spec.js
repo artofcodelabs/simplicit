@@ -5,7 +5,7 @@ test("slideshow loads with 🙈 #B as the current slide", async ({ page }) => {
 
   // Current slide renders its caption as <b data-ref="bold-text">…</b>
   const current = page.locator(
-    '#slideshow div[data-component="slide"] [data-ref="bold-text"]',
+    '[data-component="slideshow"] div[data-component="slide"] [data-ref="bold-text"]',
   );
   await expect(current).toHaveText("🙈 #B");
   await expect(current).toBeVisible();
@@ -17,10 +17,14 @@ test("slideshow next/prev arrows change the current slide", async ({
   await page.goto("/slideshow");
 
   const current = page.locator(
-    '#slideshow div[data-component="slide"] [data-ref="bold-text"]',
+    '[data-component="slideshow"] div[data-component="slide"] [data-ref="bold-text"]',
   );
-  const prev = page.locator('#slideshow button[data-ref="previous"]');
-  const next = page.locator('#slideshow button[data-ref="next"]');
+  const prev = page.locator(
+    '[data-component="slideshow"] button[data-ref="previous"]',
+  );
+  const next = page.locator(
+    '[data-component="slideshow"] button[data-ref="next"]',
+  );
 
   await expect(current).toHaveText("🙈 #B");
 
@@ -46,10 +50,14 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await page.goto("/slideshow");
 
   const current = page.locator(
-    '#slideshow div[data-component="slide"] [data-ref="bold-text"]',
+    '[data-component="slideshow"] div[data-component="slide"] [data-ref="bold-text"]',
   );
-  const prev = page.locator('#slideshow button[data-ref="previous"]');
-  const next = page.locator('#slideshow button[data-ref="next"]');
+  const prev = page.locator(
+    '[data-component="slideshow"] button[data-ref="previous"]',
+  );
+  const next = page.locator(
+    '[data-component="slideshow"] button[data-ref="next"]',
+  );
 
   const manager = page.locator('[data-component="slideshow-manager"]');
   const addSlide = manager.locator('button[data-ref="add-slide"]');
@@ -65,12 +73,16 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   // 2) Show slides -> there should be 5 visible slides
   await showSlides.click();
   await expect(
-    page.locator('#slideshow div[data-component="slide"]:visible'),
+    page.locator(
+      '[data-component="slideshow"] div[data-component="slide"]:visible',
+    ),
   ).toHaveCount(5);
   // Ensure the newly added slide is the last slide.
   await expect(
     page
-      .locator('#slideshow div[data-component="slide"]:visible')
+      .locator(
+        '[data-component="slideshow"] div[data-component="slide"]:visible',
+      )
       .last()
       .locator('[data-ref="caption"], [data-ref="bold-text"]'),
   ).toContainText("🐒 #5");
@@ -79,19 +91,25 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await manageSlides.click();
 
   // 4) Delete slide 🙊 #D
-  const slideD = page.locator('#slideshow div[data-component="slide"]', {
-    hasText: "🙊 #D",
-  });
+  const slideD = page.locator(
+    '[data-component="slideshow"] div[data-component="slide"]',
+    {
+      hasText: "🙊 #D",
+    },
+  );
   await slideD.locator('[data-ref="delete"]').click();
   await expect(slideD).toHaveCount(0);
   await expect(
-    page.locator('#slideshow div[data-component="slide"]'),
+    page.locator('[data-component="slideshow"] div[data-component="slide"]'),
   ).toHaveCount(4);
 
   // 5) Edit slide 🙉 #C -> 🙉 #CODE
-  const slideC = page.locator('#slideshow div[data-component="slide"]', {
-    hasText: "🙉 #C",
-  });
+  const slideC = page.locator(
+    '[data-component="slideshow"] div[data-component="slide"]',
+    {
+      hasText: "🙉 #C",
+    },
+  );
   await expect(slideC.locator('[data-ref="delete"]')).toBeVisible();
   await expect(slideC.locator('[data-ref="caption"]')).toHaveCSS(
     "cursor",
@@ -100,12 +118,16 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await slideC.locator('[data-ref="caption"]').click();
   // Once caption is removed, the slide's text no longer matches "🙉 #C",
   // so locate the edit input globally (only one slide can be edited at a time).
-  const editInput = page.locator('#slideshow [data-ref="edit"]');
+  const editInput = page.locator(
+    '[data-component="slideshow"] [data-ref="edit"]',
+  );
   await expect(editInput).toBeVisible();
   await editInput.fill("🙉 #CODE");
   await editInput.press("Enter");
   await expect(
-    page.locator('#slideshow [data-ref="caption"]', { hasText: "🙉 #CODE" }),
+    page.locator('[data-component="slideshow"] [data-ref="caption"]', {
+      hasText: "🙉 #CODE",
+    }),
   ).toBeVisible();
 
   // 6) Click next arrow 2 times to go to #CODE as current (bold).
@@ -120,7 +142,7 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   await manageSlides.click();
   await expect(
     page.locator(
-      '#slideshow div[data-component="slide"] [data-ref="delete"]:not([hidden])',
+      '[data-component="slideshow"] div[data-component="slide"] [data-ref="delete"]:not([hidden])',
     ),
   ).toHaveCount(0);
 
@@ -133,7 +155,9 @@ test("slideshow manager flow: add/show/manage/delete/edit/navigate", async ({
   const hideSlides = manager.locator('button[data-ref="hide-slides"]');
   await hideSlides.click();
   await expect(
-    page.locator('#slideshow div[data-component="slide"]:visible'),
+    page.locator(
+      '[data-component="slideshow"] div[data-component="slide"]:visible',
+    ),
   ).toHaveCount(1);
   await expect(current).toHaveText("🐵 #A");
 });
