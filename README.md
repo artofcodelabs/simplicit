@@ -423,6 +423,31 @@ Two cases keep the *display* in step with memory:
 * **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update(...)`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
 * **While an instance is unmounted** (you'd navigated away), `record.update(...)` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
 
+#### Knowing when a snapshot landed: `data-as-of` + `onHydrate`
+
+A seed is a snapshot: anything that changed between the server rendering it and your websocket subscribing is missing from it. To catch up, you need to know *how old* the snapshot is. Stamp each `data-model` script with **`data-as-of`** and pass **`onHydrate`** to `start()`:
+
+```html
+<script type="application/json" data-model="Article" data-as-of="2026-09-10T10:00:00.000000Z">
+  [{ "id": 1, "title": "A" }]
+</script>
+```
+
+```javascript
+// `cable` is your own websocket subscription (here, an Action Cable channel
+// with a `catch_up` action that replays changes since a timestamp).
+start({
+  root: document,
+  models: [Article, Comment],
+  onHydrate: (asOf) => cable.send({ action: "catch_up", since: asOf }),
+});
+```
+
+* `onHydrate(asOf)` is called **after** the records are loaded, with the script's `data-as-of` value as-is (a string; anything `Date.parse` understands).
+* **Once per page, not once per script.** A page's scripts all come from one server render, so the scripts hydrated together (at `start()`, `addModels()`, or in one Turbo swap) are reported as **one** call, on a microtask. It gets the **oldest** `as-of` among them, so a catch-up never assumes more than the stalest snapshot knew.
+* **Every hydration, not just the first.** A `data-model` script streamed in later (e.g. a Turbo visit) triggers it again with that page's `as-of`. A restoration visit doesn't — its scripts were already removed, so nothing hydrates.
+* A script **without** `data-as-of` still hydrates, but isn't reported. If none of the scripts in a batch has one, `onHydrate` isn't called.
+
 #### `start({ ..., models })`
 
 `start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents`. The DOM markup, either way, can arrive whenever — see above.
