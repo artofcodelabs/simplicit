@@ -1,4 +1,11 @@
-import { COMPONENT_ID, PROPS, KEY, CONTAINER } from "../attributes.js";
+import {
+  COMPONENT,
+  COMPONENT_ID,
+  PROPS,
+  KEY,
+  CONTAINER,
+} from "../attributes.js";
+import { popProps } from "./helpers.js";
 
 const PRESERVED_ATTRIBUTES = new Set([COMPONENT_ID, PROPS]);
 
@@ -13,7 +20,11 @@ const key = (node) => (isElement(node) ? node.getAttribute(KEY) : null);
 const sameNode = (a, b) => {
   if (a.nodeType !== b.nodeType) return false;
   if (isElement(a)) {
-    return a.tagName === b.tagName && key(a) === key(b);
+    return (
+      a.tagName === b.tagName &&
+      key(a) === key(b) &&
+      a.getAttribute(COMPONENT) === b.getAttribute(COMPONENT)
+    );
   }
   return true;
 };
@@ -58,7 +69,7 @@ const warnMissingKeys = (from, fromChildren, toChildren) => {
   }
 };
 
-const morphChildren = (from, to) => {
+const morphChildren = (from, to, keepNested) => {
   const fromChildren = Array.from(from.childNodes);
   const toChildren = Array.from(to.childNodes);
 
@@ -69,7 +80,7 @@ const morphChildren = (from, to) => {
     if (!fromChild) {
       from.appendChild(toChild);
     } else if (sameNode(fromChild, toChild)) {
-      morphNode(fromChild, toChild, false);
+      morphNode(fromChild, toChild, false, keepNested);
     } else {
       from.replaceChild(toChild, fromChild);
     }
@@ -80,14 +91,23 @@ const morphChildren = (from, to) => {
   }
 };
 
-const morphNode = (from, to, isRoot) => {
+const morphNode = (from, to, isRoot, keepNested) => {
   if (isElement(from)) {
+    // A live nested component owns its subtree: leave its DOM alone and hand
+    // it any props the parent template passed (Child.toHTML) via update().
+    if (!isRoot && keepNested && from.instance) {
+      if (to.hasAttribute(PROPS)) from.instance.update(popProps(to));
+      return;
+    }
     morphAttributes(from, to);
     if (!isRoot && isContainer(from)) return;
-    morphChildren(from, to);
+    morphChildren(from, to, keepNested);
   } else if (from.nodeValue !== to.nodeValue) {
     from.nodeValue = to.nodeValue;
   }
 };
 
-export const morph = (from, to) => morphNode(from, to, true);
+// keepNested: set by a component re-rendering itself. Container refills leave
+// it off — they re-render their rows from fresh records on purpose.
+export const morph = (from, to, { keepNested = false } = {}) =>
+  morphNode(from, to, true, keepNested);

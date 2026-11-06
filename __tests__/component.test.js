@@ -1,4 +1,5 @@
 import { start, Component } from "index";
+import { waitFor } from "./support.js";
 
 describe("Component.ref", () => {
   beforeEach(() => {
@@ -765,5 +766,109 @@ describe('Component.on("<ref>", ...)', () => {
     el.click();
 
     expect(clicks).toBe(1); // still bound once after re-render
+  });
+});
+
+describe("nested components rendered from a template", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  class Child extends Component {
+    static name = "tpl-child";
+    static template = ({ label = "" }) =>
+      `<span data-component="tpl-child">${label}</span>`;
+  }
+
+  const childInstance = () =>
+    document.querySelector('[data-component="tpl-child"]')?.instance;
+
+  it("links a child once when parent and child mount in the same batch", async () => {
+    class Parent extends Component {
+      static name = "tpl-parent";
+      static template = () =>
+        `<div data-component="tpl-parent">${Child.toHTML({ label: "c" })}</div>`;
+    }
+    document.body.innerHTML = `<script type="application/json" data-component="tpl-parent">[{}]</script>`;
+
+    start({ root: document.body, components: [Parent, Child] });
+    await waitFor(childInstance);
+
+    const parent = document.querySelector(
+      '[data-component="tpl-parent"]',
+    ).instance;
+    expect(parent.children("tpl-child")).toEqual([childInstance()]);
+  });
+
+  it("keeps a child's own render when the parent re-renders", async () => {
+    class Parent extends Component {
+      static name = "tpl-parent";
+      static template = ({ title = "" }) =>
+        `<div data-component="tpl-parent"><h1>${title}</h1><span data-component="tpl-child"></span></div>`;
+    }
+    document.body.innerHTML = `<div data-component="tpl-parent"></div>`;
+    start({ root: document.body, components: [Parent, Child] });
+    const parent = document.querySelector(
+      '[data-component="tpl-parent"]',
+    ).instance;
+
+    parent.update({ title: "A" });
+    await waitFor(childInstance);
+    const child = childInstance();
+    child.update({ label: "mine" });
+    parent.update({ title: "B" });
+
+    expect(parent.element.querySelector("h1").textContent).toBe("B");
+    expect(childInstance()).toBe(child);
+    expect(child.element.textContent).toBe("mine");
+  });
+
+  it("passes new props down to an existing child via toHTML", async () => {
+    class Parent extends Component {
+      static name = "tpl-parent";
+      static template = ({ label = "" }) =>
+        `<div data-component="tpl-parent">${Child.toHTML({ label })}</div>`;
+    }
+    document.body.innerHTML = `<div data-component="tpl-parent"></div>`;
+    start({ root: document.body, components: [Parent, Child] });
+    const parent = document.querySelector(
+      '[data-component="tpl-parent"]',
+    ).instance;
+
+    parent.update({ label: "one" });
+    await waitFor(childInstance);
+    const child = childInstance();
+    parent.update({ label: "two" });
+
+    expect(childInstance()).toBe(child);
+    expect(child.props.label).toBe("two");
+    expect(child.element.textContent).toBe("two");
+    expect(child.element.hasAttribute("data-props")).toBe(false);
+  });
+
+  it("replaces a nested component whose name changed", async () => {
+    class Other extends Component {
+      static name = "tpl-other";
+    }
+    class Parent extends Component {
+      static name = "tpl-parent";
+      static template = ({ name = "tpl-child" }) =>
+        `<div data-component="tpl-parent"><span data-component="${name}"></span></div>`;
+    }
+    document.body.innerHTML = `<div data-component="tpl-parent"></div>`;
+    start({ root: document.body, components: [Parent, Child, Other] });
+    const parent = document.querySelector(
+      '[data-component="tpl-parent"]',
+    ).instance;
+
+    parent.update({ name: "tpl-child" });
+    await waitFor(childInstance);
+    parent.update({ name: "tpl-other" });
+    await waitFor(
+      () => document.querySelector('[data-component="tpl-other"]')?.instance,
+    );
+
+    expect(parent.children("tpl-other")).toHaveLength(1);
+    expect(parent.children("tpl-child")).toHaveLength(0);
   });
 });

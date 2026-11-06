@@ -193,6 +193,7 @@ export default class Component {
     morph(
       this.element,
       sanitizedFragment(this.constructor.template(props)).firstElementChild,
+      { keepNested: true },
     );
     this.#applyBindings();
   }

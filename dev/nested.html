@@ -8,7 +8,9 @@
     body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; }
     [data-component="article-card"] { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin: .75rem 0; }
     [data-component="article-card"] h4 { margin: 0 0 .25rem; }
+    [data-component="deleted-comment"] { color: #999; }
     input[data-ref="title"] { width: 60%; }
+    li button { margin-left: .5rem; }
   </style>
 </head>
 
@@ -16,14 +18,35 @@
   <h1>Simplicit > Nested components</h1>
   <p>
     Same articles + comments as the <a href="/articles">Model example</a>, but with
-    <b>no Model</b>. Each <code>article-card</code> holds its own comments in
-    <code>this.props</code> and renders one nested <code>comment-item</code>
-    component per comment. Adding a comment just re-renders the card — the morph
-    inserts a new nested child, and Simplicit binds it as a real child instance.
+    <b>no Model</b>.
+    Each <code>article-card</code> holds its own comments in <code>this.props</code>
+    and renders one nested <code>comment-item</code> component per comment.
   </p>
+  <ul>
+    <li>
+      <b>Add comment</b> re-renders the card.
+      The morph inserts a new nested child, and Simplicit binds it as a real child instance.
+    </li>
+    <li>
+      <b>👍</b> is the comment's <em>own</em> state (<code>this.update</code> on the child).
+      Rename the article or toggle Shout: the likes survive, because a parent re-render
+      doesn't repaint a live nested component.
+    </li>
+    <li>
+      <b>Shout</b> is parent state passed down.
+      The card renders each comment with <code>CommentItem.toHTML({ ...comment, loud })</code>,
+      and those props reach the child through <code>child.update(props)</code>.
+    </li>
+    <li>
+      <b>Last liked</b> goes the other way: the child calls <code>this.parent.update(...)</code>.
+    </li>
+    <li>
+      <b>🗑</b> swaps the row to a different component (<code>deleted-comment</code>)
+      with the same tag and <code>data-key</code>.
+      Simplicit disconnects the old instance and mounts a new one.
+    </li>
+  </ul>
 
-  <!-- Server returns the data ONCE. Comments are nested INSIDE each article
-       (no foreign keys, no separate collection) — plain component props. -->
   <script type="application/json" data-component="article-card">
     [
       { "id": 1, "title": "Simplicit is tiny", "body": "A modest framework.",
@@ -51,11 +74,10 @@
   <script type="module">
     import { start, Component } from "Simplicit";
 
-    // A card renders its comments inline as nested comment-item components.
     class ArticleCard extends Component {
       static name = "article-card";
 
-      static template = ({ id, title, body, comments }) => `
+      static template = ({ id, title, body, comments, loud = false, lastLiked = null }) => `
         <div data-component="article-card" data-key="${id}">
           <h4>${title}</h4>
           <p>${body}</p>
@@ -63,10 +85,16 @@
             <input data-ref="title" value="${title}" />
             <button>Rename</button>
           </form>
+          <label><input type="checkbox" data-ref="loud" ${loud ? "checked" : ""} /> Shout</label>
           <ul>
-            ${comments.map((c) => CommentItem.toHTML(c)).join("")}
+            ${comments
+              .map((c) =>
+                c.deleted ? DeletedComment.toHTML(c) : CommentItem.toHTML({ ...c, loud }),
+              )
+              .join("")}
           </ul>
           <button data-ref="add-comment">💬 Add comment</button>
+          <small data-ref="last-liked">${lastLiked ? `Last liked: ${lastLiked}` : ""}</small>
         </div>`;
 
       connect() {
@@ -75,22 +103,49 @@
           this.update({ title: this.ref("title").value });
         });
 
+        this.on("loud", "change", (e) => this.update({ loud: e.target.checked }));
+
         this.on("add-comment", "click", () => {
           const comments = this.props.comments;
           const nextId = comments.reduce((max, c) => Math.max(max, c.id), 0) + 1;
           this.update({ comments: [...comments, { id: nextId, body: "New comment." }] });
         });
       }
+
+      deleteComment(id) {
+        this.update({
+          comments: this.props.comments.map((c) => (c.id === id ? { ...c, deleted: true } : c)),
+        });
+      }
     }
 
-    // One nested component per comment. data-key keeps rows stable across morphs.
+    // `likes` lives only here — the card never passes it, so it survives card re-renders.
     class CommentItem extends Component {
       static name = "comment-item";
-      static template = ({ id, body }) =>
-        `<li data-component="comment-item" data-key="${id}">${body}</li>`;
+      static template = ({ id, body, loud = false, likes = 0 }) => `
+        <li data-component="comment-item" data-key="${id}">
+          ${loud ? body.toUpperCase() : body}
+          <button data-ref="like">👍 ${likes}</button>
+          <button data-ref="delete">🗑</button>
+        </li>`;
+
+      connect() {
+        this.on("like", "click", () => {
+          this.update({ likes: (this.props.likes ?? 0) + 1 });
+          this.parent.update({ lastLiked: this.props.body });
+        });
+
+        this.on("delete", "click", () => this.parent.deleteComment(this.props.id));
+      }
     }
 
-    start({ root: document, components: [ArticleCard, CommentItem] });
+    class DeletedComment extends Component {
+      static name = "deleted-comment";
+      static template = ({ id }) =>
+        `<li data-component="deleted-comment" data-key="${id}"><i>comment deleted</i></li>`;
+    }
+
+    start({ root: document, components: [ArticleCard, CommentItem, DeletedComment] });
   </script>
 
   <p>

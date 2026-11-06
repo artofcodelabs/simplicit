@@ -59,21 +59,12 @@ const existingElements = (searchRoot) => {
 
 const linkInstances = (instances) => {
   for (const instance of instances) {
-    // Link to parent instances (if any) and update children relationships.
+    // Child → parent only: every element in the batch already carries its
+    // instance (extendElement ran first), so this one link covers parents in
+    // the same batch too. Linking from the parent side as well duplicated them.
     const parentEl = instance.element.parentElement?.closest(`[${COMPONENT}]`);
     if (parentEl?.instance) {
       instance.addParent(parentEl.instance);
-    }
-    for (const childInstance of instances) {
-      if (childInstance.element === instance.element) continue;
-
-      const nearest = childInstance.element.parentElement?.closest(
-        `[${COMPONENT}]`,
-      );
-      if (nearest === instance.element) {
-        instance.node.children.push(childInstance.node);
-        childInstance.node.parent = instance.node;
-      }
     }
   }
 

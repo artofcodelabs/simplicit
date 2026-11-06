@@ -105,6 +105,15 @@ Simplicit exports a `Component` base class you can extend.
 
   This makes the template a pure function of `props`: write a single decision tree over all props that affect the markup, then call `update()` to move between states instead of mutating the DOM by hand.
 
+  **Nested components in a template.**
+  A template may contain other `data-component` elements.
+  They mount and link to the parent (`children()`, `parent`) like any other component.
+  Once a nested component is live, it owns its subtree:
+  a parent `update()` does not repaint it.
+  To pass data down, render it with `Child.toHTML(props)`.
+  On each parent update, those props reach the child through `child.update(props)`.
+  Changing the nested element's `data-component` name replaces it with a new instance.
+
 #### Keying list items with `data-key`
 
 Morphing compares the old and new children **by position**: child 1 against child 1, child 2 against child 2, and so on. Same tag at a position → the existing node is patched in place; different tag → it’s replaced. That’s exactly right for fixed layouts, but it’s the wrong default for a **list whose items reorder, get inserted, or get removed**.
