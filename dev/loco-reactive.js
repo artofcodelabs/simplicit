@@ -18,13 +18,13 @@ export default class LocoReactive extends Reactive(Base) {
     const target = isCreate ? this : this.clone();
     for (const [key, val] of Object.entries(partial))
       target.assignAttr(key, val);
-    if (target.isInvalid()) return { success: false, errors: target.errors };
+    if (target.isInvalid()) return { ok: false, errors: target.errors };
 
     const resp = await Base.prototype.save.call(target);
-    if (!resp.success) return resp;
+    if (!resp.ok) return resp;
 
     if (isCreate) {
-      this.id = resp.id;
+      this.update(resp.data ?? {});
       this.constructor.add(this);
     } else {
       this.update(partial);
@@ -34,13 +34,27 @@ export default class LocoReactive extends Reactive(Base) {
 
   async delete(...args) {
     const resp = await super.delete(...args);
-    if (resp.success) this.del();
+    if (resp.ok) this.del();
+    return resp;
+  }
+
+  async updateAttribute(attr, value = this[attr]) {
+    const previous = this[attr];
+    this.assignAttr(attr, value);
+    const resp = await super.updateAttribute(attr);
+    if (resp.ok) this.rerender();
+    else this.assignAttr(attr, previous);
     return resp;
   }
 
   update(partial = {}) {
-    for (const [key, val] of Object.entries(partial)) this.assignAttr(key, val);
+    for (const [key, val] of Object.entries(partial))
+      this.assignAttr(this.getAttrName(key), val);
     return this.rerender();
+  }
+
+  changes() {
+    return super.changes(this.constructor.byId(this.id));
   }
 
   applyChanges(...args) {

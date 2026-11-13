@@ -83,7 +83,7 @@
           status(`PUT /api/articles/${this.model.id} …`);
           const resp = await this.model.save({ title: this.ref("title").value });
           status(
-            resp.success
+            resp.ok
               ? `updated #${this.model.id}`
               : `invalid: title ${resp.errors.title.join(", ")}`,
           );
@@ -94,7 +94,7 @@
           const id = this.model.id;
           status(`DELETE /api/articles/${id} …`);
           const resp = await this.model.delete();
-          status(resp.success ? `deleted #${id}` : `delete failed`);
+          status(resp.ok ? `deleted #${id}` : `delete failed`);
         });
       }
     }
@@ -127,7 +127,7 @@
 
           status("POST /api/articles …");
           const resp = await article.save(); // POST + add to memory + render
-          if (!resp.success) {
+          if (!resp.ok) {
             this.ref("errors").textContent = "create failed";
             return;
           }

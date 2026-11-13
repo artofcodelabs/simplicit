@@ -33,19 +33,19 @@ app.post("/api/articles", (req, res) => {
   const { title, body } = req.body.article ?? {};
   const article = { id: nextArticleId++, title, body };
   articles.push(article);
-  res.json({ success: true, id: article.id });
+  res.json({ ok: true, data: article });
 });
 
 app.put("/api/articles/:id", (req, res) => {
   const article = articles.find((a) => String(a.id) === req.params.id);
-  if (!article) return res.status(404).json({ success: false });
+  if (!article) return res.status(404).json({ ok: false });
   Object.assign(article, req.body.article ?? {});
-  res.json({ success: true });
+  res.json({ ok: true });
 });
 
 app.delete("/api/articles/:id", (req, res) => {
   articles = articles.filter((a) => String(a.id) !== req.params.id);
-  res.json({ success: true });
+  res.json({ ok: true });
 });
 
 app.get("/loco-reactive.js", (_, res) => {
