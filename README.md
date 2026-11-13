@@ -461,6 +461,90 @@ start({
 
 `start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents`. The DOM markup, either way, can arrive whenever — see above.
 
+#### Bringing your own model layer: `Reactive(Base)`
+
+The [`Model`](#one-model-many-representations-model) class exported by Simplicit is a thin wrapper.
+Everything it does — the collection (`load`, `add`, `byId`) and re-rendering (`update`, `del`) — comes from the `Reactive` mixin,
+applied here to a plain `Object`:
+
+```javascript
+// src/model.js
+export default class Model extends Reactive() {
+  constructor(attributes = {}) {
+    super(attributes);
+    Object.assign(this, attributes);
+  }
+}
+```
+
+`Reactive(Base)` accepts any base class.
+If your records already live in a model library — one that validates, coerces types and talks to the API —
+mix `Reactive` into that library's base class instead of copying records into a `Model`.
+The result is both at once, so it goes into `start({ models })` like any other Model.
+
+What `Reactive` expects from `Base`:
+
+* The constructor takes an attributes object — `load`, `add` and hydration call `new Model(attributes)`.
+* Records have an `id` — `byId` and `data-key` binding compare it as a string.
+* `update(partial)` defaults to `Object.assign` plus `rerender()`.
+  If the base assigns attributes its own way (type coercion, renamed fields), override `update` and end it with `return this.rerender()`.
+
+`Reactive` only keeps memory and re-renders; it knows nothing about the server.
+To persist, wrap the base's server calls so memory changes only after the server accepts the write.
+
+[`dev/loco-reactive.js`](dev/loco-reactive.js) does this for [loco-js-model](https://github.com/locoframework/loco-js-model).
+It expects [loco-rails](https://github.com/locoframework/loco-rails)-style responses:
+`{ ok: true, data }` on success, `{ ok: false, errors }` on failure.
+
+```javascript
+import { Reactive } from "simplicit";
+import { Models } from "loco-js-model";
+
+class LocoReactive extends Reactive(Models.Base) {
+  // all, save, delete, updateAttribute, update, changes, applyChanges —
+  // see dev/loco-reactive.js
+}
+
+class Article extends LocoReactive {
+  static name = "Article";
+  static components = [ArticleCard];
+  static resources = { url: "/api/articles" };
+  static attributes = {
+    title: { type: "String", validations: { presence: true } },
+    body: { type: "String" },
+  };
+}
+
+start({ root: document, models: [Article] });
+await Article.all(); // GET, then load into memory and render
+```
+
+| Call | Server | Memory, when `ok` |
+| --- | --- | --- |
+| `Article.all()` | GET | `load` the records |
+| `new Article(attrs).save()` | POST | merge `resp.data` (the new `id`), then `add` to the collection |
+| `article.save(partial)` | PUT a validated clone | `update(partial)` |
+| `article.updateAttribute(attr, value)` | PUT one attribute | `rerender()` |
+| `article.delete()` | DELETE | `del()` |
+
+* `save()` validates first: a write that fails validation never reaches the server and returns `{ ok: false, errors }`.
+  `updateAttribute` doesn't validate on the client.
+* `save(partial)` validates and sends a clone,
+  so an invalid or rejected update never touches the in-memory record.
+* `updateAttribute` sets the new value on the record itself, because that's what it sends.
+  Nothing re-renders until the server accepts it;
+  if the server rejects it, the old value is put back.
+* `update(partial)` maps server field names (`remoteName`) to local attribute names before assigning,
+  so `resp.data` can be merged as-is.
+* `changes()` compares against the record in Simplicit's collection, not loco-js-model's `IdentityMap`;
+  `applyChanges()` re-renders after applying them.
+
+`LocoReactive` isn't part of the package — copy it from `dev/`.
+For a working CRUD page, see [`dev/loco.html`](dev/loco.html)
+(`npm start`, then open `/loco`;
+
+‼️ TODO: it needs a loco-js-model build next to this repo, see [`dev/server.js`](dev/server.js)).
+
 ## 🕹️ Controllers
 
 Simplicit must have access to all controllers you want to run. In practice, you build a `Controllers` object and pass it to `init()`.
