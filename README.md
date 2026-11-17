@@ -80,8 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   * Validates the DOM again.
   * Scans the existing DOM for elements with `data-component` matching the newly added classes and initializes those that weren’t initialized yet.
   * Returns the newly created instances (or `null` if nothing was added).
-* **`addModels(newModels)`**: registers additional `Model` classes later (the model counterpart of `addComponents`).
-  * Links each Model’s representation components to it and registers them (you don’t pass them in `addComponents` yourself).
+* **`addModels(newModels)`**: registers additional `Model` classes later (the model counterpart of `addComponents()`).
+  * Links each Model’s representation components to it and registers them (you don’t pass them in `addComponents()` yourself).
   * Hydrates any `data-model` script already on the page for the newly added Models and renders their containers; the Models stay subscribed so later markup resolves too.
   * Returns the newly created component instances (or `null` if nothing was added).
 
@@ -95,7 +95,7 @@ Simplicit exports a `Component` base class you can extend.
 * **`node`**: internal node graph `{ name, element, parent, children, siblings }`.
 * **`componentId`**: string id mirrored to `data-component-id`.
 * **`parent`**: parent component instance (or `null` for root components).
-* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.render`), available before `connect()`. Defaults to `{}` for components mounted from plain markup. Treat `props` as the full state that drives the markup.
+* **`props`**: the data the component was rendered with (see [templates](#server-driven-templates-via-script-typeapplicationjson) / `Component.toHTML()`), available before `connect()`. Defaults to `{}` for components mounted from plain markup. Treat `props` as the full state that drives the markup.
 
 #### Reactive updates
 
@@ -152,7 +152,7 @@ class Counter extends Component {
 }
 ```
 
-A component mounted from plain markup keeps whatever HTML is already inside its element — `template` does **not** run automatically. To render it client-side, call `update(initialProps)` in `connect()` (as above); it morphs the template in, and `on("<ref>", ...)` then attaches to the freshly painted refs.
+A component mounted from plain markup keeps whatever HTML is already inside its element — `template()` does **not** run automatically. To render it client-side, call `update(initialProps)` in `connect()` (as above); it morphs the template in, and `on("<ref>", ...)` then attaches to the freshly painted refs.
 
 **`on(target, type, listener, options?)`** — `target` can be a **ref name** (`"inc"`) or a **ref element** (`this.ref("inc")`); both behave identically, because an element carries its own `data-ref`. The framework keeps `listener` attached to whatever `[data-ref]` elements match after **every** render: it binds nodes that morphing recreated, binds refs that only appear in a later state, unbinds ones that disappear, and de-duplicates so kept nodes never stack handlers. Declare it once in `connect()` and never think about it again.
 
@@ -254,7 +254,7 @@ Notes:
 
 The `<script type="application/json">` approach above ties one JSON payload to **one** component. But the same record is often shown several ways on a page — a full card, a compact chip, a row. Returning the JSON once per representation duplicates it.
 
-A **`Model`** is the single source of truth: the server renders the data **once**, Simplicit hydrates it into Model instances, and renders **one component instance per record** into each representation present on the page. Every component is bound 1:1 to its record, so `record.update(...)` re-renders exactly the components bound to that record — and nothing else.
+A **`Model`** is the single source of truth: the server renders the data **once**, Simplicit hydrates it into Model instances, and renders **one component instance per record** into each representation present on the page. Every component is bound 1:1 to its record, so `record.update()` re-renders exactly the components bound to that record — and nothing else.
 
 ```javascript
 import { start, Component, Model } from "simplicit";
@@ -310,7 +310,7 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
-3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A container-filled representation whose template has no `data-key` throws at `start()`. On `Model.add`/`load` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A container-filled representation whose template has no `data-key` throws at `start()`. On `Model.add()`/`Model.load()` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
 
 #### Collection readouts: a representation without `data-key`
 
@@ -333,7 +333,7 @@ class Article extends Model {
 <span data-component="article-tally"></span>
 ```
 
-* It is **not** bound to a record, so `this.model` stays `null`; it subscribes to the Model instead and re-renders on **any** change to it — `Model.load`, `Model.add`, `record.del()`, and `record.update(...)`. So a readout that aggregates record *fields* (a sum, "3 unread") stays in step, not just a count of rows.
+* It is **not** bound to a record, so `this.model` stays `null`; it subscribes to the Model instead and re-renders on **any** change to it — `Model.load()`, `Model.add()`, `record.del()`, and `record.update()`. So a readout that aggregates record *fields* (a sum, "3 unread") stays in step, not just a count of rows.
 * `records` is `Model.loaded` — the live array of record instances, **always an array**: `[]` before hydration, and present even on a render you trigger yourself from `connect()`. No default needed in the destructuring.
 * It's a plain component root, not a container: put it wherever you want in the markup, and `data-container-component` doesn't apply.
 * The subscription is registered as cleanup, so `disconnect()` (element removed from the DOM) unsubscribes it.
@@ -345,6 +345,20 @@ class Article extends Model {
 * **`Model.byId(id)`**: the record whose `id` matches (string/number coerced), or `null`.
 * **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
 * **`Model.add(attributes)`**: append a record; containers gain a new component per representation.
+* **`Model.onChange(handler)`**: call `handler()` on **any** change to the Model —
+  `Model.load()`, `Model.add()`, `record.del()`, or `record.update()` on any of its records.
+  Returns an unsubscribe function.
+  This is what collection readouts subscribe to.
+* **`Model.onCollectionChange(handler)`**: call `handler()` only when **which records exist** changes —
+  `Model.load()`, `Model.add()`, `record.del()` — not on `record.update()`.
+  Returns an unsubscribe function.
+  This is what containers subscribe to, so a field edit doesn't refill them.
+
+  ```javascript
+  // In a component, register the unsubscribe as cleanup so disconnect() drops it.
+  this.registerCleanup(Article.onChange(() => this.update()));
+  ```
+
 * **`record.update(partial)`**: mutate one record and re-render the components bound to it, plus any collection readouts. Containers are **not** refilled — the shape didn't change, and the bound components already repainted themselves.
 * **`record.del()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
 
@@ -352,7 +366,7 @@ class Article extends Model {
   Article.byId(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
   ```
 
-* **`this.model`** (on a model-bound component): the single record instance it represents. The `template` receives that record's fields; `this.props` stays as authored.
+* **`this.model`** (on a model-bound component): the single record instance it represents. The `template()` receives that record's fields; `this.props` stays as authored.
 
 #### Associations
 
@@ -423,14 +437,14 @@ Model **classes** must be known at `start()` (passed in `models`), but the **mar
 
 A late `data-model` for a Model you didn't register is **warned** about (`console.warn`) and skipped. It's still a dev error — you likely forgot to pass the Model to `start({ models })` — but a late script is discovered inside a `MutationObserver`, where throwing is uncatchable and would abort the rest of that batch. So the fail-fast **throw** stays on the synchronous `start()` scan; late discoveries warn instead.
 
-**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.byId(id).update(...)`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
+**Memory is the source of truth after the initial hydration.** The `data-model` script only *seeds* the Model; it's removed once read. From then on the records live in JS memory (which Turbo keeps across visits), and you mutate them directly — e.g. a websocket pushes a change and you call `Model.byId(id).update()`. A *fresh* server visit always returns up-to-date JSON, so seeding from it is correct; the only stale copy is the one frozen inside a **Turbo-cached page snapshot**.
 
 This is why the seed script is **removed** rather than kept: on a **restoration visit** (back/forward) Turbo shows a cached DOM snapshot, and if the stale JSON were still in it, re-hydrating would overwrite your live in-memory changes. With it gone, restoration keeps memory intact — nothing re-hydrates.
 
 Two cases keep the *display* in step with memory:
 
-* **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update(...)`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
-* **While an instance is unmounted** (you'd navigated away), `record.update(...)` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
+* **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update()`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
+* **While an instance is unmounted** (you'd navigated away), `record.update()` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
 
 #### Knowing when a snapshot landed: `data-as-of` + `onHydrate`
 
@@ -459,12 +473,12 @@ start({
 
 #### `start({ ..., models })`
 
-`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents`. The DOM markup, either way, can arrive whenever — see above.
+`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents()`. The DOM markup, either way, can arrive whenever — see above.
 
 #### Bringing your own model layer: `Reactive(Base)`
 
 The [`Model`](#one-model-many-representations-model) class exported by Simplicit is a thin wrapper.
-Everything it does — the collection (`load`, `add`, `byId`) and re-rendering (`update`, `del`) — comes from the `Reactive` mixin,
+Everything it does — the collection (`load()`, `add()`, `byId()`) and re-rendering (`update()`, `del()`) — comes from the `Reactive` mixin,
 applied here to a plain `Object`:
 
 ```javascript
@@ -484,10 +498,10 @@ The result is both at once, so it goes into `start({ models })` like any other M
 
 What `Reactive` expects from `Base`:
 
-* The constructor takes an attributes object — `load`, `add` and hydration call `new Model(attributes)`.
-* Records have an `id` — `byId` and `data-key` binding compare it as a string.
+* The constructor takes an attributes object — `load()`, `add()` and hydration call `new Model(attributes)`.
+* Records have an `id` — `byId()` and `data-key` binding compare it as a string.
 * `update(partial)` defaults to `Object.assign` plus `rerender()`.
-  If the base assigns attributes its own way (type coercion, renamed fields), override `update` and end it with `return this.rerender()`.
+  If the base assigns attributes its own way (type coercion, renamed fields), override `update()` and end it with `return this.rerender()`.
 
 `Reactive` only keeps memory and re-renders; it knows nothing about the server.
 To persist, wrap the base's server calls so memory changes only after the server accepts the write.
@@ -521,17 +535,17 @@ await Article.all(); // GET, then load into memory and render
 
 | Call | Server | Memory, when `ok` |
 | --- | --- | --- |
-| `Article.all()` | GET | `load` the records |
-| `new Article(attrs).save()` | POST | merge `resp.data` (the new `id`), then `add` to the collection |
+| `Article.all()` | GET | `load()` the records |
+| `new Article(attrs).save()` | POST | merge `resp.data` (the new `id`), then `add()` to the collection |
 | `article.save(partial)` | PUT a validated clone | `update(partial)` |
 | `article.updateAttribute(attr, value)` | PUT one attribute | `rerender()` |
 | `article.delete()` | DELETE | `del()` |
 
 * `save()` validates first: a write that fails validation never reaches the server and returns `{ ok: false, errors }`.
-  `updateAttribute` doesn't validate on the client.
+  `updateAttribute()` doesn't validate on the client.
 * `save(partial)` validates and sends a clone,
   so an invalid or rejected update never touches the in-memory record.
-* `updateAttribute` sets the new value on the record itself, because that's what it sends.
+* `updateAttribute()` sets the new value on the record itself, because that's what it sends.
   Nothing re-renders until the server accepts it;
   if the server rejects it, the old value is put back.
 * `update(partial)` maps server field names (`remoteName`) to local attribute names before assigning,
@@ -662,7 +676,7 @@ controller.index();                                // if exists
 
 You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
 
-The `init` function returns `{ namespaceController, controller, controllers, action }`, where `controllers` lists every active level outer → inner (e.g. `[Main, Panel, Pages]`).
+The `init()` function returns `{ namespaceController, controller, controllers, action }`, where `controllers` lists every active level outer → inner (e.g. `[Main, Panel, Pages]`).
 
 ### Ruby on Rails: generating `<body>` data attributes
 
