@@ -121,11 +121,8 @@ Simplicit exports a `Component` base class you can extend.
 
 #### Keying list items with `data-key`
 
-Morphing compares the old and new children **by position**: child 1 against child 1, child 2 against child 2, and so on. Same tag at a position → the existing node is patched in place; different tag → it’s replaced. That’s exactly right for fixed layouts, but it’s the wrong default for a **list whose items reorder, get inserted, or get removed**.
-
-Say you render a list and then delete the first item. Positionally, every item shifts up one slot, so the morph patches each surviving node into the *next* item’s data — every row is mutated, and whatever was tied to those nodes (focus, a half-typed input, a CSS transition) is now attached to the wrong row.
-
-Add **`data-key="<stable-id>"`** to each item so morphing can recognise identity instead of trusting position:
+In a list whose items can be inserted, removed or reordered,
+add **`data-key="<stable-id>"`** to each item so morphing can tell which element is which:
 
 ```javascript
 static template = ({ todos }) => `
@@ -135,9 +132,15 @@ static template = ({ todos }) => `
 `;
 ```
 
-With keys, two nodes are only treated as “the same” when their tag, `data-key` **and** `data-component` match; a position whose key changed is replaced rather than mutated, so a node’s identity follows its data, not its slot. Recommended whenever you render a collection from an array — use a stable id from your data (a database id, a uuid), never the array index, since the index is just the position you’re trying to stop relying on.
+Without keys, morphing pairs children by position:
+delete the first item and every remaining row is patched into its neighbour's data,
+so focus or a half-typed input ends up on the wrong row.
+With keys, an element is reused only when its tag, `data-key` **and** `data-component` match;
+otherwise it's rebuilt.
+Use a stable id from your data (a database id, a uuid), never the array index.
 
-> Note: keys here are a correctness guard for the positional diff (replace-vs-patch), not full move-detection — the morph doesn’t relocate a moved node, it rebuilds it where the key no longer matches. That keeps identity attached to the right data; it just doesn’t physically reuse a node that jumped position.
+> Keys stop the morph from reusing the wrong element; they don't move elements.
+> A row whose position changed is rebuilt in place, not relocated.
 
 #### Listeners
 
