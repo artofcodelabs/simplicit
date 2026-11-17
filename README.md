@@ -1,6 +1,6 @@
 # 🧐 What is Simplicit?
 
-Simplicit is a small library for structuring front-end JavaScript around **controllers** and **components**.
+Simplicit is a small library for structuring front-end JavaScript around **components** and **controllers**.
 
 On the MVC side, it mirrors the “controller/action” convention you may know from frameworks like [Ruby on Rails](https://rubyonrails.org): based on `<body>` attributes, it finds the corresponding controller and calls its lifecycle hooks and action method.
 
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
   * `<name>` must match the component class’ **`static name`**.
   * `<script>` tags are never treated as components, even if they have `data-component`.
 * **`data-component-id="<id>"`**: set automatically on every element with `data-component` (each component instance).
-  * Also available as `instance.componentId`.
+  * Also available as `this.componentId` inside the component (already set in `connect()`).
 * **`data-ref="<key>"`**: marks ref elements inside a component (see `ref()` / `refs()`).
 
 ### `start({ root, components })`
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
   * Throws if any provided component class does not define a writable `static name`.
 * **Lifecycle**
   * When an instance is created, if it has `connect()`, it is called after the instance is bound to its root DOM element (available as `this.element`).
-  * When a component element is removed from the DOM, its `instance.disconnect()` is called automatically.
+  * When a component element is removed from the DOM, its `disconnect()` is called automatically.
 
 #### Return value
 
@@ -80,9 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
   * Validates the DOM again.
   * Scans the existing DOM for elements with `data-component` matching the newly added classes and initializes those that weren’t initialized yet.
   * Returns the newly created instances (or `null` if nothing was added).
-* **`addModels(newModels)`**: registers additional `Model` classes later (the model counterpart of `addComponents()`).
+* **`addModels(newModels)`**: registers additional `Model` classes later (see [Models](#one-model-many-representations-model)).
   * Links each Model’s representation components to it and registers them (you don’t pass them in `addComponents()` yourself).
-  * Hydrates any `data-model` script already on the page for the newly added Models and renders their containers; the Models stay subscribed so later markup resolves too.
+  * Hydrates every `data-model` script still on the page and re-renders every container; the new Models stay subscribed so later markup resolves too.
+    A remaining script for a Model that still isn't registered throws, as at `start()`.
   * Returns the newly created component instances (or `null` if nothing was added).
 
 ### Base class: `Component`
@@ -130,7 +131,7 @@ static template = ({ todos }) => `
 `;
 ```
 
-With keys, two nodes are only treated as “the same” when their tag **and** `data-key` match; a position whose key changed is replaced rather than mutated, so a node’s identity follows its data, not its slot. Recommended whenever you render a collection from an array — use a stable id from your data (a database id, a uuid), never the array index, since the index is just the position you’re trying to stop relying on.
+With keys, two nodes are only treated as “the same” when their tag, `data-key` **and** `data-component` match; a position whose key changed is replaced rather than mutated, so a node’s identity follows its data, not its slot. Recommended whenever you render a collection from an array — use a stable id from your data (a database id, a uuid), never the array index, since the index is just the position you’re trying to stop relying on.
 
 > Note: keys here are a correctness guard for the positional diff (replace-vs-patch), not full move-detection — the morph doesn’t relocate a moved node, it rebuilds it where the key no longer matches. That keeps identity attached to the right data; it just doesn’t physically reuse a node that jumped position.
 
@@ -154,7 +155,7 @@ class Counter extends Component {
 
 A component mounted from plain markup keeps whatever HTML is already inside its element — `template()` does **not** run automatically. To render it client-side, call `update(initialProps)` in `connect()` (as above); it morphs the template in, and `on("<ref>", ...)` then attaches to the freshly painted refs.
 
-**`on(target, type, listener, options?)`** — `target` can be a **ref name** (`"inc"`) or a **ref element** (`this.ref("inc")`); both behave identically, because an element carries its own `data-ref`. The framework keeps `listener` attached to whatever `[data-ref]` elements match after **every** render: it binds nodes that morphing recreated, binds refs that only appear in a later state, unbinds ones that disappear, and de-duplicates so kept nodes never stack handlers. Declare it once in `connect()` and never think about it again.
+**`on(target, type, listener, options)`** — `target` can be a **ref name** (`"inc"`) or a **ref element** (`this.ref("inc")`); both behave identically, because an element carries its own `data-ref`. The framework keeps `listener` attached to whatever `[data-ref]` elements match after **every** render: it binds nodes that morphing recreated, binds refs that only appear in a later state, unbinds ones that disappear, and de-duplicates so kept nodes never stack handlers. Declare it once in `connect()` and never think about it again.
 
 The one difference is for targets that **have no `data-ref`** — `window`, `document`, or the component root (`this.element`). Those can't be addressed by ref, so the listener is simply pinned to that exact object (and, since those never get morphed away, that's all you need).
 
@@ -181,6 +182,7 @@ All relationship helpers filter by component name(s):
 #### Refs
 
 Refs are scoped to the component’s root element.
+Refs inside a nested component belong to that component and are excluded.
 
 * **`ref(name)`**: returns `null`, a single element, or an array of elements (when multiple match).
 * **`refs()`**: returns an object mapping each `data-ref` key to `Element | Element[]`. Only elements inside the component that have `data-ref` are included.
@@ -247,7 +249,9 @@ Notes:
 * The rendered HTML is sanitized with `dompurify` before being inserted.
 * The `<script>` is removed from the DOM once rendered.
 * `data-target`, if present, must match an existing element id, otherwise an error is thrown. If **omitted**, the script element itself is the anchor — rendered HTML is inserted at the script's own position (default `beforebegin`, i.e. right where the script sits).
-* Insertion uses `targetEl.insertAdjacentHTML(position, html)` where `position` comes from `data-position`. Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted. Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`.
+* `data-position` says where the rendered nodes go relative to the target, with the same meaning as in `insertAdjacentHTML()`.
+  Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted.
+  Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`; anything else throws.
 * Inserted component elements are then auto-initialized like any other DOM addition.
 
 ### One Model, many representations: `Model`
@@ -310,7 +314,10 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
-3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders. A container-filled representation whose template has no `data-key` throws at `start()`. On `Model.add()`/`Model.load()` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
+3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders.
+   A container-filled representation whose template has no `data-key` throws the first time its container is filled with at least one record —
+   at `start()` if records are already loaded, otherwise later, when records first arrive (`Model.add()`, `Model.load()`, a streamed-in `data-model` script).
+   On `Model.load()`, `Model.add()` and `record.del()` the container re-renders — `data-key` keeps existing rows (and their live instances) in place.
 
 #### Collection readouts: a representation without `data-key`
 
@@ -344,7 +351,9 @@ class Article extends Model {
 * **`Model.loaded`** (static getter): the current array of record instances.
 * **`Model.byId(id)`**: the record whose `id` matches (string/number coerced), or `null`.
 * **`Model.load(items)`**: replace the collection with `new Model(item)` for each item (what hydration calls).
-* **`Model.add(attributes)`**: append a record; containers gain a new component per representation.
+* **`Model.add(attributesOrInstance)`**: append a record; containers gain a new component per representation.
+  Takes an attributes object or an existing instance.
+  If a record with the same `id` is already loaded, it is updated with the new attributes and returned instead — no duplicate is appended.
 * **`Model.onChange(handler)`**: call `handler()` on **any** change to the Model —
   `Model.load()`, `Model.add()`, `record.del()`, or `record.update()` on any of its records.
   Returns an unsubscribe function.
@@ -370,7 +379,8 @@ class Article extends Model {
 
 #### Associations
 
-Models relate to each other by **foreign key**, the same convention Rails uses. Declare the relationship on the Model classes:
+Models relate to each other by **foreign key**, like Rails does.
+Declare the relationship on the Model classes:
 
 ```javascript
 class Article extends Model {
@@ -385,8 +395,13 @@ class Comment extends Model {
 }
 ```
 
-* **`static belongsTo = [Owner, ...]`** — a *belongs to* per owner. Each adds a getter named after the owner, lower-cased (`Article` → `comment.article`). A Model can belong to several owners — `static belongsTo = [Article, Author]` gives both `comment.article` (from `article_id`) and `comment.author` (from `author_id`).
-* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, pluralized and lower-cased (`Comment` → `article.comments`).
+* **`static belongsTo = [Owner, ...]`** — a *belongs to* per owner. Each adds a getter named after the owner, with its first letter lower-cased (`Article` → `comment.article`). A Model can belong to several owners — `static belongsTo = [Article, Author]` gives both `comment.article` (from `article_id`) and `comment.author` (from `author_id`).
+* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, with its first letter lower-cased and an `s` appended (`Comment` → `article.comments`).
+
+Naming is mechanical, not Rails' inflection:
+a `BlogPost` owner gives `blogPost` and the foreign key `blogPost_id` (not `blog_post_id`),
+and a `Category` child gives `categorys`.
+A namespaced Model name (`static name = "Article.Comment"`) is named after its last segment — `comments`, `comment`, `comment_id`.
 
 **Declare `belongsTo` and the `hasMany` inverse is inferred.** `Comment.belongsTo = [Article]` above implies `Article` *has many* `Comment` — you don't write `Article.hasMany = [Comment]` yourself. Declare `static hasMany` explicitly only for a *has many* whose child has no `belongsTo` back-reference.
 
@@ -430,7 +445,7 @@ This is **reactive**: because a nested comment container is still a comment repr
 
 Model **classes** must be known at `start()` (passed in `models`), but the **markup** need not be present yet. Simplicit keeps watching `root`, so a `data-model` script or a `data-container-component` container injected later — e.g. when [Turbo](https://turbo.hotwired.dev) swaps in a server-rendered page — is resolved the same way as at startup:
 
-* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders every container currently on the page.
+* A late `data-model` script hydrates its Model (**replacing** the collection) and re-renders that Model's containers currently on the page.
 * A late container fills in place from whatever records are loaded.
 * Order doesn't matter: if containers arrive before their data (or vice-versa), the Model's change notification fills them once both are present.
 * Each representation stays subscribed to its Model for the whole session; on a collection change it re-finds its containers in the DOM and re-renders them. A container that's been removed from the page isn't found, so it's never rendered into (no wasted work on elements that are gone); one restored later is found again.
@@ -515,7 +530,7 @@ import { Reactive } from "simplicit";
 import { Models } from "loco-js-model";
 
 class LocoReactive extends Reactive(Models.Base) {
-  // all, save, delete, updateAttribute, update, changes, applyChanges —
+  // identity, all, save, delete, updateAttribute, update, changes, applyChanges —
   // see dev/loco-reactive.js
 }
 
@@ -650,7 +665,9 @@ Resolution rules (simplified):
 
 * If every level of `data-namespace` resolves (e.g. `Main/Panel` → `Controllers.Main`, `Controllers.Main.Panel`), Simplicit initializes each level outer → inner and resolves the page controller under the innermost one (e.g. `Controllers.Main.Panel.Pages`).
 * Otherwise it skips the namespace levels and falls back to `Controllers.Pages`.
-* `namespaceController` is the outermost level (`Main`). Every level gets `.namespaceController` (outermost) and `.controller` (page controller) references.
+* `namespaceController` is the outermost level (`Main`).
+  Every other level gets a `.namespaceController` reference to it,
+  and every level except the page controller gets a `.controller` reference to the page controller.
 * On re-init, `deinitialize()` runs inner → outer.
 
 Call order (per controller):
@@ -659,20 +676,27 @@ Call order (per controller):
 * On navigation/re-init, previously active controllers receive `deinitialize()` (if present).
 
 ```javascript
+// 1. Construct every level, outer → inner.
 namespaceController = new Controllers.Main;
+panel = new Controllers.Main.Panel;
+controller = new Controllers.Main.Panel.Pages;
+
+// 2. Set the .namespaceController / .controller references.
+
+// 3. Initialize every level, outer → inner.
 Controllers.Main.initialize();                     // if exists
 namespaceController.initialize();                  // if exists
-
-panel = new Controllers.Main.Panel;
 Controllers.Main.Panel.initialize();               // if exists
 panel.initialize();                                // if exists
-
-controller = new Controllers.Main.Panel.Pages;
 Controllers.Main.Panel.Pages.initialize();         // if exists
 controller.initialize();                           // if exists
+
+// 4. Call the action.
 Controllers.Main.Panel.Pages.index();              // if exists
 controller.index();                                // if exists
 ```
+
+So every constructor runs before any `initialize()`, and the references are already set when `initialize()` runs.
 
 You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
 
