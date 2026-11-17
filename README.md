@@ -166,9 +166,22 @@ A component mounted from plain markup keeps whatever HTML is already inside its 
 
 The one difference is for targets that **have no `data-ref`** — `window`, `document`, or the component root (`this.element`). Those can't be addressed by ref, so the listener is simply pinned to that exact object (and, since those never get morphed away, that's all you need).
 
+```javascript
+connect() {
+  // One listener per instance, each removed on its own disconnect().
+  this.on(document, "keydown", (e) => {
+    if (e.key === "Escape" && this.props.open) this.update({ open: false });
+  });
+}
+```
+
 Prefer the ref name for not-yet-rendered elements: `this.ref("inc")` returns `null` before its first render, so only `on("inc", ...)` can bind a ref that appears later.
 
-Both return an `off()` and are cleared automatically on `disconnect()`. For an imperative touch-up after a state change (focus an input, scroll into view), do it right after `update()` — the morph is synchronous, so the new ref is already in the DOM:
+Every listener is removed automatically on `disconnect()`.
+To remove one earlier, call the function `on()` returns:
+`const off = this.on("inc", "click", handler); off();`.
+
+For an imperative touch-up after a state change (focus an input, scroll into view), do it right after `update()` — the morph is synchronous, so the new ref is already in the DOM:
 
 ```javascript
 edit() {
