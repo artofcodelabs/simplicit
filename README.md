@@ -113,7 +113,11 @@ Simplicit exports a `Component` base class you can extend.
   a parent `update()` does not repaint it.
   To pass data down, render it with `Child.toHTML(props)`.
   On each parent update, those props reach the child through `child.update(props)`.
-  Changing the nested element's `data-component` name replaces it with a new instance.
+  To swap a nested slot to a different component — say, a comment row to a `deleted-comment` placeholder —
+  render the other component there.
+  A changed `data-component` name replaces the element even with the same tag and `data-key`:
+  the old instance is disconnected and a new one is mounted.
+  [`dev/nested.html`](dev/nested.html) shows all of this.
 
 #### Keying list items with `data-key`
 
