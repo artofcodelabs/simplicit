@@ -95,6 +95,57 @@ it("supports nested namespaces (e.g. Main/Panel)", () => {
   expect(nestedCounter).toEqual(18);
 });
 
+it("runs lifecycle on every namespace level, outer → inner", () => {
+  const log = [];
+  const level = (name) => ({
+    initialize: () => log.push(`init ${name}`),
+    deinitialize: () => log.push(`deinit ${name}`),
+  });
+
+  class Pages {
+    initialize() {
+      log.push("init Pages");
+    }
+    deinitialize() {
+      log.push("deinit Pages");
+    }
+    index() {
+      log.push("index");
+    }
+  }
+
+  const A = level("A");
+  const B = level("B");
+  const C = Object.assign(level("C"), { Pages });
+  const NestedControllers = {
+    A: Object.assign(A, { B: Object.assign(B, { C }) }),
+  };
+
+  document.body.setAttribute("data-namespace", "A/B/C");
+  document.body.setAttribute("data-controller", "Pages");
+  document.body.setAttribute("data-action", "index");
+
+  const { namespaceController, controller, controllers } =
+    init(NestedControllers);
+  expect(log).toEqual(["init A", "init B", "init C", "init Pages", "index"]);
+  expect(namespaceController).toBe(A);
+  expect(controller).toBeInstanceOf(Pages);
+  expect(controllers).toEqual([A, B, C, controller]);
+  expect(B.namespaceController).toBe(A);
+  expect(B.controller).toBe(controller);
+  expect(controller.namespaceController).toBe(A);
+
+  log.length = 0;
+  init(NestedControllers);
+  expect(log.slice(0, 4)).toEqual([
+    "deinit Pages",
+    "deinit C",
+    "deinit B",
+    "deinit A",
+  ]);
+  expect(controllers).toEqual([A, B, C, controller]);
+});
+
 it("falls back to top-level controller when namespace path is missing", () => {
   let local = 0;
 
@@ -115,8 +166,10 @@ it("falls back to top-level controller when namespace path is missing", () => {
   document.body.setAttribute("data-controller", "Pages");
   document.body.setAttribute("data-action", "list");
 
-  init(Controllers);
+  const { namespaceController } = init(Controllers);
   expect(local).toEqual(3);
+  expect(namespaceController).toBeNull();
+  expect(Controllers).toEqual({ Pages });
 });
 
 it("falls back to top-level controller when data-namespace is missing", () => {
@@ -137,7 +190,10 @@ it("falls back to top-level controller when data-namespace is missing", () => {
 
   document.body.setAttribute("data-controller", "Pages");
   document.body.setAttribute("data-action", "list");
+  document.body.removeAttribute("data-namespace");
 
-  init(Controllers);
+  const { namespaceController } = init(Controllers);
   expect(local).toEqual(3);
+  expect(namespaceController).toBeNull();
+  expect(Controllers).toEqual({ Pages });
 });

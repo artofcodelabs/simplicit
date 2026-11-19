@@ -1,0 +1,64 @@
+import { Reactive } from "Simplicit";
+import { Models } from "LocoModel";
+
+const { Base } = Models;
+
+export default class LocoReactive extends Reactive(Base) {
+  static get identity() {
+    return this.name;
+  }
+
+  static async all(...args) {
+    const records = await super.all(...args);
+    return this.load(records);
+  }
+
+  async save(partial = {}) {
+    const isCreate = this.id == null;
+    const target = isCreate ? this : this.clone();
+    for (const [key, val] of Object.entries(partial))
+      target.assignAttr(key, val);
+    if (target.isInvalid()) return { ok: false, errors: target.errors };
+
+    const resp = await Base.prototype.save.call(target);
+    if (!resp.ok) return resp;
+
+    if (isCreate) {
+      this.update(resp.data ?? {});
+      this.constructor.add(this);
+    } else {
+      this.update(partial);
+    }
+    return resp;
+  }
+
+  async delete(...args) {
+    const resp = await super.delete(...args);
+    if (resp.ok) this.del();
+    return resp;
+  }
+
+  async updateAttribute(attr, value = this[attr]) {
+    const previous = this[attr];
+    this.assignAttr(attr, value);
+    const resp = await super.updateAttribute(attr);
+    if (resp.ok) this.rerender();
+    else this.assignAttr(attr, previous);
+    return resp;
+  }
+
+  update(partial = {}) {
+    for (const [key, val] of Object.entries(partial))
+      this.assignAttr(this.getAttrName(key), val);
+    return this.rerender();
+  }
+
+  changes() {
+    return super.changes(this.constructor.byId(this.id));
+  }
+
+  applyChanges(...args) {
+    super.applyChanges(...args);
+    return this.rerender();
+  }
+}
