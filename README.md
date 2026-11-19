@@ -340,7 +340,8 @@ Renaming record 1 in its card updates its chip too — both components are bound
 How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
-2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it — you don't pass them in `components` yourself. Each `static template` renders **one** record.
+2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it,
+so `start({ models: [Article] })` is enough — don't also list `ArticleCard` or `ArticleChip` in `components`. Each `static template` renders **one** record.
 3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders.
    A container-filled representation whose template has no `data-key` throws the first time its container is filled with at least one record —
    at `start()` if records are already loaded, otherwise later, when records first arrive (`Model.add()`, `Model.load()`, a streamed-in `data-model` script).
