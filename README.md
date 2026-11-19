@@ -277,7 +277,9 @@ Notes:
 * `data-position` says where the rendered nodes go relative to the target, with the same meaning as in `insertAdjacentHTML()`.
   Default: `beforeend` when `data-target` is set, `beforebegin` when it is omitted.
   Valid values: `beforebegin`, `afterbegin`, `beforeend`, `afterend`; anything else throws.
-* Inserted component elements are then auto-initialized like any other DOM addition.
+* The rendered components then mount like any element added to the page later:
+  Simplicit's DOM observer creates an instance for each and calls its `connect()`.
+  That happens just after `start()` returns, so they aren't in `start().roots`.
 
 ### One Model, many representations: `Model`
 
