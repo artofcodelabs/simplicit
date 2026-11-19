@@ -192,17 +192,22 @@ edit() {
 
 #### Relationships
 
-All relationship helpers filter by component name(s):
+These helpers filter by component name(s); a name is required.
+The ones that return arrays return `[]` when nothing matches.
 
 * **`children(nameOrNames)`**: direct children component instances (DOM order).
 * **`siblings(nameOrNames)`**: sibling component instances.
 * **`ancestor(name)`**: nearest matching ancestor component instance (or `null`).
 * **`descendants(name)`**: all matching descendants (flat array).
 
+The direct parent needs no name, so it's a property: **`this.parent`** (see [Core properties](#core-properties)).
+
 #### Refs
 
 Refs are scoped to the component’s root element.
-Refs inside a nested component belong to that component and are excluded.
+A ref belongs to its nearest component, so a parent never sees its nested components' refs:
+if a `card` and a `comment` inside it both have `data-ref="save"`,
+the card's `this.ref("save")` returns only the card's own button.
 
 * **`ref(name)`**: returns `null`, a single element, or an array of elements (when multiple match).
 * **`refs()`**: returns an object mapping each `data-ref` key to `Element | Element[]`. Only elements inside the component that have `data-ref` are included.
@@ -214,7 +219,7 @@ Refs inside a nested component belong to that component and are excluded.
 You can register cleanup manually or use helpers that auto-register cleanup:
 
 * **`registerCleanup(fn)`**
-* **`on(target, type, listener, options)`** (auto-removes the listener on disconnect)
+* **`on(target, type, listener, options)`** (auto-removes the listener on disconnect; `options` goes straight to `addEventListener()`, e.g. `{ passive: true }`)
 * **`timeout(fn, delay)`** (auto-clears on disconnect)
 * **`interval(fn, delay)`** (auto-clears on disconnect)
 
