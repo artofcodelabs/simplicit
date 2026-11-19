@@ -400,18 +400,31 @@ class Article extends Model {
   Returns an unsubscribe function.
   This is what containers subscribe to, so a field edit doesn't refill them.
 
+  Representations are subscribed for you, and a component class belongs to one Model.
+  Subscribe by hand when something follows more than one, e.g. a summary of two Models:
+
   ```javascript
-  // In a component, register the unsubscribe as cleanup so disconnect() drops it.
-  this.registerCleanup(Article.onChange(() => this.update()));
+  class Summary extends Component {
+    static name = "summary";
+    static template = () =>
+      `<p data-component="summary">${Article.loaded.length} articles, ${Comment.loaded.length} comments</p>`;
+
+    connect() {
+      // registerCleanup() unsubscribes both on disconnect().
+      this.registerCleanup(Article.onChange(() => this.update()));
+      this.registerCleanup(Comment.onChange(() => this.update()));
+      this.update();
+    }
+  }
   ```
 
 * **`record.update(partial)`**: mutate one record and re-render the components bound to it, plus any collection readouts. Containers are **not** refilled — the shape didn't change, and the bound components already repainted themselves.
-* **`record.del()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
 
   ```javascript
   Article.byId(1).update({ title: "Renamed" }); // card #1 and chip #1 update; others don't
   ```
 
+* **`record.del()`**: remove the record from the collection; containers re-render and the components bound to it are removed.
 * **`this.model`** (on a model-bound component): the single record instance it represents. The `template()` receives that record's fields; `this.props` stays as authored.
 
 #### Associations
