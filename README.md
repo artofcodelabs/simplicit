@@ -341,7 +341,7 @@ How it works:
 
 1. **Render once.** `<script type="application/json" data-model="<name>">` carries an array of records. At `start()`, Simplicit hydrates them into Model instances (`new Article(record)`) and removes the script.
 2. **Declare representations.** A Model lists its per-record components in `static components`. `start({ models })` links each back to its Model (`Component.Model`) and registers it,
-so `start({ models: [Article] })` is enough — don't also list `ArticleCard` or `ArticleChip` in `components`. Each `static template` renders **one** record.
+   so `start({ models: [Article] })` is enough — don't also list `ArticleCard` or `ArticleChip` in `components`. Each `static template` renders **one** record.
 3. **Render per record.** Mark a container with `data-container-component="<component-name>"`; Simplicit fills it with one component instance per record. The marker is a plain attribute (not `data-component`), so the foundation ignores the container itself — it's a passive host, not a component. Each rendered element **must** carry `data-key="${record.id}"` — Simplicit uses it to bind the instance to its record (`this.model`) and to keep rows stable across re-renders.
    A container-filled representation whose template has no `data-key` throws the first time its container is filled with at least one record —
    at `start()` if records are already loaded, otherwise later, when records first arrive (`Model.add()`, `Model.load()`, a streamed-in `data-model` script).
@@ -371,8 +371,17 @@ class Article extends Model {
 * It is **not** bound to a record, so `this.model` stays `null`; it subscribes to the Model instead and re-renders on **any** change to it — `Model.load()`, `Model.add()`, `record.del()`, and `record.update()`. So a readout that aggregates record *fields* (a sum, "3 unread") stays in step, not just a count of rows.
 * `records` is `Model.loaded` — the live array of record instances, **always an array**: `[]` before hydration, and present even on a render you trigger yourself from `connect()`. No default needed in the destructuring.
 * It's a plain component root, not a container: put it wherever you want in the markup, and `data-container-component` doesn't apply.
-* The subscription is registered as cleanup, so `disconnect()` (element removed from the DOM) unsubscribes it.
-* `this.props` still works — `update({ filter: "all" })` merges into `props` and the template receives both `props` and `records`.
+* Simplicit subscribes it with `Model.onChange()` and unsubscribes on `disconnect()`,
+  so a readout removed from the page stops re-rendering.
+* `this.props` still works and starts as `{}`.
+  `update({ filter: "unread" })` merges into `props`, and the template receives `props` and `records` together:
+
+  ```javascript
+  static template = ({ records, filter = "all" }) => {
+    const shown = filter === "all" ? records : records.filter((r) => !r.read);
+    return `<span data-component="article-tally">${shown.length} ${filter}</span>`;
+  };
+  ```
 
 #### `Model` API
 
