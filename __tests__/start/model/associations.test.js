@@ -38,6 +38,30 @@ describe("associations", () => {
     expect(pluralize(Comment.name)).toBe("comments");
   });
 
+  it("snake_cases multi-word foreign keys; pluralizes consonant + y as -ies", () => {
+    expect(foreignKey({ name: "BlogPost" })).toBe("blog_post_id");
+    expect(pluralize("BlogPost")).toBe("blogPosts"); // getters stay camelCase
+    expect(pluralize("Category")).toBe("categories");
+    expect(pluralize("Day")).toBe("days"); // vowel + y keeps the y
+  });
+
+  it("resolves multi-word associations through the snake_case key", () => {
+    class BlogPost extends Model {
+      static name = "BlogPost";
+    }
+    class Category extends Model {
+      static name = "Category";
+      static belongsTo = [BlogPost];
+    }
+    wireAssociations([BlogPost, Category]);
+
+    BlogPost.load([{ id: 1 }]);
+    Category.load([{ id: 5, blog_post_id: 1 }]);
+
+    expect(BlogPost.byId(1).categories.map((c) => c.id)).toEqual([5]);
+    expect(Category.byId(5).blogPost.id).toBe(1);
+  });
+
   it("infers hasMany inverses from belongsTo without polluting siblings", () => {
     expect(Article.hasMany).toEqual([Comment]);
     expect(Author.hasMany).toEqual([Comment]);

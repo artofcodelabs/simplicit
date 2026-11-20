@@ -7,9 +7,18 @@ const member = (name) => name.split(".").pop();
 const lower = (name) =>
   member(name).charAt(0).toLowerCase() + member(name).slice(1);
 
-export const pluralize = (name) => `${lower(name)}s`;
+// BlogPost → blog_post, matching Rails column names.
+const snake = (name) =>
+  member(name)
+    .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+    .toLowerCase();
 
-export const foreignKey = (OwnerClass) => `${lower(OwnerClass.name)}_id`;
+// ponytail: consonant + y → ies, else + s. Irregular plurals (person, child)
+// aren't handled; declare a getter yourself if you need one.
+export const pluralize = (name) =>
+  `${lower(name).replace(/([^aeiou])y$/, "$1ie")}s`;
+
+export const foreignKey = (OwnerClass) => `${snake(OwnerClass.name)}_id`;
 
 export const wireAssociations = (modelClasses) => {
   for (const ModelClass of modelClasses) {

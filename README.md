@@ -446,16 +446,17 @@ class Comment extends Model {
 ```
 
 * **`static belongsTo = [Owner, ...]`** — a *belongs to* per owner. Each adds a getter named after the owner, with its first letter lower-cased (`Article` → `comment.article`). A Model can belong to several owners — `static belongsTo = [Article, Author]` gives both `comment.article` (from `article_id`) and `comment.author` (from `author_id`).
-* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, with its first letter lower-cased and an `s` appended (`Comment` → `article.comments`).
+* **`static hasMany = [Child, ...]`** — a *has many* per child. Each adds a getter named after the child, with its first letter lower-cased and pluralized (`Comment` → `article.comments`).
 
-Naming is mechanical, not Rails' inflection:
-a `BlogPost` owner gives `blogPost` and the foreign key `blogPost_id` (not `blog_post_id`),
-and a `Category` child gives `categorys`.
+Getters are camelCase and foreign keys are snake_case, as in Rails:
+a `BlogPost` owner gives `comment.blogPost` and the foreign key `blog_post_id`.
+Pluralizing only adds `s`, or turns a consonant + `y` into `ies` (`Category` → `categories`);
+irregular plurals like `Person` → `people` aren't handled.
 A namespaced Model name (`static name = "Article.Comment"`) is named after its last segment — `comments`, `comment`, `comment_id`.
 
 **Declare `belongsTo` and the `hasMany` inverse is inferred.** `Comment.belongsTo = [Article]` above implies `Article` *has many* `Comment` — you don't write `Article.hasMany = [Comment]` yourself. Declare `static hasMany` explicitly only for a *has many* whose child has no `belongsTo` back-reference.
 
-The **foreign key lives on the "belongs to" side** and is named `<owner>_id` — so a `Comment` that belongs to an `Article` carries `article_id`. Both getters resolve against the live collections at access time:
+The **foreign key lives on the "belongs to" side** and is named `<owner>_id` (snake_case) — so a `Comment` that belongs to an `Article` carries `article_id`. Both getters resolve against the live collections at access time:
 
 ```javascript
 article.comments; // Comment.loaded.filter((c) => c.article_id === article.id)
