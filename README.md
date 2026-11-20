@@ -490,7 +490,12 @@ class ArticleCard extends Component {
 }
 ```
 
-This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.add({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. A top-level `data-container-component="comment-item"` (no model-bound ancestor) still renders the full collection.
+This is **reactive**: because a nested comment container is still a comment representation, it stays subscribed to `Comment`. `Comment.add({ article_id: 1, ... })` re-renders every comment container on the page — and each one refills from *its* owner, so only article 1's list grows. The same container placed in the page itself, outside any article card, has no owner to filter by, so it shows every comment:
+
+```html
+<!-- Outside any article-card: all comments (Comment.loaded) -->
+<ul data-container-component="comment-item"></ul>
+```
 
 #### Streamed-in markup (Turbo)
 
