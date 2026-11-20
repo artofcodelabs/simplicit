@@ -571,8 +571,10 @@ export default class Model extends Reactive() {
 
 `Reactive(Base)` accepts any base class.
 If your records already live in a model library — one that validates, coerces types and talks to the API —
-mix `Reactive` into that library's base class instead of copying records into a `Model`.
-The result is both at once, so it goes into `start({ models })` like any other Model.
+mix `Reactive` into that library's base class.
+Otherwise you'd keep two objects per record — the library's, plus a `Model` holding a copy of its fields for rendering —
+and every change would have to be made to both.
+With the mixin, one object is both, and it goes into `start({ models })` like any other Model.
 
 What `Reactive` expects from `Base`:
 
