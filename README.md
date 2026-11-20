@@ -514,8 +514,8 @@ This is why the seed script is **removed** rather than kept: on a **restoration 
 
 Two cases keep the *display* in step with memory:
 
-* **While an instance is mounted**, a live update flows the ordinary way: your websocket handler calls `record.update()`, which re-renders every currently-bound instance. Nothing Turbo-specific here.
-* **While an instance is unmounted** (you'd navigated away), `record.update()` has nothing to re-render — only memory changes. So when that instance re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
+* **While a record's component is on the page**, a live update flows the ordinary way: your websocket handler calls `record.update()`, which re-renders every component currently bound to that record. Nothing Turbo-specific here.
+* **While it's off the page** (you'd navigated away, so its element was removed and its component disconnected), `record.update()` has nothing to re-render — only memory changes. So when that element re-appears with stale markup (a Turbo restoration shows its cached snapshot), Simplicit re-renders it from its record **as it binds**. *Binding* is the moment Simplicit initializes a rendered element and links it to its record by `data-key` (step 3 above) — it's what sets `this.model`. This is a re-render from memory, not a re-hydration from the (stale) JSON.
 
 #### Knowing when a snapshot landed: `data-as-of` + `onHydrate`
 
