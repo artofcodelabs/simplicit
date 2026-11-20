@@ -60,9 +60,20 @@ document.addEventListener("DOMContentLoaded", () => {
   * Also available as `this.componentId` inside the component (already set in `connect()`).
 * **`data-ref="<key>"`**: marks ref elements inside a component (see `ref()` / `refs()`).
 
-### `start({ root, components })`
+### `start({ root, components, models, onHydrate })`
 
 `start()` scans `root` (defaults to `document.body`) for elements with `data-component`, creates and binds component instances for them, and keeps them in sync with DOM changes (new elements get initialized, removed ones get disconnected).
+
+* **Options**
+  * `root`: the element to scan and watch (default `document.body`).
+  * `components`: component classes.
+  * `models`: `Model` classes; their representation components are registered for you
+    (see [Models](#one-model-many-representations-model)).
+  * `onHydrate(asOf)`: called after `data-model` scripts are loaded
+    (see [`data-as-of` + `onHydrate`](#knowing-when-a-snapshot-landed-data-as-of--onhydrate)).
+
+  Classes must be passed here or added later with `addComponents()` / `addModels()`;
+  the markup can arrive at any time.
 
 * **Validation**
   * Throws if the DOM contains `data-component="X"` but you didn’t pass a matching class in `components`.
@@ -541,10 +552,6 @@ start({
 * **Once per page, not once per script.** A page's scripts all come from one server render, so the scripts hydrated together (at `start()`, `addModels()`, or in one Turbo swap) are reported as **one** call, on a microtask. It gets the **oldest** `as-of` among them, so a catch-up never assumes more than the stalest snapshot knew.
 * **Every hydration, not just the first.** A `data-model` script streamed in later (e.g. a Turbo visit) triggers it again with that page's `as-of`. A restoration visit doesn't — its scripts were already removed, so nothing hydrates.
 * A script **without** `data-as-of` still hydrates, but isn't reported. If none of the scripts in a batch has one, `onHydrate` isn't called.
-
-#### `start({ ..., models })`
-
-`start()` accepts a `models` array alongside `components`. Model classes and their representation components are resolved at `start()`; you can also register more later with **`addModels(newModels)`** (see [return value](#return-value)) — the mirror of `addComponents()`. The DOM markup, either way, can arrive whenever — see above.
 
 #### Bringing your own model layer: `Reactive(Base)`
 
