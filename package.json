@@ -54,6 +54,10 @@
     "webpack-cli": "^7.2.2",
     "webpack-dev-middleware": "^8.1.1"
   },
+  "overrides": {
+    "glob": "^14.0.2",
+    "minimatch": "^11.0.1"
+  },
   "browserslist": [
     "defaults"
   ]
