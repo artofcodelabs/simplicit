@@ -52,11 +52,12 @@ app.get("/loco-reactive.js", (_, res) => {
   res.type("js").sendFile(path.join(__dirname, "loco-reactive.js"));
 });
 
-// TODO: Requires ../../loco-js-model (not released to npm yet) built with 'npm run build'
+// TODO: loco-js-model 3 isn't on npm yet (2.x uses `success`, not `ok`),
+// so package.json installs it from GitHub branch `3`. Switch to "^3" once released.
 app.get("/loco-model.mjs", (_, res) => {
   const file = path.resolve(
     __dirname,
-    "../../loco-js-model/dist/loco-model.mjs",
+    "../node_modules/loco-js-model/dist/loco-model.mjs",
   );
   res.sendFile(file, (err) => {
     if (err)
@@ -64,7 +65,7 @@ app.get("/loco-model.mjs", (_, res) => {
         .status(404)
         .type("js")
         .send(
-          `throw new Error("loco-js-model build not found at ${file} — clone it next to this repo and run 'npm run build' there.");`,
+          `throw new Error("loco-js-model build not found at ${file} — run 'npm install'.");`,
         );
   });
 });

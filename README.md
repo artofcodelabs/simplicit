@@ -634,10 +634,7 @@ await Article.all(); // GET, then load into memory and render
   `applyChanges()` re-renders after applying them.
 
 `LocoReactive` isn't part of the package — copy it from `dev/`.
-For a working CRUD page, see [`dev/loco.html`](dev/loco.html)
-(`npm start`, then open `/loco`;
-
-‼️ TODO: it needs a loco-js-model build next to this repo, see [`dev/server.js`](dev/server.js)).
+For a working CRUD page, see [`dev/loco.html`](dev/loco.html) (`npm start`, then open `/loco`).
 
 ## 🕹️ Controllers
 

@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-// The /loco page needs the sibling loco-js-model build (see dev/server.js).
 const card = (page, title) =>
   page.locator('[data-component="article-card"]', { hasText: title });
 

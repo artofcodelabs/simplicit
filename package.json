@@ -48,6 +48,7 @@
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^17.3.0",
+    "loco-js-model": "github:locoframework/loco-js-model#3",
     "prettier": "^3.9.6",
     "webpack": "^5.109.2",
     "webpack-cli": "^7.2.2",
