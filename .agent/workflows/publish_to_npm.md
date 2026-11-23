@@ -4,38 +4,35 @@ description: How to publish the simplicit package to npm
 
 # Publish to NPM
 
-1.  **Login to NPM** (if not already logged in):
+1.  **Version the package on the release branch** (before merging to `master`):
+    Bump `package.json` and `package-lock.json` without a commit or tag,
+    and commit the bump with the rest of the branch.
+    While on `0.x`, a breaking change bumps the minor version (`0.5.2` → `0.6.0`),
+    because `^0.5.2` only accepts `0.5.x`.
+    ```bash
+    npm version 0.6.0 --no-git-tag-version
+    ```
+
+2.  **Login to NPM** (if not already logged in):
     ```bash
     npm login
     ```
 
-2.  **Build the project**:
-    Ensure the latest code is built.
-    ```bash
-    // turbo
-    npm run build
-    ```
-
-3.  **Run Tests**:
+3.  **Run Tests** on `master` after the merge:
     Ensure all tests pass before publishing.
     ```bash
     // turbo
     npm run test
     ```
 
-4.  **Version the package**:
-    Update the version in `package.json`. You can use `npm version` for this.
-    *   For a patch (0.0.x): `npm version patch`
-    *   For a minor update (0.x.0): `npm version minor`
-    *   For a major update (x.0.0): `npm version major`
-
+4.  **Tag the release**:
     ```bash
-    # Example:
-    npm version patch
+    git tag v$(node -p "require('./package.json').version")
+    git push origin --tags
     ```
 
 5.  **Publish**:
-    Publish the package to the npm registry.
+    `npm publish` runs the `prepare` script, which rebuilds `dist`.
     ```bash
     npm publish --access public
     ```

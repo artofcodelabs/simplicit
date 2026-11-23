@@ -1,6 +1,6 @@
 {
   "name": "simplicit",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "A truly modest yet powerful JavaScript framework.",
   "type": "module",
   "main": "dist/simplicit.mjs",
@@ -8,12 +8,15 @@
   "exports": {
     ".": "./dist/simplicit.mjs"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && npm run build",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .js --fix",
+    "lint": "eslint . --fix",
     "lint-staged": "lint-staged",
-    "build": "webpack --mode=production --config-node-env=production -c webpack.config.js --progress",
+    "build": "webpack --progress",
     "start": "node dev/server.js",
     "test": "npm run test:jest && npm run test:e2e",
     "test:jest": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
@@ -45,10 +48,15 @@
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^17.3.0",
+    "loco-js-model": "github:locoframework/loco-js-model#3",
     "prettier": "^3.9.6",
     "webpack": "^5.109.2",
     "webpack-cli": "^7.2.2",
     "webpack-dev-middleware": "^8.1.1"
+  },
+  "overrides": {
+    "glob": "^14.0.2",
+    "minimatch": "^11.0.1"
   },
   "browserslist": [
     "defaults"

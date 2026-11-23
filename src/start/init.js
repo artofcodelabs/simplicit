@@ -1,14 +1,16 @@
-import { generateComponentId } from "./id.js";
+import { COMPONENT_ID } from "../attributes.js";
+import { generateComponentId, popProps } from "./helpers.js";
 
 export const initComponent = (node, ComponentClass) => {
   const instance = new ComponentClass();
   instance.node = node;
   instance.componentId = generateComponentId();
+  instance.props = popProps(node.element);
   return instance;
 };
 
 export const extendElement = (element, instance) => {
-  element.setAttribute("data-component-id", instance.componentId);
+  element.setAttribute(COMPONENT_ID, instance.componentId);
   element.instance = instance;
 };
 
@@ -25,6 +27,9 @@ export const initMatches = (nodes, componentClasses) => {
   }
   for (const instance of instances) {
     if (typeof instance.connect === "function") instance.connect();
+  }
+  for (const instance of instances) {
+    instance.connectModel();
   }
   return instances;
 };
