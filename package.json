@@ -1,6 +1,6 @@
 {
   "name": "simplicit",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "A truly modest yet powerful JavaScript framework.",
   "type": "module",
   "main": "dist/simplicit.mjs",
