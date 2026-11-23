@@ -71,7 +71,8 @@ app.get("/loco-model.mjs", (_, res) => {
 });
 
 app.get("/{:page}", (req, res) => {
-  res.sendFile(path.join(__dirname, `${req.params.page || "index"}.html`));
+  // root: send() refuses paths that escape dev/ (e.g. an encoded "../").
+  res.sendFile(`${req.params.page || "index"}.html`, { root: __dirname });
 });
 
 app.listen(4000, () => {
