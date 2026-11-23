@@ -703,7 +703,6 @@ export default {
   render: ({ id }) => {
     const el = document.getElementById("app");
     el.textContent = `Article ${id}`;
-    // If you need data loading, you can fetch here and update the DOM after.
   },
 };
 ```
@@ -762,7 +761,9 @@ So every constructor runs before any `initialize()`, and the references are alre
 
 You don’t need controllers for every page; if a controller/method is missing, Simplicit skips it.
 
-The `init()` function returns `{ namespaceController, controller, controllers, action }`, where `controllers` lists every active level outer → inner (e.g. `[Main, Panel, Pages]`).
+The `init()` function returns `{ namespaceController, controller, controllers, action }`,
+where `controllers` lists the instance of every active level, outer → inner
+(e.g. `[namespaceController, panel, controller]` from the call order above).
 
 ### Ruby on Rails: generating `<body>` data attributes
 
